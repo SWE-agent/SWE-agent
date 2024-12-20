@@ -234,6 +234,12 @@ class BasicCLI:
             ),
         )
         parser.add_argument(
+            "--verbosity",
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            help="Set the logging verbosity level",
+            default=None,
+        )
+        parser.add_argument(
             "-h",
             "--help",
             help="Show help text and exit",
