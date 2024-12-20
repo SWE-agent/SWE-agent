@@ -14,3 +14,14 @@ The easiest way to contribute is to give us feedback.
 <!-- INCLUSION END -->
 
 You want to do contribute to the development? Great! Please see the [development guidelines](https://swe-agent.com/latest/dev/contribute/) for guidelines and tips.
+
+## Line Endings
+To ensure consistent behavior across different platforms and prevent patch application issues:
+
+- All text files use LF (Unix-style) line endings
+- This is enforced via `.gitattributes` for all contributors
+- Windows users: Configure Git to handle line endings correctly:
+  ```bash
+  git config --global core.autocrlf input
+  ```
+- If you experience patch failures, check your line endings with `git ls-files --eol`
