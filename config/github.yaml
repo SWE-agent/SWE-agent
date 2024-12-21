@@ -1,0 +1,82 @@
+# GitHub integration configuration
+github:
+  # Common settings
+  cost_limits:
+    target_hourly_rate: 10.0  # Target cost in rupees per hour
+    max_hourly_rate: 15.0     # Maximum allowed cost rate
+    max_total_cost: 1000.0    # Maximum total cost allowed
+
+  # Action mode configuration
+  action:
+    # Supported event types and their actions
+    events:
+      issues:
+        actions: ["opened", "edited"]
+        # Cost optimization settings
+        batch_size: 5          # Number of similar events to batch
+        min_tokens: 100        # Minimum tokens to process
+        max_tokens: 2000       # Maximum tokens per event
+
+      pull_request:
+        actions: ["opened", "synchronize"]
+        batch_size: 3
+        min_tokens: 200
+        max_tokens: 3000
+
+      discussion:
+        actions: ["created", "edited"]
+        batch_size: 5
+        min_tokens: 100
+        max_tokens: 2000
+
+    # Action-specific settings
+    concurrent_events: 3       # Maximum concurrent events to process
+    cache_ttl: 3600           # Cache TTL in seconds
+
+  # Bot mode configuration
+  bot:
+    # Webhook configuration
+    webhook:
+      port: 8000              # Port to listen on
+      host: "0.0.0.0"         # Host to bind to
+      timeout: 10             # Request timeout in seconds
+      max_payload: 1048576    # Maximum payload size (1MB)
+
+    # Event configuration (same structure as action mode)
+    events:
+      issues:
+        actions: ["opened", "edited"]
+        batch_size: 5
+        min_tokens: 100
+        max_tokens: 2000
+
+      pull_request:
+        actions: ["opened", "synchronize"]
+        batch_size: 3
+        min_tokens: 200
+        max_tokens: 3000
+
+      discussion:
+        actions: ["created", "edited"]
+        batch_size: 5
+        min_tokens: 100
+        max_tokens: 2000
+
+    # Bot-specific settings
+    concurrent_events: 5       # Maximum concurrent events to process
+    cache_ttl: 3600           # Cache TTL in seconds
+    rate_limit:
+      requests_per_hour: 100  # Maximum webhook requests per hour
+      burst: 10              # Maximum burst requests
+
+# Logging configuration
+logging:
+  github:
+    level: INFO
+    handlers:
+      - console
+      - file
+    file:
+      path: logs/github.log
+      max_size: 10485760     # 10MB
+      backup_count: 5
