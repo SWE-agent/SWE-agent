@@ -1,0 +1,40 @@
+# Enforce LF line endings for all text files
+* text=auto eol=lf
+
+# Python files
+*.py text diff=python eol=lf
+*.pyi text diff=python eol=lf
+*.pyx text diff=python eol=lf
+*.pxd text diff=python eol=lf
+
+# Documentation
+*.md text diff=markdown eol=lf
+*.rst text eol=lf
+*.txt text eol=lf
+
+# Configuration files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Git files
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.gitmodules text eol=lf
+
+# Binary files (no line ending conversion)
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.pyc binary
