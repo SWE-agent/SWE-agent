@@ -27,8 +27,23 @@ def _interpret_level(level: int | str | None, *, default=logging.DEBUG) -> int:
     return getattr(logging, level.upper())
 
 
-_STREAM_LEVEL = _interpret_level(os.environ.get("SWE_AGENT_LOG_STREAM_LEVEL"))
-_FILE_LEVEL = _interpret_level(os.environ.get("SWE_AGENT_LOG_FILE_LEVEL"), default=logging.TRACE)  # type: ignore
+# Default levels from environment variables or CLI args
+_STREAM_LEVEL = None
+_FILE_LEVEL = None
+
+
+def set_default_levels(stream_level: int | str | None = None, file_level: int | str | None = None) -> None:
+    """Set the default logging levels for stream and file handlers.
+
+    Args:
+        stream_level: Level for stream handlers (console output)
+        file_level: Level for file handlers
+    """
+    global _STREAM_LEVEL, _FILE_LEVEL
+    _STREAM_LEVEL = _interpret_level(stream_level or os.environ.get("SWE_AGENT_LOG_STREAM_LEVEL"))
+    _FILE_LEVEL = _interpret_level(file_level or os.environ.get("SWE_AGENT_LOG_FILE_LEVEL"), default=logging.TRACE)  # type: ignore
+
+
 _INCLUDE_LOGGER_NAME_IN_STREAM_HANDLER = False
 
 _THREAD_NAME_TO_LOG_SUFFIX: dict[str, str] = {}
