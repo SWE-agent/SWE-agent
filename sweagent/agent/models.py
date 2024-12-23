@@ -118,9 +118,14 @@ class GenericAPIModelConfig(PydanticBaseModel):
 
 class ReplayModelConfig(GenericAPIModelConfig):
     replay_path: Path = Field(description="Path to replay file when using the replay model.")
-
     name: Literal["replay"] = Field(default="replay", description="Model name.")
+    model_config = ConfigDict(extra="forbid")
 
+
+class OllamaModelConfig(GenericAPIModelConfig):
+    name: Literal["ollama"] = Field(default="ollama", description="Model name.")
+    model_id: str = Field(description="Ollama model identifier (e.g. 'llama2', 'mistral', etc.)")
+    api_base: str = Field(default="http://localhost:11434", description="Ollama API base URL")
     model_config = ConfigDict(extra="forbid")
 
 
@@ -152,7 +157,8 @@ ModelConfig = Annotated[
     | ReplayModelConfig
     | InstantEmptySubmitModelConfig
     | HumanModelConfig
-    | HumanThoughtModelConfig,
+    | HumanThoughtModelConfig
+    | OllamaModelConfig,
     Field(union_mode="left_to_right"),
 ]
 
@@ -595,7 +601,12 @@ def get_model(args: ModelConfig, tools: ToolConfig) -> AbstractModel:
     """Returns correct model object given arguments and commands"""
     # Convert GenericAPIModelConfig to specific model config if needed
     if isinstance(args, GenericAPIModelConfig) and not isinstance(
-        args, HumanModelConfig | HumanThoughtModelConfig | ReplayModelConfig | InstantEmptySubmitModelConfig
+        args,
+        HumanModelConfig
+        | HumanThoughtModelConfig
+        | ReplayModelConfig
+        | InstantEmptySubmitModelConfig
+        | OllamaModelConfig,
     ):
         if args.name == "human":
             args = HumanModelConfig(**args.model_dump())
@@ -605,6 +616,8 @@ def get_model(args: ModelConfig, tools: ToolConfig) -> AbstractModel:
             args = ReplayModelConfig(**args.model_dump())
         elif args.name == "instant_empty_submit":
             args = InstantEmptySubmitModelConfig(**args.model_dump())
+        elif args.name == "ollama":
+            args = OllamaModelConfig(**args.model_dump())
 
     if args.name == "human":
         assert isinstance(args, HumanModelConfig), f"Expected {HumanModelConfig}, got {args}"
@@ -618,5 +631,8 @@ def get_model(args: ModelConfig, tools: ToolConfig) -> AbstractModel:
     elif args.name == "instant_empty_submit":
         assert isinstance(args, InstantEmptySubmitModelConfig), f"Expected {InstantEmptySubmitModelConfig}, got {args}"
         return InstantEmptySubmitTestModel(args, tools)
+    elif args.name == "ollama":
+        assert isinstance(args, OllamaModelConfig), f"Expected {OllamaModelConfig}, got {args}"
+        return LiteLLMModel(args, tools)
     assert isinstance(args, GenericAPIModelConfig), f"Expected {GenericAPIModelConfig}, got {args}"
     return LiteLLMModel(args, tools)
