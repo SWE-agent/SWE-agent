@@ -431,6 +431,17 @@ class LiteLLMModel(AbstractModel):
         self.args = args
         self.stats = InstanceStats()
         self.tools = tools
+
+        # Check for Azure endpoint and warn about ignored model argument
+        if self.args.api_base and "azure" in self.args.api_base.lower():
+            self.logger = get_logger("swea-lm", emoji="🤖")
+            self.logger.warning(
+                "Using Azure endpoint - the --model CLI argument will be ignored. "
+                "The model is determined by OPENAI_API_VERSION instead."
+            )
+        else:
+            self.logger = get_logger("swea-lm", emoji="🤖")
+
         if tools.use_function_calling:
             if not litellm.utils.supports_function_calling(model=self.args.name):
                 msg = f"Model {self.args.name} does not support function calling"
@@ -438,7 +449,6 @@ class LiteLLMModel(AbstractModel):
         self.model_max_input_tokens = litellm.model_cost.get(self.args.name, {}).get("max_input_tokens")
         self.model_max_output_tokens = litellm.model_cost.get(self.args.name, {}).get("max_output_tokens")
         self.lm_provider = litellm.model_cost[self.args.name]["litellm_provider"]
-        self.logger = get_logger("swea-lm", emoji="🤖")
 
     def _update_stats(self, *, input_tokens: int, output_tokens: int, cost: float) -> None:
         with GLOBAL_STATS_LOCK:

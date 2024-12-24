@@ -1,0 +1,31 @@
+# Model Context Protocol (MCP) server configuration
+
+# Server settings
+server:
+  # Host address to bind the server to
+  host: localhost
+  # Port number for the MCP server
+  port: 8080
+
+# Feature flags for ACI optimizations
+features:
+  # Enable syntactic linting for edit commands
+  linting: true
+  # Enable optimized file viewing (100-line chunks)
+  file_viewer: true
+  # Enable optimized directory search
+  search: true
+
+# Resource settings
+resources:
+  # Maximum file size for viewing (in bytes)
+  max_file_size: 10485760  # 10MB
+  # Default chunk size for file viewing
+  default_chunk_size: 100  # lines
+
+# Tool settings
+tools:
+  # Maximum execution time for tools (in seconds)
+  timeout: 30
+  # Enable command validation
+  validate_commands: true
