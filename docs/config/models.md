@@ -18,8 +18,26 @@ Remember to unset spending limits and configure the action parser if you cannot 
 
 ### Anthropic Claude
 
-Prompt caching makes SWE-agent several times more affordable. While this is done automatically for models like gpt-4o,
-care has to be taken for Anthropic Claude. Anthropic Claude gives you 4 cache break points per key.
+Prompt caching makes SWE-agent several times more affordable. While this is done automatically for models like `gpt-4o`,
+care has to be taken for Anthropic Claude, as you need to manually set the cache break points.
+
+For this, include the following history processor:
+
+```yaml
+agent:
+  history_processors:
+  - type: cache_control
+    last_n_messages: 2
+```
+
+!!! warning "Other history processors"
+
+    Other history processors might interfere with the prompt caching
+    if you are not careful.
+    However, if your history processor is only modifying the last observation,
+    you can combine as done [here](https://github.com/SWE-agent/SWE-agent/blob/main/config/sweagent_heavy.yaml).
+
+Anthropic Claude gives you 4 cache break points per key.
 You need two of them for a single agent run (because the break points are both used to retrieve and set the cache).
 Therefore, you can only run two parallel instances of SWE-agent with [`run-batch`](../usage/batch_mode.md) per key.
 To support more parallel running instances, supply multiple keys as described below.

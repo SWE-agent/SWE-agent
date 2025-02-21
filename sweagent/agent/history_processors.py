@@ -223,6 +223,10 @@ class ClosedWindowHistoryProcessor(BaseModel):
 
 
 class CacheControlHistoryProcessor(BaseModel):
+    """This history processor adds manual cache control marks to the history.
+    Use this when running with anthropic claude.
+    """
+
     type: Literal["cache_control"] = "cache_control"
     """Do not change. Used for (de)serialization."""
 
@@ -263,8 +267,13 @@ class CacheControlHistoryProcessor(BaseModel):
 
 
 class RemoveRegex(BaseModel):
+    """This history processor can remove arbitrary content from history items"""
+
     remove: list[str] = ["<diff>.*</diff>"]
+    """Regex patterns to remove from history items"""
+
     keep_last: int = 0
+    """Keep the last n history items unchanged"""
 
     type: Literal["remove_regex"] = "remove_regex"
     """Do not change. Used for (de)serialization."""
