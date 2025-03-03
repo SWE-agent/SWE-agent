@@ -8,8 +8,8 @@ Running SWE-agent in your browser is the easiest way to try out our project.
 
 1. Click [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/SWE-agent/SWE-agent)
 2. Add your language modelAPI keys to `.env` (find the file in the left sidebar and fill out the template). More information on the keys [here](keys.md).
-3. Make sure to wait until the `postCreateCommand` in the terminal window at the bottom is finished
-4. Enter your SWE-agent command, see, see  [using the command line](../usage/cl_tutorial.md).
+3. Wait for the Codespace setup to complete. The system will prevent you from running commands until setup is finished and display a status message in the terminal.
+4. Enter your SWE-agent command, see [using the command line](../usage/cl_tutorial.md).
 
 ## Running the Web UI
 
