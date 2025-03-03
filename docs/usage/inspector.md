@@ -34,7 +34,7 @@ Here's how to navigate (this is similar to vim keybindings):
 * Switching between trajectories:
     * `H` and `L` go to the previous/next trajectory
     * `t` brings up a list of all trajectories. Use type-ahead search to find a specific trajectory (once your search string results in a single match, the trajectory will be opened). Press `<TAB>` to cycle through the list of matches.
-* Use `h` and `l` to navigate between the steps in the trjaectory
+* Use `h` and `l` to navigate between the steps in the trajectory
 * Use `j` and `k` to scroll down/up
 * By default we only show reduced information. You can press `v` to toggle the view.
 * Press `o` to open the logs

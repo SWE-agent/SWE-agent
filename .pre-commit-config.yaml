@@ -15,14 +15,14 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.29.9
+    rev: v1.30.0
     hooks:
       - id: typos
         files: \.(py|md|rst|yaml|toml)
         exclude: pyproject.toml
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.7
+    rev: v0.9.9
     hooks:
       # Run the linter.
       - id: ruff

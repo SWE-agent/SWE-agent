@@ -54,7 +54,7 @@ def _set_cache_control(entry: HistoryItem) -> None:
     else:
         entry["content"][0]["cache_control"] = {"type": "ephemeral"}
     if entry["role"] == "tool":
-        # Workaruond for weird bug
+        # Workaround for weird bug
         entry["content"][0].pop("cache_control", None)
         entry["cache_control"] = {"type": "ephemeral"}
 
