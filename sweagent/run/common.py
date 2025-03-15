@@ -1,10 +1,10 @@
 """Common functionality for the run scripts."""
 
 import json
+import os
 import sys
 from argparse import ArgumentParser
 from collections import defaultdict
-from collections.abc import Callable
 from pathlib import Path
 from types import UnionType
 from typing import Any
@@ -19,6 +19,37 @@ from sweagent import CONFIG_DIR
 from sweagent.types import AgentInfo, AgentRunResult
 from sweagent.utils.log import get_logger
 from sweagent.utils.serialization import merge_nested_dicts
+
+
+def check_codespace_setup():
+    """Check if we're in a Codespace and if setup is complete."""
+    if not os.getenv("CODESPACES"):
+        return True  # Not in Codespaces, no need to check
+
+    status_file = Path.home() / ".swe_agent_setup_status"
+    if not status_file.exists():
+        return True  # No status file, assume not in Codespaces setup
+
+    status = status_file.read_text().strip()
+
+    if status == "setup_started":
+        rich_print(
+            Panel.fit(
+                "[yellow]⚠️ Codespace setup is still in progress.[/yellow]\n"
+                "Please wait for the postCreateCommand to complete in the terminal window.\n"
+                "You can check the progress in the 'Terminal' tab at the bottom."
+            )
+        )
+        return False
+    elif status == "setup_failed":
+        rich_print(
+            Panel.fit(
+                "[red]❌ Codespace setup failed.[/red]\n"
+                "Please check the terminal output for errors and try restarting the Codespace."
+            )
+        )
+        return False
+    return True
 
 
 def _shorten_strings(data, *, max_length=30):
@@ -60,6 +91,7 @@ one after the other and reporting the failures for each of them.
 More on union types: [link=https://swe-agent.com/latest/usage/cl_tutorial/#union-types]https://swe-agent.com/latest/usage/cl_tutorial/#union-types[/link]
 """
 
+
 _SETTING_ERROR_HINTS = """
 [red][bold]Hints:[/bold][/red]
 Run `sweagent <subcommand> --help` for usage examples.
@@ -68,35 +100,6 @@ Run `sweagent <subcommand> --help` for usage examples.
 - You used dashes instead of underscores (wrong: `--num-workers`, correct: `--num_workers`).
 - You forgot about part of the hierarchy (wrong: `--model.name`, correct: `--agent.model.name`).
 """
-
-
-class AutoCorrectSuggestion:
-    def __init__(
-        self, original: str, alternative: str = "", *, condition: Callable | None = None, help: str | None = None
-    ):
-        self.original = original
-        self.alternative = alternative
-        self.condition = condition
-        self.help = help
-        if self.help and self.alternative:
-            msg = "Cannot set both help and alternative"
-            raise ValueError(msg)
-
-    def show(self, args: list[str]) -> bool:
-        no_equal = []
-        for arg in args:
-            if "=" in arg:
-                no_equal.extend(arg.split("="))
-            else:
-                no_equal.append(arg)
-        if self.condition is not None:
-            return self.condition(no_equal)
-        return f"--{self.original}" in no_equal
-
-    def format(self) -> str:
-        if self.help:
-            return self.help
-        return f"You wrote [red]--{self.original}[/red]. Did you mean [green]--{self.alternative}[/green]?"
 
 
 class ConfigHelper:
