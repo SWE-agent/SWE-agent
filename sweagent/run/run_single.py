@@ -33,15 +33,17 @@ from pathlib import Path
 from typing import Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from sweagent.agent.agents import AbstractAgent, AgentConfig, get_agent_from_config
 from sweagent.agent.problem_statement import (
+    CTFProblemStatement,
     EmptyProblemStatement,
     ProblemStatement,
     ProblemStatementConfig,
 )
+from sweagent.environment.repo import CTFRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
 from sweagent.run.common import AutoCorrectSuggestion as ACS
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
@@ -115,6 +117,12 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
             ),
             ACS("repo.path", "env.repo.path"),
         ]
+
+    @model_validator(mode="after")
+    def check_repo_and_problem_statement_config(self) -> Self:
+        if isinstance(self.problem_statement, CTFProblemStatement) != isinstance(self.env.repo, CTFRepoConfig):
+            ValueError("CTF problem statement should be used only with CTF repo config!")
+        return self
 
 
 class RunSingle:
