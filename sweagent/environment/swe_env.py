@@ -158,7 +158,7 @@ class SWEEnv:
                 "git status",
                 "git fetch",
                 f"git checkout {self.repo.base_commit}",
-                "git clean -fdxq",
+                "git clean -fdq",
             ]
             self.communicate(
                 input=" && ".join(startup_commands),
