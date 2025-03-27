@@ -149,12 +149,17 @@ class SWEEnv:
     def _reset_repository(self) -> None:
         """Clean repository of any modifications + Checkout base commit"""
         if self.repo is not None:
+            self.logger.debug("Resetting repository %s to commit %s", self.repo.repo_name, self.repo.base_commit)
+            # todo: Currently has swe-ft specific change: The original repo.copy isn't called, because the repo is already
+            # present. However, reset --hard <BRANCH> also doesn't work. So modified it here to do a checkout instead.
             startup_commands = [
                 f"cd /{self.repo.repo_name}",
                 "export ROOT=$(pwd -P)",
+                "git status",
+                "git fetch",
+                f"git checkout {self.repo.base_commit}",
+                "git clean -fdxq",
             ]
-            self.logger.debug("Resetting repository %s to commit %s", self.repo.repo_name, self.repo.base_commit)
-            startup_commands.extend(self.repo.get_reset_commands())
             self.communicate(
                 input=" && ".join(startup_commands),
                 check="raise",

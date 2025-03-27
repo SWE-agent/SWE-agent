@@ -330,4 +330,54 @@ class ExpertInstancesFromFile(BaseModel, AbstractInstanceSource):
         return self.path.stem
 
 
-BatchInstanceSourceConfig = InstancesFromHuggingFace | InstancesFromFile | SWEBenchInstances | ExpertInstancesFromFile
+class SWESmithInstances(BaseModel, AbstractInstanceSource):
+    """Load instances from SWE-smith."""
+
+    path: Path
+
+    deployment: DeploymentConfig = Field(
+        default_factory=lambda: DockerDeploymentConfig(image="python:3.11"),
+    )
+    """Deployment configuration. Note that the image_name option is overwritten by the images specified in the task instances.
+    """
+
+    filter: str = ".*"
+    """Regular expression to filter the instances by instance id."""
+    slice: str = ""
+    """Select only a slice of the instances (after filtering by `filter`).
+    Possible values are stop or start:stop or start:stop:step.
+    (i.e., it behaves exactly like python's list slicing `list[slice]`).
+    """
+    shuffle: bool = False
+    """Shuffle the instances (before filtering and slicing)."""
+
+    type: Literal["swesmith"] = "swesmith"
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    def get_instance_configs(self) -> list[BatchInstance]:
+        def convert_instance_dict(instance_dict: dict[str, Any]) -> dict[str, Any]:
+            instance_dict["id"] = instance_dict["instance_id"]
+            # todo: The base_commit is currently incorrect
+            instance_dict["base_commit"] = instance_dict["id"]
+            instance_dict["problem_statement"] = instance_dict.get("problem_statement", "")
+            instance_dict["repo_name"] = "testbed"
+            instance_dict["extra_fields"] = {"fail_to_pass": instance_dict["FAIL_TO_PASS"]}
+            return instance_dict
+
+        instance_dicts = load_file(self.path)
+        instances = [
+            SimpleBatchInstance.model_validate(convert_instance_dict(instance_dict)).to_full_batch_instance(
+                self.deployment
+            )
+            for instance_dict in instance_dicts
+        ]
+        return _filter_batch_items(instances, filter_=self.filter, slice_=self.slice, shuffle=self.shuffle)
+
+    @property
+    def id(self) -> str:
+        return f"swesmith_{self.path.stem}"
+
+
+BatchInstanceSourceConfig = (
+    InstancesFromHuggingFace | InstancesFromFile | SWEBenchInstances | ExpertInstancesFromFile | SWESmithInstances
+)
