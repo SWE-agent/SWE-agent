@@ -242,7 +242,7 @@ class ToolHandler:
         asyncio.run(self._upload_bundles(env))
         for bundle in self.config.bundles:
             cmds = [
-                f"export PATH=$PATH:/root/tools/{bundle.path.name}/bin",
+                f"export PATH=/root/tools/{bundle.path.name}/bin:$PATH",
                 f"chmod +x /root/tools/{bundle.path.name}/bin/*",
             ]
             if (bundle.path / "install.sh").exists():
