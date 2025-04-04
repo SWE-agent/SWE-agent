@@ -51,6 +51,14 @@ def ctf_data_path(test_data_sources_path) -> Path:
 
 
 @pytest.fixture
+def swe_agent_test_ctf_repo_and_ps(ctf_data_path) -> tuple[Path, Path]:
+    p = ctf_data_path / "forensics" / "flash"
+    ps = p / "challenge.json"
+    assert p.is_dir()
+    return p, ps
+
+
+@pytest.fixture
 def test_data_sources_path(test_data_path) -> Path:
     p = test_data_path / "data_sources"
     assert p.is_dir()

@@ -5,11 +5,19 @@ from pathlib import Path
 from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic_core import from_json
 
 from sweagent.utils.github import _get_problem_statement_from_github_issue, _parse_gh_issue_url
 from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
+
+
+def _get_ctf_json(data: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return from_json(data["path"].read_text())
+    except Exception:
+        return dict()
 
 
 class ProblemStatement(Protocol):
@@ -125,11 +133,50 @@ class GithubIssue(BaseModel):
         return self.extra_fields
 
 
-ProblemStatementConfig = TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement
+class CTFProblemStatement(BaseModel):
+    path: Path
+
+    json_data: dict[str, Any] = Field(
+        default_factory=_get_ctf_json,
+        frozen=True,
+        exclude=True,
+    )
+    name: str = Field(default_factory=lambda data: data["json_data"].get("name"))
+    category: Literal["crypto", "rev", "web", "forensics", "pwn", "misc"] = Field(
+        default_factory=lambda data: data["json_data"].get("category")
+    )
+    description: str = Field(default_factory=lambda data: data["json_data"].get("description"))
+    files: list[str] = Field(default_factory=lambda data: data["json_data"].get("files"))
+    flag: str = Field(default_factory=lambda data: data["json_data"].get("flag"))
+
+    extra_fields: dict[str, Any] = Field(default_factory=dict)
+    """Any additional data to be added to the instance.
+    This data will be available when formatting prompt templates.
+    """
+
+    type: Literal["ctf_json"] = "ctf_json"
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    id: str = Field(default_factory=lambda data: "_".join([str(data["category"]), str(data["name"])]))
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_problem_statement(self) -> str:
+        return self.description
+
+    def get_extra_fields(self) -> dict[str, Any]:
+        extra_fields = self.model_dump()
+        extra_fields.update(self.extra_fields)
+        return extra_fields
+
+
+ProblemStatementConfig = (
+    TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement | CTFProblemStatement
+)
 
 
 def problem_statement_from_simplified_input(
-    *, input: str, type: Literal["text", "text_file", "github_issue"]
+    *, input: str, type: Literal["text", "text_file", "github_issue", "ctf_json"]
 ) -> ProblemStatementConfig:
     """Get a problem statement from an `input` string and a `type`.
 
@@ -143,6 +190,8 @@ def problem_statement_from_simplified_input(
         return FileProblemStatement(path=Path(input))
     elif type == "github_issue":
         return GithubIssue(github_url=input)
+    elif type == "ctf_json":
+        return CTFProblemStatement(path=Path(input))
     else:
         msg = f"Unknown problem statement type: {type}"
         raise ValueError(msg)
