@@ -10,6 +10,7 @@ on:
       - prepare-public2
     paths-ignore:
       - 'docs/**'
+      - '.cursor/**'
       - 'README.md'
       - 'mkdocs.yml'
   pull_request:
