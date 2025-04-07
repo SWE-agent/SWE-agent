@@ -7,6 +7,7 @@ from typing import Any, Literal, Protocol
 from pydantic import BaseModel, ConfigDict, Field
 
 from sweagent.utils.github import _get_problem_statement_from_github_issue, _parse_gh_issue_url
+from sweagent.utils.jira import _get_problem_statement_from_jira, _parse_jira_issue_url
 from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
@@ -125,11 +126,40 @@ class GithubIssue(BaseModel):
         return self.extra_fields
 
 
-ProblemStatementConfig = TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement
+# New Jira Issue Class
+class JiraIssue(BaseModel):
+    jira_url: str
+
+    extra_fields: dict[str, Any] = Field(default_factory=dict)
+    """Any additional data to be added to the instance.
+    This data will be available when formatting prompt templates.
+    """
+
+    type: Literal["jira"] = "jira"
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    id: str = None  # type: ignore
+
+    model_config = ConfigDict(extra="forbid")
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.id is None:
+            logger.info("Setting problem statement based on Jira issue url")
+            instance, issue_key = _parse_jira_issue_url(self.jira_url)
+            self.id = f"{instance}__Jira-i{issue_key}"
+
+    def get_problem_statement(self) -> str:
+        return _get_problem_statement_from_jira(self.jira_url)
+
+    def get_extra_fields(self) -> dict[str, Any]:
+        return self.extra_fields
+
+
+ProblemStatementConfig = TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement | JiraIssue
 
 
 def problem_statement_from_simplified_input(
-    *, input: str, type: Literal["text", "text_file", "github_issue"]
+    *, input: str, type: Literal["text", "text_file", "github_issue", "jira_issue"]
 ) -> ProblemStatementConfig:
     """Get a problem statement from an `input` string and a `type`.
 
@@ -143,6 +173,8 @@ def problem_statement_from_simplified_input(
         return FileProblemStatement(path=Path(input))
     elif type == "github_issue":
         return GithubIssue(github_url=input)
+    elif type == "jira_issue":
+        return JiraIssue(jira_url=input)
     else:
         msg = f"Unknown problem statement type: {type}"
         raise ValueError(msg)
