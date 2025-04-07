@@ -11,7 +11,6 @@ from sweagent.types import AgentRunResult
 from sweagent.utils.github import (
     InvalidGithubURL,
     _get_gh_issue_data,
-    _parse_gh_issue_url,
 )
 from sweagent.utils.jira import (
     InvalidJiraURL,
@@ -23,7 +22,7 @@ from sweagent.utils.log import get_logger
 
 def open_pr(*, logger, token, env: SWEEnv, issue_url, trajectory, _dry_run: bool = False) -> None:
     """Create PR to repository on GitHub, regardless of issue source."""
-    
+
     logger.info(f"GitHub URL: {env.repo.github_url}")  # Always using env.repo.github_url
     logger.info("Opening PR")
 
@@ -83,9 +82,7 @@ def open_pr(*, logger, token, env: SWEEnv, issue_url, trajectory, _dry_run: bool
     dry_run_prefix = "echo " if _dry_run else ""
     out = env.communicate(
         input=f"{dry_run_prefix} git push {remote} {branch_name}",
-        error_msg=(
-            "Failed to push branch to remote. Please check your token and permissions. "
-        ),
+        error_msg=("Failed to push branch to remote. Please check your token and permissions. "),
         timeout=10,
     )
     logger.debug(f"Pushed commit to {remote=} {branch_name=}: {out}")
