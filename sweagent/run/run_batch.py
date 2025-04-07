@@ -89,7 +89,8 @@ class RunBatchConfig(BaseSettings, cli_implicit_flags=False):
     random_delay_multiplier: float = 0.3
     """We will wait for a random amount of time between 0 and `random_delay_multiplier`
     times the number of workers at the start of each instance. This is to avoid any
-    potential race conditions.
+    potential race condition or issues with bottlenecks, e.g., when running on a platform
+    with few CPUs that cannot handle the startup of all containers in time.
     """
     progress_bar: bool = True
     """Whether to show a progress bar. Progress bar is never shown for human models.
