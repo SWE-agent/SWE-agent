@@ -67,4 +67,5 @@ SWE-agent uses [SWE-ReX](https://swe-rex.com/) for sandboxed code execution.
 
 ## ✍️ Doc updates
 
+* Apr 8: [Running SWE-agent competitively](usage/competitive_runs.md)
 * Mar 7: [Updated SWE-agent architecture diagram of 1.0](background/architecture.md)

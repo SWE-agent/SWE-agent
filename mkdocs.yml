@@ -71,6 +71,7 @@ nav:
       - "Solving coding challenges": "usage/coding_challenges.md"
       - "Trajectory inspector": "usage/inspector.md"
       - "Batch mode": "usage/batch_mode.md"
+      - "Competitive runs": "usage/benchmarking.md"
       - "What's next?": "usage/whats_next.md"
     - "FAQ": "faq.md"
   - User Guides:

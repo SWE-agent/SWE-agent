@@ -193,3 +193,8 @@ data = [{"instance_id": key, **value} for key, value in preds.items()]
 jsonl = [json.dumps(d) for d in data]
 Path("all_preds.jsonl").write_text("\n".join(jsonl))
 ```
+
+!!! tip "Next up"
+
+    Take a look at our [competitive runs tutorial](competitive_runs.md)
+    for more information on running on SWE-Bench and similar benchmarks.
