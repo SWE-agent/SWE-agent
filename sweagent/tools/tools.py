@@ -207,6 +207,7 @@ class ToolHandler:
         self.logger.info("Resetting tools")
         env.set_env_variables(self.config.env_variables)
         env.write_file("/root/.swe-agent-env", json.dumps(self.config.registry_variables))
+        env.write_file("/root/state.json", "{}")
         env.communicate(" && ".join(self._reset_commands), check="raise", timeout=self.config.install_timeout)
 
     async def _upload_bundles(self, env: SWEEnv) -> None:
