@@ -20,6 +20,14 @@ python run.py \
   --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
 ```
 
+```bash title="Fix a gitlab issue"
+python run.py \
+  --agent.model.name=gpt4 \
+  --agent.model.per_instance_cost_limit=2.00 \
+  --env.repo.gitlab_url=https://gitlab.com/jpaodev/test-repo \
+  --problem_statement.gitlab_url=https://gitlab.com/jpaodev/test-repo/-/issues/1
+```
+
 ```bash title="Work on a github repo with a custom problem statement" hl_lines="4"
 python run.py \
   ...
@@ -155,6 +163,7 @@ problem_statement: TextProblemStatement | GithubIssue | FileProblemStatement  # 
 Each of these configuration objects has its own set of options:
 
 * [`GithubIssue`](../reference/problem_statements.md#sweagent.agent.problem_statement.GithubIssue)
+* [`GitlabIssue`](../reference/problem_statements.md#sweagent.agent.problem_statement.GitlabIssue)
 * [`TextProblemStatement`](../reference/problem_statements.md#sweagent.agent.problem_statement.TextProblemStatement)
 * [`FileProblemStatement`](../reference/problem_statements.md#sweagent.agent.problem_statement.FileProblemStatement)
 
@@ -255,8 +264,10 @@ Click on the :material-chevron-right-circle: icon in the right margin of the cod
 ## Taking actions
 
 * You can use `--actions.apply_patch_locally` to have SWE-agent apply successful solution attempts to local files.
-* Alternatively, when running on a GitHub issue, you can have the agent automatically open a PR if the issue has been solved by supplying the `--actions.open_pr` flag.
+* Alternatively, when running on a GitHub or GitLab issue, you can have the agent automatically open a PR (GitHub) or MR (GitLab) if the issue has been solved by supplying the `--actions.open_pr` flag.
   Please use this feature responsibly (on your own repositories or after careful consideration).
+* For GitLab, you'll need to set the `GITLAB_TOKEN` environment variable with your GitLab API token.
+* You can also specify the token type using the `GITLAB_TOKEN_TYPE` environment variable (options: `oauth`, `private`, `personal`, `project`, or `group`). The default is `project`.
 
 !!! tip "All action options"
     See [`RunSingleActionConfig`](../reference/run_single_config.md#sweagent.run.run_single.RunSingleActionConfig) for all action options.

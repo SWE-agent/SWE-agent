@@ -7,6 +7,11 @@ from typing import Any, Literal, Protocol
 from pydantic import BaseModel, ConfigDict, Field
 
 from sweagent.utils.github import _get_problem_statement_from_github_issue, _parse_gh_issue_url
+from sweagent.utils.gitlab import (
+    _get_problem_statement_from_gitlab_issue,
+    _is_gitlab_issue_url,
+    _parse_gitlab_issue_url,
+)
 from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
@@ -125,11 +130,44 @@ class GithubIssue(BaseModel):
         return self.extra_fields
 
 
-ProblemStatementConfig = TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement
+class GitlabIssue(BaseModel):
+    gitlab_url: str
+
+    extra_fields: dict[str, Any] = Field(default_factory=dict)
+    """Any additional data to be added to the instance.
+    This data will be available when formatting prompt templates.
+    """
+
+    type: Literal["gitlab"] = "gitlab"
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    id: str = None  # type: ignore
+
+    model_config = ConfigDict(extra="forbid")
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.id is None:
+            logger.info("Setting problem statement based on gitlab issue url")
+            gitlab_instance, owner, repo, issue_number = _parse_gitlab_issue_url(self.gitlab_url)
+            instance_name = gitlab_instance.replace("https://", "").replace("http://", "").replace(".", "_")
+            self.id = f"{instance_name}__{owner}__{repo}-i{issue_number}"
+
+    def get_problem_statement(self) -> str:
+        gitlab_instance, owner, repo, issue_number = _parse_gitlab_issue_url(self.gitlab_url)
+        token_type = os.getenv("GITLAB_TOKEN_TYPE", "project")
+        return _get_problem_statement_from_gitlab_issue(
+            gitlab_instance, owner, repo, issue_number, token=os.getenv("GITLAB_TOKEN"), token_type=token_type
+        )
+
+    def get_extra_fields(self) -> dict[str, Any]:
+        return self.extra_fields
+
+
+ProblemStatementConfig = TextProblemStatement | GithubIssue | GitlabIssue | EmptyProblemStatement | FileProblemStatement
 
 
 def problem_statement_from_simplified_input(
-    *, input: str, type: Literal["text", "text_file", "github_issue"]
+    *, input: str, type: Literal["text", "text_file", "github_issue", "gitlab_issue", "issue"]
 ) -> ProblemStatementConfig:
     """Get a problem statement from an `input` string and a `type`.
 
@@ -143,6 +181,15 @@ def problem_statement_from_simplified_input(
         return FileProblemStatement(path=Path(input))
     elif type == "github_issue":
         return GithubIssue(github_url=input)
+    elif type == "gitlab_issue":
+        return GitlabIssue(gitlab_url=input)
+    elif type == "issue":
+        # Auto-detect if it's a GitHub or GitLab issue URL
+        if _is_gitlab_issue_url(input):
+            return GitlabIssue(gitlab_url=input)
+        else:
+            # Default to GitHub for backward compatibility
+            return GithubIssue(github_url=input)
     else:
         msg = f"Unknown problem statement type: {type}"
         raise ValueError(msg)
