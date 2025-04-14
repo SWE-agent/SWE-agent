@@ -51,7 +51,7 @@ jobs:
       - name: Run pytest
         uses: sjvrijn/pytest-last-failed@v2
         with:
-          pytest-args: '--cov -n auto -s'
+          pytest-args: '--junitxml=test-results.xml --cov -n auto -s'
       - name: Upload logs & trajectories
         uses: actions/upload-artifact@v4
         if: always()
@@ -68,3 +68,8 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: SWE-agent/SWE-agent
+      - name: Upload test results to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/test-results-action@v1
+        with:
+          files: test-results.xml
