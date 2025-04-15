@@ -1,7 +1,7 @@
 - env:
     deployment:
       type: docker
-      image: python:3.11
+      image: python:3.13-slim
   problem_statement:
     type: text
     text: "A simple test problem"
@@ -9,7 +9,7 @@
 - env:
     deployment:
       type: docker
-      image: python:3.11
+      image: python:3.13-slim
   problem_statement:
     type: text
     text: "A simple test problem 2"

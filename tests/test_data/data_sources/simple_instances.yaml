@@ -1,3 +1,3 @@
-- image_name: "python:3.11"
+- image_name: "python:3.13-slim"
   problem_statement: "A simple test problem"
   id: "simple_test_problem"

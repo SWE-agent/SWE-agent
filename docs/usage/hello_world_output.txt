@@ -7,8 +7,8 @@
 🔧 WARNING  demonstration_template is ignored when put_demos_in_history is True
 🏃 INFO     Starting environment
 🦖 DEBUG    Found free port 60661
-🦖 INFO     Starting container python3.11-0bc626f0-e72a-4faa-9b49-0323d0f1ab87 with image python:3.11 serving on port 60661
-🦖 DEBUG    Command: "docker run --rm -p 60661:8000 --name python3.11-0bc626f0-e72a-4faa-9b49-0323d0f1ab87 python:3.11 /bin/sh -c 'swerex-remote --auth-token
+🦖 INFO     Starting container python3.13-0bc626f0-e72a-4faa-9b49-0323d0f1ab87 with image python:3.13 serving on port 60661
+🦖 DEBUG    Command: "docker run --rm -p 60661:8000 --name python3.13-0bc626f0-e72a-4faa-9b49-0323d0f1ab87 python:3.13 /bin/sh -c 'swerex-remote --auth-token
             3f979423-c1fb-40f9-8a44-35256ee60f0a || (python3 -m pip install pipx && python3 -m pipx ensurepath && pipx run swe-rex --auth-token
             3f979423-c1fb-40f9-8a44-35256ee60f0a)'"
 🦖 INFO     Starting runtime at 60661

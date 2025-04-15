@@ -1,6 +1,6 @@
 env:
   deployment:
-    image: python:3.11
+    image: python:3.13-slim
 agent:
   templates:
     system_template: |-

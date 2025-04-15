@@ -12,7 +12,7 @@ from sweagent.run.run_replay import RunReplay, RunReplayConfig
 def rr_config(swe_agent_test_repo_traj, tmp_path, swe_agent_test_repo_clone):
     return RunReplayConfig(
         traj_path=swe_agent_test_repo_traj,
-        deployment=DockerDeploymentConfig(image="python:3.11"),
+        deployment=DockerDeploymentConfig(image="python:3.13-slim"),
         output_dir=tmp_path,
     )
 

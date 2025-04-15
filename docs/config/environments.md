@@ -1,12 +1,12 @@
 # Environments
 
-SWE-agent runs on docker images (`python:3.11` by default).
+SWE-agent runs on docker images (`python:3.13-slim` by default).
 If you are running on SWE-Benmch, every instance has a docker image that we pull from dockerhub.
 
 Here's an example of a simple custom docker environment:
 
 ```dockerfile title="tiny.Dockerfile"
-FROM python:3.11.10-bullseye  # (1)!
+FROM python:3.13-slim  # (1)!
 
 ARG DEBIAN_FRONTEND=noninteractive  # (2)!
 ENV TZ=Etc/UTC

@@ -33,7 +33,7 @@ python run.py \
   --agent.model.name=claude-3.5 \
   --env.repo.path=test-repo \
   --problem_statement.path=test-repo/problem_statements/1.md \
-  --env.deployment.image=python:3.12
+  --env.deployment.image=python:3.13-slim
 ```
 
 1. Make sure to add anthropic keys (or keys for your model provider) to the environment for this one!
@@ -47,7 +47,7 @@ For this, you first need to set up a modal account, install the necessary extra 
 python run.py \
   ...
   --env.deployment.type=modal \
-  --env.deployment.image=python:3.12
+  --env.deployment.image=python:3.13-slim
 ```
 
 !!! tip "All options"
@@ -218,7 +218,7 @@ Here's an example of a custom docker environment (it's also available in the rep
 
 <!-- There's a dockerfile annotation, but it somehow breaks annotations -->
 ```bash title="tiny_test.Dockerfile"
-FROM python:3.11.10-bullseye  # (1)!
+FROM python:3.13-slim  # (1)!
 
 ARG DEBIAN_FRONTEND=noninteractive  # (2)!
 ENV TZ=Etc/UTC  # (3)!

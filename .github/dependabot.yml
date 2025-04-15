@@ -5,3 +5,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "npm" # Update package.json
+    directory: "/sweagent/frontend"
+    schedule:
+      interval: "weekly"

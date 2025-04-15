@@ -101,10 +101,10 @@ sweagent run-batch \
 Here'the simplest example of what such a file can look like
 
 ```yaml title="instances.yaml"
-- image_name: "python:3.11"  # (1)!
+- image_name: "python:3.13-slim"  # (1)!
   problem_statement: "A simple test problem"
   instance_id: "simple_test_problem"
-- image_name: "python:3.11"
+- image_name: "python:3.13-slim"
   problem_statement: "Another test problem"
   instance_id: "simple_test_problem_2"
 ```
@@ -154,7 +154,7 @@ where `instances.yaml` could look like this:
 - env:
     deployment:
       type: docker
-      image: python:3.11
+      image: python:3.13-slim
     repo:
         type: github
         github_url: "https://github.com/swe-agent/test-repo"
@@ -165,7 +165,7 @@ where `instances.yaml` could look like this:
 - env:
     deployment:
       type: docker
-      image: python:3.11
+      image: python:3.13-slim
   problem_statement:
     type: text
     text: "A simple test problem 2"
