@@ -28,6 +28,6 @@ SHELL ["/bin/bash", "-c"]
 1. This is the base image that we're starting from
 2. Important to disable any interactive prompts when installing things
 
-Build it with `docker build -f tiny.Dockerfile -t swe-agent-tiny`.
+Build it with `docker build -f tiny.Dockerfile -t swe-agent-tiny .`.
 
 Now you can run it in the agent with `sweagent run --env.image swe-agent-tiny ...`

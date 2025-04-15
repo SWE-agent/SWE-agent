@@ -5,13 +5,14 @@ WORKDIR /app
 
 # Install nodejs
 RUN apt update && \
-    apt install -y nodejs npm && \
-    apt-get clean && \
+    apt install -y nodejs npm curl && \
+    # Install Docker CLI using the official Docker installation script
+    curl -fsSL https://get.docker.com -o get-docker.sh && \
+    sh get-docker.sh && \
+    rm get-docker.sh && \
+    apt remove -y curl && \
+    apt autoremove -y && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-# Install Docker CLI using the official Docker installation script
-RUN curl -fsSL https://get.docker.com -o get-docker.sh && \
-    sh get-docker.sh
 
 # Copy the application code
 # Do this last to take advantage of the docker layer mechanism
