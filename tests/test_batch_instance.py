@@ -32,7 +32,7 @@ def test_slice_spec_to_slice():
 
 @pytest.mark.slow
 def test_get_swe_bench_instances():
-    for subset in ["lite", "verified", "full"]:
+    for subset in ["lite", "verified", "full", "multimodal"]:
         for split in ["dev", "test"]:
             if subset == "verified" and split == "dev":
                 continue
