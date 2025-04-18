@@ -123,3 +123,33 @@ def test_run_ies_repo_ps_matrix(
     for fmt in output_formats:
         assert len(list(Path(tmpdir).rglob(f"*.{fmt}"))) == 1
         print(fmt, list(Path(tmpdir).iterdir()))
+
+
+@pytest.mark.slow
+def test_run_single_ctf(tmpdir, swe_agent_test_ctf_repo_and_ps):
+    # ies = instant empty submit
+    output_formats = ["traj", "pred", "patch"]
+    for fmt in output_formats:
+        assert not list(Path(tmpdir).glob(f"*.{fmt}"))
+    repo, ps = swe_agent_test_ctf_repo_and_ps
+    ps_args = ["--problem_statement.path", str(ps), "--problem_statement.type", "ctf_json"]
+    repo_args = ["--env.repo.path", str(repo), "--env.repo.type", "ctf"]
+    args = [
+        "--agent.model.name=instant_empty_submit",
+        "--output_dir",
+        str(tmpdir),
+        *ps_args,
+        *repo_args,
+        "--config",
+        str(CONFIG_DIR / "default_no_fcalls.yaml"),
+    ]
+    print(args)
+    rs_config = BasicCLI(RunSingleConfig).get_config(args)
+    print(rs_config)
+    rs = RunSingle.from_config(rs_config)  # type: ignore
+    with tmpdir.as_cwd():
+        # Test that we can run run.py also independently from repo dir
+        rs.run()
+    for fmt in output_formats:
+        assert len(list(Path(tmpdir).rglob(f"*.{fmt}"))) == 1
+        print(fmt, list(Path(tmpdir).iterdir()))
