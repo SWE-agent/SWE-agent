@@ -27,7 +27,7 @@ sweagent run \
 ```
 
 The example above uses the `Claude 3.5 Sonnet` model from Anthropic. Alternatively, you can for example use `GPT-4o` (from OpenAI)
-by setting `--angent.model.name=gpt-4o`.
+by setting `--agent.model.name=gpt-4o`.
 In order to use it, you need to add your keys to the environment:
 
 ```bash
