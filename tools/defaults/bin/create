@@ -18,7 +18,7 @@ def main():
         print(f"Warning: File '{path}' already exists.")
         sys.exit(1)
 
-    path.write_text("\n")
+    path.touch()
 
     wfile = WindowedFile(path=path)
     wfile.first_line = 0
