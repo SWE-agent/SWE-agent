@@ -156,6 +156,7 @@ extra_css:
   - assets/custom.css
   - assets/mkdocstrings.css
   - assets/image_theme.css
+  - assets/bubbles.css
 extra:
   version:
     provider: mike

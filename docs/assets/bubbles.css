@@ -1,0 +1,83 @@
+/* Floating bubbles styles */
+.floating-bubbles {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.floating-bubbles-title {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  font-size: 12px;
+  color: #777;
+  text-align: right;
+  font-weight: bold;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+  white-space: nowrap;
+}
+
+.floating-bubbles:hover .floating-bubbles-title {
+  opacity: 1;
+  visibility: visible;
+}
+
+.bubble {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.bubble:hover {
+  transform: scale(1.1);
+}
+
+.bubble img {
+  width: 40px;
+  height: 40px;
+}
+
+.bubble-tooltip {
+  position: absolute;
+  right: 60px;
+  background-color: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.bubble:hover .bubble-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.floating-bubbles:hover .bubble-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+  .floating-bubbles {
+    display: none;
+  }
+}

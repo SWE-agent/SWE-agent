@@ -3,4 +3,27 @@
 SWE-agent 1.0 is the open source SOTA on SWE-bench lite! <a href="https://swe-agent.com/latest/installation/migration/">New features + migration guide.</a>
 {% endblock %}
 
+{% block content %}
+{{ super() }}
 
+<!-- Floating Bubbles -->
+<div class="floating-bubbles">
+<div class="floating-bubbles-title">Affiliated projects</div>
+  <a href="https://swe-rex.com/" class="bubble" title="SWE-rex">
+    <img src="{{ config.site_url | default('/') }}assets/swerex_logo.svg" alt="SWE-rex">
+    <span class="bubble-tooltip">SWE-ReX</span>
+  </a>
+  <a href="https://swesmith.com" class="bubble" title="SWE-smith">
+    <img src="{{ config.site_url | default('/') }}assets/swesmith_logo.png" alt="SWE-smith">
+    <span class="bubble-tooltip">SWE-smith</span>
+  </a>
+  <a href="https://swebench.com" class="bubble" title="SWE-bench">
+    <img src="{{ config.site_url | default('/') }}assets/swebench_logo.png" alt="SWE-bench">
+    <span class="bubble-tooltip">SWE-bench</span>
+  </a>
+  <a href="https://www.swebench.com/sb-cli/" class="bubble" title="sb-cli">
+    <img src="{{ config.site_url | default('/') }}assets/sbcli_logo.svg" alt="sb-cli">
+    <span class="bubble-tooltip">sb-cli</span>
+  </a>
+</div>
+{% endblock %}
