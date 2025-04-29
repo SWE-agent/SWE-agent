@@ -1,7 +1,2 @@
-#!/usr/bin/env bash
-
-main() {
-    echo "Executed do_nothing"
-}
-
-main "$@"
+# This will never be called, but having a file here
+# ensures that chmod +x commands on the bin directory don't fail

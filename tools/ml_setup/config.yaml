@@ -1,5 +1,1 @@
-# This exists to make the validation pass. The only useful part of the tool is install.sh
-tools:
-  do_nothing:
-    signature: "do_nothing"
-    docstring: "does nothing"
+tools: {}
