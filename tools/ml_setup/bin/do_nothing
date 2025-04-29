@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+    echo "Executed do_nothing"
+}
+
+main "$@"
