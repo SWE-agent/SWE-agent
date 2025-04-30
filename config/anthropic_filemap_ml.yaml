@@ -1,4 +1,6 @@
-# This template is heavily inspired by anthropic and openhands
+# This template is heavily inspired by anthropic and openhands. It is almost
+# identical to anthropic_filemap.yaml, but it removes python-specific language
+# and adds the ml_setup tool to support evaluation on the Multilingual dataset.
 agent:
   type: default
   templates:
@@ -62,11 +64,3 @@ agent:
   history_processors:
     - type: cache_control
       last_n_messages: 2
-  model:
-    name: claude-3-7-sonnet-20250219
-    max_output_tokens: 64000
-    per_instance_cost_limit: 2.50
-    per_instance_call_limit: 150
-    total_cost_limit: 500.0
-    temperature: 0.0
-    delay: 0.0
