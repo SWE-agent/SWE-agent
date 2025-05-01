@@ -248,6 +248,12 @@ class SWEBenchInstances(BaseModel, AbstractInstanceSource):
     """Load instances from SWE-bench."""
 
     subset: Literal["lite", "verified", "full", "multimodal", "multilingual"] = "lite"
+    """Subset of swe-bench to use"""
+
+    path: str | Path | None = None
+    """Allow to specify a different huggingface dataset name or path to a huggingface
+    dataset. This will override the automatic path set by `subset`.
+    """
 
     split: Literal["dev", "test"] = "dev"
 
@@ -273,24 +279,27 @@ class SWEBenchInstances(BaseModel, AbstractInstanceSource):
     evaluate: bool = False
     """Run sb-cli to evaluate"""
 
-    def _get_huggingface_name(self) -> str:
-        if self.subset == "full":
-            return "princeton-nlp/SWE-Bench"
-        elif self.subset == "verified":
-            return "princeton-nlp/SWE-Bench_Verified"
-        elif self.subset == "lite":
-            return "princeton-nlp/SWE-Bench_Lite"
-        elif self.subset == "multimodal":
-            return "princeton-nlp/SWE-Bench_Multimodal"
-        elif self.subset == "multilingual":
-            return "swe-bench/SWE-Bench_Multilingual"
-        msg = f"Unsupported subset: {self.subset}"
-        raise ValueError(msg)
+    def _get_dataset_path(self) -> str:
+        if self.path is not None:
+            return str(self.path)
+        dataset_mapping = {
+            "full": "princeton-nlp/SWE-Bench",
+            "verified": "princeton-nlp/SWE-Bench_Verified",
+            "lite": "princeton-nlp/SWE-Bench_Lite",
+            "multimodal": "princeton-nlp/SWE-Bench_Multimodal",
+            "multilingual": "swe-bench/SWE-Bench_Multilingual",
+        }
+
+        if self.subset not in dataset_mapping:
+            msg = f"Unsupported subset: {self.subset}"
+            raise ValueError(msg)
+
+        return dataset_mapping[self.subset]
 
     def get_instance_configs(self) -> list[BatchInstance]:
         from datasets import load_dataset
 
-        ds: list[dict[str, Any]] = load_dataset(self._get_huggingface_name(), split=self.split)  # type: ignore
+        ds: list[dict[str, Any]] = load_dataset(self._get_dataset_path(), split=self.split)  # type: ignore
 
         if isinstance(self.deployment, DockerDeploymentConfig):
             self.deployment.platform = "linux/amd64"
