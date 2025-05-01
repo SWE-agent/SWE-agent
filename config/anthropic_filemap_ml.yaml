@@ -1,6 +1,6 @@
 # This template is heavily inspired by anthropic and openhands. It is almost
 # identical to anthropic_filemap.yaml, but it removes python-specific language
-# and adds the ml_setup tool to support evaluation on the Multilingual dataset.
+# and adds the multilingual_setup tool to support evaluation on the Multilingual dataset.
 agent:
   type: default
   templates:
@@ -34,7 +34,7 @@ agent:
   tools:
     execution_timeout: 300
     bundles:
-      - path: tools/ml_setup
+      - path: tools/multilingual_setup
       - path: tools/registry
       - path: tools/edit_anthropic
       - path: tools/review_on_submit_m
