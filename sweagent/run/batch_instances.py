@@ -250,7 +250,9 @@ class SWEBenchInstances(BaseModel, AbstractInstanceSource):
     subset: Literal["lite", "verified", "full", "multimodal", "multilingual"] = "lite"
     """Subset of swe-bench to use"""
 
-    path: str | Path | None = None
+    # IMPORTANT: Do not call this `path`, because then if people do not specify instance.type,
+    # it might be resolved to ExpertInstancesFromFile or something like that.
+    path_override: str | Path | None = None
     """Allow to specify a different huggingface dataset name or path to a huggingface
     dataset. This will override the automatic path set by `subset`.
     """
@@ -280,8 +282,8 @@ class SWEBenchInstances(BaseModel, AbstractInstanceSource):
     """Run sb-cli to evaluate"""
 
     def _get_dataset_path(self) -> str:
-        if self.path is not None:
-            return str(self.path)
+        if self.path_override is not None:
+            return str(self.path_override)
         dataset_mapping = {
             "full": "princeton-nlp/SWE-Bench",
             "verified": "princeton-nlp/SWE-Bench_Verified",
