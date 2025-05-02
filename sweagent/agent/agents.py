@@ -923,11 +923,15 @@ class DefaultAgent(AbstractAgent):
                 if self._n_consecutive_timeouts >= self.tools.config.max_consecutive_execution_timeouts:
                     msg = "Exiting agent due to too many consecutive execution timeouts"
                     self.logger.critical(msg)
+                    step.execution_time = time.perf_counter() - execution_t0
+                    self._total_execution_time += step.execution_time
                     raise
                 self._env.interrupt_session()
                 self._n_consecutive_timeouts += 1
             except Exception as f:
                 self.logger.exception("Failed to interrupt session after command timeout: %s", f, exc_info=True)
+                step.execution_time = time.perf_counter() - execution_t0
+                self._total_execution_time += step.execution_time
                 raise
             step.observation = Template(self.templates.command_cancelled_timeout_template).render(
                 **self._get_format_dict(),
