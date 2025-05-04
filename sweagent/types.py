@@ -27,6 +27,9 @@ class StepOutput(BaseModel):
     """State of the environment at the end of the step"""
     extra_info: dict[str, Any] = {}
 
+    # The exact list of messages that were provided to the language model for this step.
+    input_messages: list[dict[str, Any]] = []
+
     def to_template_format_dict(self) -> dict[str, str | int | float | bool | None]:
         """Used for formatting (error) prompt templates"""
         out = {}

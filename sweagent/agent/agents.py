@@ -972,6 +972,10 @@ class DefaultAgent(AbstractAgent):
         # attributes (e.g., if we want to requery the model for a bash syntax error, we
         # need to have the previous model output to format the requery template)
         step = StepOutput()
+        # Record the exact messages that are sent to the language model for this call.
+        # Do this *before* the actual model call, so if the call or parsing fails,
+        # the step object attached to the exception still has the correct input.
+        step.input_messages = copy.deepcopy(history)
         try:
             # Forward model and get actions
             self._chook.on_model_query(messages=history, agent=self.name)
@@ -1036,6 +1040,7 @@ class DefaultAgent(AbstractAgent):
             """Requeries the model if the error is a format/blocklist/bash syntax error."""
             self.logger.warning("Requerying model after %s (%dth requery)", type(exception).__name__, n_requeries)
             step: StepOutput = getattr(exception, "step", StepOutput())
+            # Pass the history that led to the error to the trajectory step
             self.add_step_to_trajectory(step)
             exception_message = getattr(exception, "message", "")
             if not exception_message:
@@ -1163,6 +1168,13 @@ class DefaultAgent(AbstractAgent):
         )
 
     def add_step_to_trajectory(self, step: StepOutput) -> None:
+        """Add a step to the trajectory.
+
+        The ``messages`` field in the trajectory step will contain exactly the
+        input messages provided to the language model for this attempt (stored
+        in ``step.input_messages``).
+        """
+
         trajectory_step = TrajectoryStep(
             {
                 "action": step.action,
@@ -1171,7 +1183,7 @@ class DefaultAgent(AbstractAgent):
                 "thought": step.thought,
                 "execution_time": step.execution_time,
                 "state": step.state,
-                "messages": self.messages,
+                "messages": step.input_messages,  # Always use the recorded input messages
                 "extra_info": step.extra_info,
             },
         )
@@ -1194,7 +1206,10 @@ class DefaultAgent(AbstractAgent):
 
         n_step = len(self.trajectory) + 1
         self.logger.info("=" * 25 + f" STEP {n_step} " + "=" * 25)
-        step_output = self.forward_with_handling(self.messages)
+        # Capture the messages *before* they might be modified by history processors
+        # based on the step's outcome. This is what the LLM actually sees.
+        messages_for_llm = self.messages
+        step_output = self.forward_with_handling(messages_for_llm)
         self.add_step_to_history(step_output)
 
         self.info["submission"] = step_output.submission
@@ -1202,6 +1217,7 @@ class DefaultAgent(AbstractAgent):
         self.info.update(self._get_edited_files_with_context(patch=step_output.submission or ""))  # type: ignore
         self.info["model_stats"] = self.model.stats.model_dump()
 
+        # Add trajectory step (will merge input messages with latest history)
         self.add_step_to_trajectory(step_output)
 
         self._chook.on_step_done(step=step_output, info=self.info)
