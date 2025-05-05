@@ -775,8 +775,8 @@ class DefaultAgent(AbstractAgent):
         self.logger.warning(f"{error_template}")
 
         return self.messages + [
-            {"role": "assistant", "content": output, "agent": self.name},
-            {"role": "user", "content": error_template, "agent": self.name},
+            {"role": "assistant", "content": output, "agent": self.name, "message_type": "assistant"},
+            {"role": "user", "content": error_template, "agent": self.name, "message_type": "user"},
         ]
 
     def attempt_autosubmission_after_error(self, step: StepOutput) -> StepOutput:
