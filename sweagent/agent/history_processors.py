@@ -114,7 +114,7 @@ class LastNObservations(BaseModel):
         observation_indices = [
             idx
             for idx, entry in enumerate(history)
-            if entry["message_type"] == "observation" and not entry.get("is_demo", False)
+            if entry.get("message_type") == "observation" and not entry.get("is_demo", False)
         ]
         last_removed_idx = max(0, (len(observation_indices) // self.polling) * self.polling - self.n)
         # Note: We never remove the first observation, as it is the instance template
@@ -131,8 +131,8 @@ class LastNObservations(BaseModel):
                 new_history.append(entry)
             else:
                 data = entry.copy()
-                assert data["message_type"] == "observation", (
-                    f"Expected observation for dropped entry, got: {data['message_type']}"
+                assert data.get("message_type") == "observation", (
+                    f"Expected observation for dropped entry, got: {data.get('message_type')}"
                 )
                 text = _get_content_text(data)
                 _set_content_text(data, f"Old environment output: ({len(text.splitlines())} lines omitted)")
@@ -161,12 +161,12 @@ class TagToolCallObservations(BaseModel):
         entry["tags"] = list(tags)
 
     def _should_add_tags(self, entry: HistoryItem) -> bool:
-        if entry["message_type"] != "action":
+        if entry.get("message_type") != "action":
             return False
         function_calls = entry.get("tool_calls", [])
         if not function_calls:
             return False
-        function_names = {call["function"]["name"] for call in function_calls}
+        function_names = {call["function"]["name"] for call in function_calls}  # type: ignore
         return bool(self.function_names & function_names)
 
     def __call__(self, history: History) -> History:
