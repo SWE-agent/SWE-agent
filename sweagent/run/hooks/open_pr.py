@@ -95,7 +95,7 @@ def open_pr(*, logger, token, env: SWEEnv, github_url, trajectory, _dry_run: boo
         f"This is a PR opened by AI tool [SWE Agent](https://github.com/SWE-agent/SWE-agent/) "
         f"to close [#{issue.number}]({issue_url}) ({issue.title}).\n\nCloses #{issue.number}."
     )
-    body += "\n\n" + format_trajectory_markdown(trajectory)
+    body += "\n\n" + format_trajectory_markdown(trajectory, char_limit=60_000)
     api = GhApi(token=token)
     if not _dry_run:
         args = dict(
@@ -189,15 +189,28 @@ def _remove_triple_backticks(text: str) -> str:
     return "\n".join(line.removeprefix("```") for line in text.splitlines())
 
 
-def format_trajectory_markdown(trajectory: list[dict[str, str]]):
-    """Format a trajectory as a markdown string for use in gh PR description."""
+def format_trajectory_markdown(trajectory: list[dict[str, str]], char_limit: int | None = None):
+    """Format a trajectory as a markdown string for use in gh PR description.
+
+    Args:
+        char_limit: If not None, truncate the trajectory to this many characters.
+    """
     prefix = [
         "<details>",
         "<summary>Thought process ('trajectory') of SWE-agent (click to expand)</summary>",
         "",
         "",
     ]
+    prefix_text = "\n".join(prefix)
+    suffix = [
+        "",
+        "</details>",
+    ]
+    suffix_text = "\n".join(suffix)
+
     steps = []
+    current_length = len(prefix_text) + len(suffix_text)
+
     for i, step in enumerate(trajectory):
         step_strs = [
             f"**🧑‍🚒 Response ({i})**: ",
@@ -207,9 +220,24 @@ def format_trajectory_markdown(trajectory: list[dict[str, str]]):
             f"{_remove_triple_backticks(step['observation']).strip()}",
             "```",
         ]
-        steps.append("\n".join(step_strs))
-    suffix = [
-        "",
-        "</details>",
-    ]
-    return "\n".join(prefix) + "\n\n---\n\n".join(steps) + "\n".join(suffix)
+        step_text = "\n".join(step_strs)
+
+        # Calculate separator length (only needed for steps after the first one)
+        separator_length = 0
+        if steps:
+            separator_length = len("\n\n---\n\n")
+
+        # Check if adding this step would exceed the character limit
+        if char_limit is not None and current_length + separator_length + len(step_text) > char_limit:
+            if i > 0:
+                steps.append("\n\n... (truncated due to length limit)")
+            break
+
+        if steps:
+            steps.append("\n\n---\n\n")
+            current_length += separator_length
+
+        steps.append(step_text)
+        current_length += len(step_text)
+
+    return prefix_text + "".join(steps) + suffix_text

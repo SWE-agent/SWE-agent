@@ -47,12 +47,35 @@ function createTrajectoryItem(item, index) {
       .replace(/'/g, "&#039;");
   };
 
+  const getMessageContent = (msg) => {
+    if (!msg.content) {
+      return "";
+    }
+
+    // Handle content as a string
+    if (typeof msg.content === "string") {
+      return msg.content;
+    }
+
+    // Handle content as an array with a dictionary containing 'text' key
+    if (
+      Array.isArray(msg.content) &&
+      msg.content.length > 0 &&
+      msg.content[0].text
+    ) {
+      return msg.content[0].text;
+    }
+
+    // Fallback to stringifying the content
+    return JSON.stringify(msg.content);
+  };
+
   const messagesContent = hasMessages
     ? item.messages
         .map((msg, msgIndex) => {
           let content = `----Item ${msgIndex}-----\n`;
           content += `role: ${msg.role}\n`;
-          content += `content: |\n${escapeHtml(msg.content)}\n`;
+          content += `content: |\n${escapeHtml(getMessageContent(msg))}\n`;
 
           if (msg.tool_calls && msg.tool_calls.length > 0) {
             msg.tool_calls.forEach((tool, idx) => {

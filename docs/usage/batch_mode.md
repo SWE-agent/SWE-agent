@@ -79,6 +79,11 @@ You'll see output that looks like this (only with 3 workers instead of 30):
 !!! tip "All command line options"
     See [`RunBatchConfig`](../reference/run_batch_config.md/#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
 
+When starting a lot of parallel instances with the docker backend, it might happen that you see some bottleneck effects
+(e.g., when running on a platform with few CPUs, you might see some timeouts because there's not enough CPUs to handle the startup of all containers in time).
+In this case, please set `--random_delay_multiplier` to e.g., 1. This means that every worker will wait a random time between `0s` and `1s * #workers` before starting,
+thereby easing CPU pressure. Default is 0.3.
+
 ## Loading instances from a file
 
 ```bash
@@ -98,13 +103,18 @@ Here'the simplest example of what such a file can look like
 ```yaml title="instances.yaml"
 - image_name: "python:3.11"  # (1)!
   problem_statement: "A simple test problem"
-  id: "simple_test_problem"
+  instance_id: "simple_test_problem"
 - image_name: "python:3.11"
   problem_statement: "Another test problem"
-  id: "simple_test_problem_2"
+  instance_id: "simple_test_problem_2"
 ```
 
 1. Must be available locally or on dockerhub.
+
+!!! warning "Recent changes"
+    The `instance_id` key was named `id` until Mar 16, 2025.
+    This was changed to add compatibility with the standard SWE-bench format.
+    However, we temporarily support both names.
 
 !!! tip "More options"
     * There's a few more fields that you can populate. See [`SimpleBatchInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.SimpleBatchInstance) for more information.
@@ -167,3 +177,24 @@ where `instances.yaml` could look like this:
 
 ## Output files and next steps
 
+All patches generated (all submissions/predictions of the agent) are saved to a `preds.json` file.
+If you interrupt `sweagent run-batch`, some of these or the file itself might be missing.
+You can use the `sweagent merge-preds` utility to fix this.
+
+The `preds.json` file is very similar to the `.jsonl` format that is used for SWE-bench local runs.
+You can convert between the formats with
+
+```python
+from pathlib import Path
+import json
+
+preds = json.loads(Path("preds.json").read_text())
+data = [{"instance_id": key, **value} for key, value in preds.items()]
+jsonl = [json.dumps(d) for d in data]
+Path("all_preds.jsonl").write_text("\n".join(jsonl))
+```
+
+!!! tip "Next up"
+
+    Take a look at our [competitive runs tutorial](competitive_runs.md)
+    for more information on running on SWE-Bench and similar benchmarks.

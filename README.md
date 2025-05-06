@@ -15,7 +15,7 @@ SWE-agent lets your language model of choice (e.g. GPT-4o or Claude Sonnet 3.7) 
 
 * [fix issues in real GitHub repositories](https://swe-agent.com/latest/usage/hello_world),
 * perform tasks on the web,
-* find cybersecurity vulnerabilities (by solving Capture The Flag challenges), or
+* [find cybersecurity vulnerabilities](https://enigma-agent.com/) (by solving Capture The Flag challenges), or
 * [any custom task](https://swe-agent.com/latest/usage/coding_challenges).
 
 It does so by using configurable [agent-computer interfaces](https://arxiv.org/abs/2405.15793) (ACIs) to interact with isolated computer environments.
@@ -24,6 +24,7 @@ SWE-agent is built and maintained by researchers from Princeton University and S
 
 ## 📣 News
 
+* May 2: [SWE-agent-LM-32b](https://swesmith.com) achieves open-weights SOTA on SWE-bench
 * Feb 28: [SWE-agent 1.0 + Claude 3.7 is SoTA on SWE-Bench full](https://x.com/KLieret/status/1895487966409298067)
 * Feb 25: [SWE-agent 1.0 + Claude 3.7 is SoTA on SWE-bench verified](https://x.com/KLieret/status/1894408819670733158)
 * Feb 13: [Releasing SWE-agent 1.0: SoTA on SWE-bench light & tons of new features](https://x.com/KLieret/status/1890048205448220849)
@@ -48,24 +49,40 @@ Read our [documentation][docs] to learn more:
 
 [SWE-agent: EnIGMA][enigma] is a mode for solving offensive cybersecurity (capture the flag) challenges.
 EnIGMA achieves state-of-the-art results on multiple cybersecurity benchmarks (see [leaderboard](https://enigma-agent.com/#results)).
-The EnIGMA project introduced multiple features that are available in all modes of SWE-agent, such as the [debugger and server connection tools](https://swe-agent.com/0.7/background/iat/) and a [summarizer](https://swe-agent.com/0.7/config/summarizers/) to handle long outputs. Please use [SWE-agent 0.7](https://github.com/SWE-agent/SWE-agent/tree/v0.7) while we update EnIGMA for 1.0.
+Please use [SWE-agent 0.7](https://github.com/SWE-agent/SWE-agent/tree/v0.7) while we update EnIGMA for 1.0.
 
 [enigma]: https://enigma-agent.com
 [SWE-bench]: https://github.com/SWE-bench/SWE-bench
 [nyu-ctf]: https://arxiv.org/abs/2406.05590
 
-## About
-SWE-agent is an academic project started at Princeton University by John Yang*, Carlos E. Jimenez*, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik Narasimhan, and Ofir Press.
-Contact person: [John Yang](https://john-b-yang.github.io/), [Carlos E. Jimenez](http://www.carlosejimenez.com/), and [Kilian Lieret](https://www.lieret.net/) (Email: johnby@stanford.edu, carlosej@princeton.edu, kl5675@princeton.edu).
+In addition, you might be interested in the following projects:
+
+
+<div align="center">
+  <a href="https://github.com/SWE-agent/SWE-ReX"><img src="docs/assets/swerex_logo_text_below.svg" alt="SWE-ReX" height="120px"></a>
+   &nbsp;&nbsp;
+  <a href="https://github.com/SWE-bench/SWE-bench"><img src="docs/assets/swebench_logo_text_below.svg" alt="SWE-bench" height="120px"></a>
+  &nbsp;&nbsp;
+  <!-- <a href="https://github.com/SWE-agent/SWE-agent"><img src="docs/assets/sweagent_logo_text_below.svg" alt="SWE-agent" height="120px"></a> -->
+  <a href="https://github.com/SWE-bench/SWE-smith"><img src="docs/assets/swesmith_logo_text_below.svg" alt="SWE-smith" height="120px"></a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/SWE-bench/sb-cli"><img src="docs/assets/sbcli_logo_text_below.svg" alt="sb-cli" height="120px"></a>
+</div>
 
 ## Contributions <a name="contributions"></a>
 
-- If you'd like to ask questions, learn about upcoming features, and participate in future development, join our [Discord community](https://discord.gg/AVEFbBn2rH)!
-- If you'd like to contribute to the codebase, we welcome [issues](https://github.com/SWE-agent/SWE-agent/issues) and [pull requests](https://github.com/SWE-agent/SWE-agent/pulls)!
+If you'd like to contribute to the codebase, we welcome [issues](https://github.com/SWE-agent/SWE-agent/issues) and [pull requests](https://github.com/SWE-agent/SWE-agent/pulls)! For larger code changes, we always encourage discussion in issues first.
 
-## Citation <a name="citation"></a>
+## Citation & contact <a name="citation"></a>
+
+SWE-agent is an academic project started at Princeton University by John Yang*, Carlos E. Jimenez*, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik Narasimhan, and Ofir Press.
+Contact person: [John Yang](https://john-b-yang.github.io/), [Carlos E. Jimenez](http://www.carlosejimenez.com/), and [Kilian Lieret](https://www.lieret.net/) (Email: johnby@stanford.edu, carlosej@princeton.edu, kl5675@princeton.edu).
 
 If you found this work helpful, please consider citing it using the following:
+
+<details>
+<summary> SWE-agent citation</summary>
+
 ```bibtex
 @inproceedings{yang2024sweagent,
   title={{SWE}-agent: Agent-Computer Interfaces Enable Automated Software Engineering},
@@ -75,8 +92,13 @@ If you found this work helpful, please consider citing it using the following:
   url={https://arxiv.org/abs/2405.15793}
 }
 ```
+</details>
 
 If you used the summarizer, interactive commands or the offensive cybersecurity capabilities in SWE-agent, please also consider citing:
+
+<details>
+<summary>EnIGMA citation</summary>
+
 ```bibtex
 @misc{abramovich2024enigmaenhancedinteractivegenerative,
       title={EnIGMA: Enhanced Interactive Generative Model Agent for CTF Challenges},
@@ -88,9 +110,12 @@ If you used the summarizer, interactive commands or the offensive cybersecurity 
       url={https://arxiv.org/abs/2409.16165},
 }
 ```
+</details>
+
 
 ## 🪪 License <a name="license"></a>
 MIT. Check `LICENSE`.
+
 
 <div align="center">
 

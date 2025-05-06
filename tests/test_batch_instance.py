@@ -16,7 +16,7 @@ def test_simple_batch_from_swe_bench_to_full_batch_instance(test_data_sources_pa
     assert isinstance(instance.env.repo, PreExistingRepoConfig)
     assert instance.env.repo.repo_name == "testbed"
     assert isinstance(instance.env.deployment, DockerDeploymentConfig)
-    assert instance.env.deployment.image == "swebench/sweb.eval.x86_64.pydicom_1776_pydicom-1458:v1"
+    assert instance.env.deployment.image == "swebench/sweb.eval.x86_64.pydicom_1776_pydicom-1458:latest"
     assert isinstance(instance.problem_statement, TextProblemStatement)
     assert instance.problem_statement.text == sb_instance["problem_statement"]
     assert instance.problem_statement.id == "pydicom__pydicom-1458"
@@ -34,7 +34,7 @@ def test_slice_spec_to_slice():
 def test_get_swe_bench_instances():
     for subset in ["lite", "verified", "full"]:
         for split in ["dev", "test"]:
-            if subset == "verified" and split == "dev":
+            if subset in ["verified", "multilingual"] and split == "dev":
                 continue
             print(subset, split)
             instance_config = SWEBenchInstances(subset=subset, split=split)  # type: ignore

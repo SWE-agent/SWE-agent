@@ -17,7 +17,7 @@ from sweagent.utils.log import get_logger
 
 
 class SweBenchEvaluate(RunHook):
-    _SUBSET_MAP = {"lite": "swe-bench_lite", "verified": "swe-bench_verified"}
+    _SUBSET_MAP = {"lite": "swe-bench_lite", "verified": "swe-bench_verified", "multimodal": "swe-bench_multimodal"}
 
     def __init__(self, output_dir: Path, subset: str, split: str, continuous_submission_every: int = 0) -> None:
         super().__init__()

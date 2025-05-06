@@ -272,7 +272,7 @@ class BasicCLI:
             if module not in sys.modules:
                 __import__(module)
             type_ = getattr(sys.modules[module], name)
-            print(ConfigHelper().get_help(type_))
+            rich_print(ConfigHelper().get_help(type_))
             exit(0)
 
         # >>> Step 3: Load config files and merge them in a big nested data structure

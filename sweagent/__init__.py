@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from functools import partial
 from logging import WARNING, getLogger
@@ -36,13 +37,13 @@ if sys.version_info < PYTHON_MINIMUM_VERSION:
 assert PACKAGE_DIR.is_dir(), PACKAGE_DIR
 REPO_ROOT = PACKAGE_DIR.parent
 assert REPO_ROOT.is_dir(), REPO_ROOT
-CONFIG_DIR = PACKAGE_DIR.parent / "config"
+CONFIG_DIR = Path(os.getenv("SWE_AGENT_CONFIG_DIR", PACKAGE_DIR.parent / "config"))
 assert CONFIG_DIR.is_dir(), CONFIG_DIR
 
-TOOLS_DIR = PACKAGE_DIR.parent / "tools"
+TOOLS_DIR = Path(os.getenv("SWE_AGENT_TOOLS_DIR", PACKAGE_DIR.parent / "tools"))
 assert TOOLS_DIR.is_dir(), TOOLS_DIR
 
-TRAJECTORY_DIR = PACKAGE_DIR.parent / "trajectories"
+TRAJECTORY_DIR = Path(os.getenv("SWE_AGENT_TRAJECTORY_DIR", PACKAGE_DIR.parent / "trajectories"))
 assert TRAJECTORY_DIR.is_dir(), TRAJECTORY_DIR
 
 

@@ -203,3 +203,8 @@ website/frontend/build
 # Disasm / Decomp output
 *.decomp.json
 *.disas.json
+
+# SWE-smith
+agent_conf
+sb-cli-reports/
+trajectories_sft/

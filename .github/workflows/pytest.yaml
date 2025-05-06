@@ -10,6 +10,7 @@ on:
       - prepare-public2
     paths-ignore:
       - 'docs/**'
+      - '.cursor/**'
       - 'README.md'
       - 'mkdocs.yml'
   pull_request:
@@ -50,7 +51,7 @@ jobs:
       - name: Run pytest
         uses: sjvrijn/pytest-last-failed@v2
         with:
-          pytest-args: '--cov -n auto -s'
+          pytest-args: '--junitxml=test-results.xml --cov -n auto -s'
       - name: Upload logs & trajectories
         uses: actions/upload-artifact@v4
         if: always()
@@ -63,7 +64,12 @@ jobs:
         run: coverage xml
       - name: Upload coverage reports to Codecov
         if: matrix.python-version == '3.11'
-        uses: codecov/codecov-action@v5.4.0
+        uses: codecov/codecov-action@v5.4.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: SWE-agent/SWE-agent
+      - name: Upload test results to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/test-results-action@v1
+        with:
+          files: test-results.xml

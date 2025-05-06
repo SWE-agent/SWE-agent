@@ -71,6 +71,7 @@ nav:
       - "Solving coding challenges": "usage/coding_challenges.md"
       - "Trajectory inspector": "usage/inspector.md"
       - "Batch mode": "usage/batch_mode.md"
+      - "Competitive runs": "usage/competitive_runs.md"
       - "What's next?": "usage/whats_next.md"
     - "FAQ": "faq.md"
   - User Guides:
@@ -155,6 +156,7 @@ extra_css:
   - assets/custom.css
   - assets/mkdocstrings.css
   - assets/image_theme.css
+  - assets/bubbles.css
 extra:
   version:
     provider: mike

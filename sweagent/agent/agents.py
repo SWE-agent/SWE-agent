@@ -5,7 +5,7 @@ import copy
 import json
 import logging
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Annotated, Any, Literal
 
 import yaml
@@ -867,7 +867,9 @@ class DefaultAgent(AbstractAgent):
                 pf = (
                     PatchFormatter(
                         patch,
-                        read_method=lambda path: self._env.read_file(Path("/") / self._env.repo.repo_name / path),  # type: ignore[attr-defined]
+                        read_method=lambda path: self._env.read_file(
+                            PurePosixPath("/") / self._env.repo.repo_name / path
+                        ),  # type: ignore[attr-defined]
                     )
                     if patch
                     else None

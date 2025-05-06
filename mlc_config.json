@@ -7,6 +7,9 @@
       "pattern": "https://platform.openai.com/docs/.*"
     },
     {
+      "pattern": "https://docs.anthropic.com/.*"
+    },
+    {
       "pattern": ".*localhost.*"
     },
     {

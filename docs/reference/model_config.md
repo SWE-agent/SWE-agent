@@ -14,6 +14,10 @@ In most cases, you will want to use the `GenericAPIModelConfig` object.
     options:
         heading_level: 3
 
+::: sweagent.agent.models.RetryConfig
+    options:
+        heading_level: 3
+
 ## Manual models for testing
 
 The following two models allow you to test your environment by prompting you for actions.

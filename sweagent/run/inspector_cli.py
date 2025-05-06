@@ -70,7 +70,7 @@ class TrajectoryViewer(Static):
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
-            yield Static(id="content")
+            yield Static(id="content", markup=False)
 
     def on_mount(self) -> None:
         self.update_content()
@@ -195,10 +195,11 @@ class TrajectorySelectorScreen(ModalScreen[int]):
             yield Static(
                 "Press <TAB> to switch between search and list. Use <ARROW KEY>/<ENTER> to select.",
                 id="title",
+                markup=False,
             )
             yield Input(placeholder="Type to filter (auto-select if only one item remains)...", id="filter-input")
             yield ListView(
-                *[ListItem(Static(p)) for p in self._get_list_item_texts(self.paths)],
+                *[ListItem(Static(p, markup=False)) for p in self._get_list_item_texts(self.paths)],
                 id="trajectory-list",
                 initial_index=self.current_index,
             )
@@ -224,7 +225,7 @@ class TrajectorySelectorScreen(ModalScreen[int]):
         # Update ListView with filtered items
         list_view.clear()
         for item in filtered_items:
-            list_view.append(ListItem(Static(item)))
+            list_view.append(ListItem(Static(item, markup=False)))
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         # Map the filtered index back to the original index
@@ -295,11 +296,11 @@ class FileViewerScreen(ModalScreen):
                     # Syntax highlighting breaks if we truncate
                     content_str = _yaml_serialization_with_linebreaks(json.loads(text))
                     syntax = Syntax(content_str, "yaml", theme="monokai", word_wrap=True)
-                    yield Static(syntax)
+                    yield Static(syntax, markup=False)
                 else:
-                    yield Static(text)
+                    yield Static(text, markup=False)
             else:
-                yield Static(f"No file found at {self.path}")
+                yield Static(f"No file found at {self.path}", markup=False)
 
     def action_scroll_down(self) -> None:
         vs = self.query_one(VerticalScroll)

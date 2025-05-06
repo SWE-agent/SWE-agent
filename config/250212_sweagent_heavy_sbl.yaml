@@ -1,7 +1,7 @@
 # Used for our SWE-Bench lite benchmark submission from 12 Feb 2025
 # Used together with swe-agent as
 # sweagent run-batch --num_workers=12 --instances.type=swe_bench --instances.subset=lite --instances.split=test
-# --instances.shuffle=True --instances.evaluate=True --instances.deployment.docker_args=--memory=10g --config config/retry_heavy_v3.yaml --instances.slice :100
+# --instances.shuffle=True --instances.evaluate=True --instances.deployment.docker_args=--memory=10g --config config/retry_heavy_v3.yaml
 # This template is heavily inspired by anthropic's computer use demo
 agent:
   type: retry

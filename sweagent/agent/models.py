@@ -18,6 +18,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict, Field, SecretStr
 from swerex.exceptions import SwerexException
 from tenacity import (
+    RetryCallState,
     Retrying,
     retry_if_not_exception_type,
     stop_after_attempt,
@@ -125,6 +126,14 @@ class GenericAPIModelConfig(PydanticBaseModel):
     """If set, this will override the max input tokens for the model that we usually look
     up from `litellm.model_cost`.
     Use this for local models or if you want to set a custom max input token limit.
+    If this value is exceeded, a `ContextWindowExceededError` will be raised.
+    Set this to 0 to disable this check.
+    """
+
+    max_output_tokens: int | None = None
+    """If set, this will override the max output tokens for the model that we usually look
+    up from `litellm.model_cost`.
+    Use this for local models or if you want to set a custom max output token limit.
     If this value is exceeded, a `ContextWindowExceededError` will be raised.
     Set this to 0 to disable this check.
     """
@@ -551,6 +560,8 @@ class LiteLLMModel(AbstractModel):
         self.config: GenericAPIModelConfig = args.model_copy(deep=True)
         self.stats = InstanceStats()
         self.tools = tools
+        self.logger = get_logger("swea-lm", emoji="🤖")
+
         if tools.use_function_calling:
             if not litellm.utils.supports_function_calling(model=self.config.name):
                 msg = (
@@ -558,16 +569,19 @@ class LiteLLMModel(AbstractModel):
                     " does not support function calling, you can use `parse_function='thought_action'` instead. "
                     "See https://swe-agent.com/latest/faq/ for more information."
                 )
-                raise ModelConfigurationError(msg)
+                self.logger.warning(msg)
 
         if self.config.max_input_tokens is not None:
             self.model_max_input_tokens = self.config.max_input_tokens
         else:
             self.model_max_input_tokens = litellm.model_cost.get(self.config.name, {}).get("max_input_tokens")
 
-        self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
+        if self.config.max_output_tokens is not None:
+            self.model_max_output_tokens = self.config.max_output_tokens
+        else:
+            self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
+
         self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider")
-        self.logger = get_logger("swea-lm", emoji="🤖")
 
     @property
     def instance_cost_limit(self) -> float:
@@ -711,6 +725,19 @@ class LiteLLMModel(AbstractModel):
 
     def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
         messages = self._history_to_messages(history)
+
+        def retry_warning(retry_state: RetryCallState):
+            exception_info = ""
+            if attempt.retry_state.outcome is not None and attempt.retry_state.outcome.exception() is not None:
+                exception = attempt.retry_state.outcome.exception()
+                exception_info = f" due to {exception.__class__.__name__}: {str(exception)}"
+
+            self.logger.warning(
+                f"Retrying LM query: attempt {attempt.retry_state.attempt_number} "
+                f"(slept for {attempt.retry_state.idle_for:.2f}s)"
+                f"{exception_info}"
+            )
+
         for attempt in Retrying(
             stop=stop_after_attempt(self.config.retry.retries),
             wait=wait_random_exponential(min=self.config.retry.min_wait, max=self.config.retry.max_wait),
@@ -732,19 +759,9 @@ class LiteLLMModel(AbstractModel):
                     ModelConfigurationError,
                 )
             ),
+            before_sleep=retry_warning,
         ):
             with attempt:
-                if attempt.retry_state.attempt_number > 1:
-                    exception_info = ""
-                    if attempt.retry_state.outcome is not None and attempt.retry_state.outcome.exception() is not None:
-                        exception = attempt.retry_state.outcome.exception()
-                        exception_info = f" due to {exception.__class__.__name__}: {str(exception)}"
-
-                    self.logger.warning(
-                        f"Retrying LM query: attempt {attempt.retry_state.attempt_number} "
-                        f"(slept for {attempt.retry_state.idle_for:.2f}s)"
-                        f"{exception_info}"
-                    )
                 result = self._query(messages, n=n, temperature=temperature)
         if n is None or n == 1:
             return result[0]
