@@ -13,6 +13,7 @@ from typing_extensions import TypedDict
 
 
 class StepOutput(BaseModel):
+    query: list[dict] = [{}]
     thought: str = ""
     action: str = ""
     output: str = ""
@@ -45,7 +46,7 @@ class TrajectoryStep(TypedDict):
     state: dict[str, str]
     thought: str
     execution_time: float
-    messages: list[dict[str, Any]]
+    query: list[dict[str, Any]]
     extra_info: dict[str, Any]
 
 

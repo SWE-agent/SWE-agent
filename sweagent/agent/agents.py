@@ -972,6 +972,7 @@ class DefaultAgent(AbstractAgent):
         # attributes (e.g., if we want to requery the model for a bash syntax error, we
         # need to have the previous model output to format the requery template)
         step = StepOutput()
+        step.query = copy.deepcopy(history)
         try:
             # Forward model and get actions
             self._chook.on_model_query(messages=history, agent=self.name)
@@ -1171,7 +1172,7 @@ class DefaultAgent(AbstractAgent):
                 "thought": step.thought,
                 "execution_time": step.execution_time,
                 "state": step.state,
-                "messages": self.messages,
+                "query": step.query,
                 "extra_info": step.extra_info,
             },
         )
