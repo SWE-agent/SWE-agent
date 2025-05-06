@@ -493,7 +493,7 @@ agent:
       end_name: null
       name: _constrain_line
       signature: _constrain_line
-  config_file: config/default.yaml
+  config_file: config/anthropic_filemap.yaml
   model:
     host_url: localhost:11434
     model_name: gpt4

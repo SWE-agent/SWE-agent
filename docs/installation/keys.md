@@ -40,7 +40,7 @@ Here are a few options for `--agent.model.name`:
 
 | Model | API key | Comment |
 | ----- | ------- | ------- |
-| `claude-3-5-sonnet-20241022` | `ANTHROPIC_API_KEY` | Our recommended model |
+| `claude-3-7-sonnet-latest` | `ANTHROPIC_API_KEY` | Our recommended model |
 | `gpt-4o` | `OPENAI_API_KEY` | |
 | `o1-preview` | `OPENAI_API_KEY` | You might need to set temperature and sampling to the supported values. |
 

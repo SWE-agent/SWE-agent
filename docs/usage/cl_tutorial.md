@@ -207,7 +207,7 @@ In addition, you can also execute additional commands before starting the agent 
 
 ```bash
 sweagent run \
-    --agent.model.name=claude-3-5-sonnet-20241022 \
+    --agent.model.name=claude-3-7-sonnet-latest \
     --env.post_startup_commands='["pip install flake8"]' \
     ...
 ```

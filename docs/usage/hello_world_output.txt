@@ -17,7 +17,7 @@
 🌱 DEBUG    Resetting repository SWE-agent__test-repo to commit HEAD
 🏃 INFO     Running agent
 🤠 INFO     Trajectory will be saved to
-            /Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/fuchur/default__claude-3-5-sonnet-20241022__t-0.00__p-1.00__c-2.00___SWE-agent__test-repo-i1/SWE-agent__test-
+            /Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/fuchur/default__claude-3-7-sonnet-latest__t-0.00__p-1.00__c-2.00___SWE-agent__test-repo-i1/SWE-agent__test-
             repo-i1/SWE-agent__test-repo-i1.traj
 🦖 DEBUG    Uploading file from /Users/fuchur/Documents/24/git_sync/SWE-agent/tools/registry to /root/tools/registry
 🦖 DEBUG    Created zip file at /var/folders/g3/1y2_hl1j16scls01cxqm76s80000gn/T/tmpswoslekq/zipped_transfer.zip
@@ -363,7 +363,7 @@
             (Current directory: /SWE-agent__test-repo)
             bash-$
 🤠 INFO     Trajectory saved to
-            /Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/fuchur/default__claude-3-5-sonnet-20241022__t-0.00__p-1.00__c-2.00___SWE-agent__test-repo-i1/SWE-agent__test-
+            /Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/fuchur/default__claude-3-7-sonnet-latest__t-0.00__p-1.00__c-2.00___SWE-agent__test-repo-i1/SWE-agent__test-
             repo-i1/SWE-agent__test-repo-i1.traj
 ╭──────────────────────────── 🎉 Submission successful 🎉 ────────────────────────────╮
 │ SWE-agent has produced a patch that it believes will solve the issue you submitted! │
@@ -371,7 +371,7 @@
 ╰─────────────────────────────────────────────────────────────────────────────────────╯
 
  # The patch has been saved to your local filesystem at:
- PATCH_FILE_PATH='/Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/fuchur/default__claude-3-5-sonnet-20241022__t-0.00__p-1.00__c-2.00___SWE-agent__test-repo-i1/SWE-agent
+ PATCH_FILE_PATH='/Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/fuchur/default__claude-3-7-sonnet-latest__t-0.00__p-1.00__c-2.00___SWE-agent__test-repo-i1/SWE-agent
  test-repo-i1.patch'
  # Inspect it:
  cat "${PATCH_FILE_PATH}"

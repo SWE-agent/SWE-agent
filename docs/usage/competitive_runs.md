@@ -14,7 +14,7 @@ We recently used two configurations for SWE-bench submissions
 * [250225_anthropic_filemap_simple_review.yaml](https://github.com/SWE-agent/SWE-agent/blob/main/config/250225_anthropic_filemap_simple_review.yaml):
   This is our current default one-attempt config. It uses `claude-3-7-sonnet-20250219`.
 * [250212_sweagent_heavy_sbl.yaml](https://github.com/SWE-agent/SWE-agent/blob/main/config/250212_sweagent_heavy_sbl.yaml):
-  This config runs 5 attempts with slightly different configurations using `claude-3-5-sonnet-20241022`,
+  This config runs 5 attempts with slightly different configurations using `claude-3-7-sonnet-latest`,
   then uses o1 to discriminate between them.
   This is a very expensive configuration.
   If you use it, also make sure to use Claude 3.7 instead of claude 3.5.

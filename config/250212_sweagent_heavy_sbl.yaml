@@ -9,7 +9,7 @@ agent:
     # +filemap
     - type: default
       model: &model
-        name: claude-3-5-sonnet-20241022
+        name: claude-3-7-sonnet-latest
         api_key: $CLAUDE_API_KEY_ROTATION
         per_instance_cost_limit: 1.5
         per_instance_call_limit: 75

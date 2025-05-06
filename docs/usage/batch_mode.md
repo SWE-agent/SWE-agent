@@ -14,7 +14,7 @@ Let's run on three [SWE-bench](https://www.swebench.com/) issues which will be d
 
 ```bash
 sweagent run-batch \
-    --config config/default.yaml \
+    --config config/anthropic_filemap.yaml \
     --agent.model.name gpt-4o \
     --agent.model.per_instance_cost_limit 2.00 \
     --instances.type swe_bench \
@@ -58,7 +58,7 @@ Let's speed things up and run on 5 instances at once. Only a single line to chan
 
 ```bash hl_lines="4-4"
 sweagent run-batch \
-    --config config/default.yaml \
+    --config config/anthropic_filemap.yaml \
     --agent.model.name gpt-4o \
     --num_workers 3 \
     --agent.model.per_instance_cost_limit 2.00 \
@@ -88,7 +88,7 @@ thereby easing CPU pressure. Default is 0.3.
 
 ```bash
 sweagent run-batch \
-    --config config/default.yaml \
+    --config config/anthropic_filemap.yaml \
     --agent.model.name gpt-4o \
     --instances.type file \
     --instances.path instances.yaml \

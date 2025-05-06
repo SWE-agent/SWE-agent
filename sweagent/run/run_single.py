@@ -11,7 +11,7 @@
 
 Basic usage: Run over a [bold][cyan]github issue[/bold][/cyan][green]:
 
-sweagent run --config config/default.yaml --agent.model.name "gpt-4o" \\
+sweagent run --config config/anthropic_filemap.yaml --agent.model.name "gpt-4o" \\
     --env.repo.github_url=https://github.com/SWE-agent/test-repo/ \\
     --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
 [/green]
@@ -21,7 +21,7 @@ You can set the image with [green]--env.docker.image[/green].
 
 Here's an example that uses [bold][cyan]modal[/bold][/cyan] instead of docker and also a [bold][cyan]local repository[/bold][/cyan]:
 
-[green]sweagent run --config config/default.yaml --agent.model.name "gpt-4o" \\
+[green]sweagent run --config config/anthropic_filemap.yaml --agent.model.name "gpt-4o" \\
     --env.deployment.type=modal --env.repo.path /path/to/repo \\
     --problem_statement.path=path/to/problem_statement.md
 [/green]
