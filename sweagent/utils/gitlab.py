@@ -5,10 +5,31 @@ from urllib.parse import urlparse
 import requests
 
 # Regular expressions for GitLab URLs - support any GitLab instance, not just gitlab.com
-GITLAB_ISSUE_URL_PATTERN = re.compile(r"(.*?)\/([^/]+)\/([^/]+)\/\-\/issues\/(\d+)")
-# Match both https://gitlab.com/user/repo and git@gitlab.com:user/repo.git formats
-GITLAB_REPO_URL_PATTERN = re.compile(r"(?:(https?)://|git@)([^/:]+)(?::|/)([^/]+)/([^/\n]+?)(?:\.git)?$")
-GITLAB_MR_URL_PATTERN = re.compile(r"(.*?)\/([^/]+)\/([^/]+)\/\-\/merge_requests\/(\d+)")
+GITLAB_ISSUE_URL_PATTERN = re.compile(
+    r"^(https?://[^/]+)"  # 1. Base URL (e.g., https://gitlab.com)
+    r"/((?:[^/]+(?:/[^/]+)*))"  # 2. Full project path (e.g., group/subgroup/repo)
+    r"/\-\/issues\/(\d+)"  # 3. Issue ID
+    r"(?:[/?#].*)?$"  # Optional query string/fragment and end of string
+)
+
+# Pattern for GitLab Merge Request URLs
+# Captures: 1. Base URL, 2. Full Project Path, 3. MR ID
+GITLAB_MR_URL_PATTERN = re.compile(
+    r"^(https?://[^/]+)"  # 1. Base URL (e.g., https://gitlab.com)
+    r"/((?:[^/]+(?:/[^/]+)*))"  # 2. Full project path (e.g., group/subgroup/repo)
+    r"/\-\/merge_requests\/(\d+)"  # 3. MR ID
+    r"(?:[/?#].*)?$"  # Optional query string/fragment and end of string
+)
+
+# Pattern for GitLab Repository URLs (HTTP/S and SSH)
+# Captures: 1. Protocol (http/https or None), 2. Host, 3. Full Project Path
+GITLAB_REPO_URL_PATTERN = re.compile(
+    r"^(?:(?:(https?)://|git@)"  # 1. Protocol (http, https) if present, or handle git@
+    r"([^/:]+)"  # 2. Hostname (e.g., gitlab.com, gitlab.example.com)
+    r"[:/])"  # Separator : for SSH, / for HTTP/S (ends the host part)
+    r"((?:[^/:]+(?:/[^/:]+)*?))"  # 3. Full project path (e.g., group/subgroup/repo), non-greedy
+    r"(?:\.git)?/?$"  # Optional .git suffix and optional trailing slash, end of string
+)
 
 
 class InvalidGitlabURL(Exception):
