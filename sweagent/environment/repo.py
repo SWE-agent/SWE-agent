@@ -217,6 +217,7 @@ class GitlabRepoConfig(BaseModel):
         # Use a sanitized version of the instance name in the repo name to avoid conflicts
         # with repositories from different GitLab instances
         instance_name = gitlab_instance.replace("https://", "").replace("http://", "").replace(".", "_")
+        org = org.replace("/", "__")
         return f"{instance_name}__{org}__{repo}"
 
     def _get_url_with_token(self, token: str, token_type: str = "project") -> str:
