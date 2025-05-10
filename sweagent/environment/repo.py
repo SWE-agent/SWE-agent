@@ -160,8 +160,8 @@ class GithubRepoConfig(BaseModel):
                 Command(
                     command=" && ".join(
                         (
-                            f"mkdir {self.repo_name}",
-                            f"cd {self.repo_name}",
+                            f"mkdir /{self.repo_name}",
+                            f"cd /{self.repo_name}",
                             "git init",
                             f"git remote add origin {url}",
                             f"git fetch --depth 1 origin {base_commit}",
