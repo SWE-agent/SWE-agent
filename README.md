@@ -11,8 +11,8 @@
 </p>
 
 
-SWE-agent lets your language model of choice (e.g. GPT-4o or Claude Sonnet 3.7) autonomously use tools to 
-[fix issues in real GitHub repositories](https://swe-agent.com/latest/usage/hello_world), 
+SWE-agent lets your language model of choice (e.g. GPT-4o or Claude Sonnet 3.7) autonomously use tools to
+[fix issues in real GitHub repositories](https://swe-agent.com/latest/usage/hello_world),
 [find cybersecurity vulnerabilities](https://enigma-agent.com/), or
 [any custom task](https://swe-agent.com/latest/usage/coding_challenges).
 
