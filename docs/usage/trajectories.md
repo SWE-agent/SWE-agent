@@ -10,13 +10,24 @@ Under the `trajectory` key, you can see information for every step of the agent.
 
 ```json
 {
-  "action": "ls -F\n",
-  "observation": "AUTHORS.rst\nCHANGELOG.rst\nCODE_OF_CONDUCT.md...",
+  # This is the output of the LM
   "response": "We are indeed seeing the same output as the issue. The issue suggests that we should look at line 1474 of the `fields.py`...",
-  "state": "{\"open_file\": \"/marshmallow-code__marshmallow/reproduce.py\", \"working_dir\": \"/marshmallow-code__marshmallow\"}\n",
+  # We then parse it into thoughts and actions
   "thought": "We are indeed seeing the same output as the issue. The issue suggests that we should look at line 1474 of the `fields.py`..."
+  "action": "ls -F\n",
+  # And execute the action, resulting in the output
+  "observation": "AUTHORS.rst\nCHANGELOG.rst\nCODE_OF_CONDUCT.md...",
+  # In addition, after the action was executed, state can be extracted from the environment
+  "state": "{\"open_file\": \"/marshmallow-code__marshmallow/reproduce.py\", \"working_dir\": \"/marshmallow-code__marshmallow\"}\n",
+  # For debugging, we also keep all messages that were shown to the LM
+  "query": [{"role": "system", "content": "You are a helpful assistant ..."}, ...]
 },
 ```
+
+!!! warning "Query and message field"
+    Prior to SWE-agent 1.1.0, we had a `message` field which corresponded (approximately) to the input
+    for the LM for the _next_ step. This was replaced with `query`, which shows the exact input
+    at the current step.
 
 Here's a full example:
 

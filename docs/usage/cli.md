@@ -13,4 +13,3 @@ Here's a quick overview:
 * `sweagent inspector` or `sweagent I`: Open the web-based inspector ([more information](inspector.md)).
 * `sweagent merge-preds`: Merge multiple prediction files into a single file.
 * `sweagent traj-to-demo`: Convert a trajectory file to an easy to edit demo file ([more information on demonstrations](../config/demonstrations.md)).
-
