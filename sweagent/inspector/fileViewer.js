@@ -33,7 +33,18 @@ function fetchFiles() {
 
 function createTrajectoryItem(item, index) {
   const elementId = `trajectoryItem${index}`;
-  const hasMessages = item.messages && item.messages.length > 0;
+
+  // Check for old format and log a warning
+  const isOldFormat = item.messages && !item.query;
+  if (isOldFormat) {
+    console.log(
+      `Found old format using 'messages' instead of 'query' in item ${index}`,
+    );
+    // Migrate old format to new format
+    item.query = item.messages;
+  }
+
+  const hasMessages = item.query && item.query.length > 0;
 
   const escapeHtml = (text) => {
     if (!text) {
@@ -71,7 +82,7 @@ function createTrajectoryItem(item, index) {
   };
 
   const messagesContent = hasMessages
-    ? item.messages
+    ? item.query
         .map((msg, msgIndex) => {
           let content = `----Item ${msgIndex}-----\n`;
           content += `role: ${msg.role}\n`;
