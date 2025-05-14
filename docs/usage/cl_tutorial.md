@@ -82,6 +82,7 @@ But we can also split it up into multiple files and additional command line opti
 === "Command line"
 
     ```bash
+    # Note that you need --config in front of every config file
     python run.py --config agent.yaml --config env.yaml \
         --problem_statement.text="Hey, can you fix all the bugs?"
     ```
@@ -102,6 +103,12 @@ But we can also split it up into multiple files and additional command line opti
       repo:
         github_url: https://github.com/SWE-agent/test-repo
     ```
+
+!!! warning "Multiple config files"
+    Prior to version SWE-agent 1.1.0, configs were merged with simple dictionary updates,
+    rather than a hierarchical merge, so specifying `agent` (or any key with subkeys) in the
+    second config would completely overwrite all `agent` settings of the first config.
+    This is fixed since SWE-agent 1.1.0.
 
 The default config file is `config/anthropic_filemap.yaml`. Let's take a look at it:
 

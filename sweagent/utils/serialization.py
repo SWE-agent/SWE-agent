@@ -34,6 +34,9 @@ def _yaml_serialization_with_linebreaks(data: Any) -> str:
 
 
 def merge_nested_dicts(d1: dict, d2: dict) -> dict:
+    """Merge two nested dictionaries, updating d1 in place.
+    If a key exists in both dictionaries, the value from d2 will be used.
+    """
     for key, value in d2.items():
         if isinstance(value, dict):
             d1[key] = merge_nested_dicts(d1.get(key, {}), value)
