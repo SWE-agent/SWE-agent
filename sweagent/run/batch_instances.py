@@ -133,7 +133,8 @@ class SimpleBatchInstance(BaseModel):
 
         deployment.image = self.image_name  # type: ignore
 
-        if isinstance(deployment, DockerDeploymentConfig):
+        if isinstance(deployment, DockerDeploymentConfig) and deployment.python_standalone_dir is None:
+            # Note: you can disable this by setting python_standalone_dir to ""
             deployment.python_standalone_dir = "/root"  # type: ignore
 
         return BatchInstance(

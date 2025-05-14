@@ -652,7 +652,12 @@ class LiteLLMModel(AbstractModel):
         self, messages: list[dict[str, str]], n: int | None = None, temperature: float | None = None
     ) -> list[dict]:
         self._sleep()
-        input_tokens: int = litellm.utils.token_counter(messages=messages, model=self.config.name)
+        # Workaround for litellm bug https://github.com/SWE-agent/SWE-agent/issues/1109
+        messages_no_cache_control = copy.deepcopy(messages)
+        for message in messages_no_cache_control:
+            if "cache_control" in message:
+                del message["cache_control"]
+        input_tokens: int = litellm.utils.token_counter(messages=messages_no_cache_control, model=self.config.name)
         if self.model_max_input_tokens is None:
             msg = (
                 f"No max input tokens found for model {self.config.name!r}. "

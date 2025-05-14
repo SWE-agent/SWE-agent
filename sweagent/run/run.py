@@ -25,6 +25,7 @@ Display usage instructions for a specific command:
 [bold][green]traj-to-demo[/green][/bold]: Convert a trajectory file to an easy to edit demo file.
 [bold][green]run-api[/green][/bold]: Run swe-agent as a backend for a GUI
 [bold][green]remove-unfinished[/green][/bold] or [bold][green]ru[/green][/bold]: Remove unfinished trajectories
+[bold][green]quick-stats[/green][/bold] or [bold][green]qs[/green][/bold]: Calculate quick stats from a directory of trajectories
 """
 
 import argparse
@@ -55,6 +56,8 @@ def get_cli():
             "cr",
             "remove-unfinished",
             "ru",
+            "quick-stats",
+            "qs",
         ],
         nargs="?",
     )
@@ -125,6 +128,10 @@ def main(args: list[str] | None = None):
         from sweagent.run.remove_unfinished import run_from_cli as remove_unfinished_main
 
         remove_unfinished_main(remaining_args)
+    elif command in ["quick-stats", "qs"]:
+        from sweagent.run.quick_stats import run_from_cli as quick_stats_main
+
+        quick_stats_main(remaining_args)
     else:
         msg = f"Unknown command: {command}"
         raise ValueError(msg)

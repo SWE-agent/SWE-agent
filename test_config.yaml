@@ -1,0 +1,6 @@
+agent:
+  model:
+    name: human
+env:
+  deployment:
+    image: tiny
