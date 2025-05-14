@@ -125,10 +125,16 @@ class TemplateConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def warn_models_in_history(self) -> Self:
+    def warnings(self) -> Self:
+        logger = get_logger("swea-config", emoji="🔧")
         if self.put_demos_in_history and self.demonstration_template is not None:
-            logger = get_logger("swea-config", emoji="🔧")
             logger.warning("demonstration_template is ignored when put_demos_in_history is True")
+        if not self.system_template or self.instance_template:
+            logger.warning(
+                "system_template/instance_template is not set, using empty string. Perhaps you were"
+                " overwriting the default config? See https://swe-agent.com/latest/usage/cl_tutorial/"
+                " for more information. Note: You can ignore this warning in human mode."
+            )
         return self
 
 
