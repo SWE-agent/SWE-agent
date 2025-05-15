@@ -1,6 +1,12 @@
 ---
 title: "Getting Started"
 ---
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
 
 <div style="text-align: center;">
     <img class="light-mode-only" src="assets/readme_assets/swe-agent-banner-light.svg" alt="SWE-agent banner" style="height: 10em;">
