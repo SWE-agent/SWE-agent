@@ -817,7 +817,7 @@ class DefaultAgent(AbstractAgent):
             repo_name = f"/{self._env.repo.repo_name}"
         repo_name = f"{repo_base_dir}{repo_name}"
         submission_command = f"git add -A && git diff --cached > {env_dir}/model.patch"
-        self.logger.info(f"Executing submission command %s in %s", submission_command, repo_name)
+        self.logger.info("Executing submission command %s in %s", submission_command, repo_name)
         try:
             self._env.execute_command(submission_command, check=True, cwd=repo_name)
         except Exception as e:

@@ -106,14 +106,14 @@ class LocalRepoConfig(BaseModel):
 
         # To support multiple local runs, remove the target if it exists under /tmp.
         # Deleting paths in /tmp is safe in this context.
-        if os.path.exists(target_path) and target_path.startswith('/tmp'):
+        if Path.exists(target_path) and target_path.startswith('/tmp'):
             shutil.rmtree(target_path)
         asyncio.run(
             deployment.runtime.upload(UploadRequest(source_path=str(self.path), target_path=target_path))
         )
 
         # Only chown if running at root (repo_base_dir == '').
-        if not repo_base_dir =='':
+        if repo_base_dir != '':
             return
         r = asyncio.run(deployment.runtime.execute(Command(command=f"chown -R root:root {self.repo_name}", shell=True)))
         if r.exit_code != 0:
