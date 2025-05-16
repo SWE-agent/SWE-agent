@@ -1227,7 +1227,9 @@ class DefaultAgent(AbstractAgent):
         self,
         env: SWEEnv,
         problem_statement: ProblemStatement | ProblemStatementConfig,
+        *,
         output_dir: Path = Path("."),
+        interactive: bool = False,
     ) -> AgentRunResult:
         """Run the agent on a problem instance. This method contains the
         main loop that repeatedly calls `self._step` until the problem is solved.
@@ -1236,6 +1238,7 @@ class DefaultAgent(AbstractAgent):
             setup_args: Arguments to pass to the agent's setup method.
             env: The environment to run the agent on.
             traj_dir: Directory to save the trajectory to
+            interruptible: Whether the human can jump in by pressing ^C
         """
         self.setup(env=env, problem_statement=problem_statement, output_dir=output_dir)
 
@@ -1247,11 +1250,13 @@ class DefaultAgent(AbstractAgent):
                 step_output = self.step()
                 self.save_trajectory()
             except KeyboardInterrupt:
-                if not isinstance(self.model, HumanModel):
+                if interactive and not isinstance(self.model, HumanModel):
                     self.human_step_in()
                     continue
                 raise
             except EOFError:
+                if not interactive:
+                    raise
                 # Can only happen if we have a human model, so switch back
                 self.logger.info("Detected ^D - switching back to AI mode")
                 self.human_step_out()
@@ -1287,7 +1292,7 @@ class DefaultAgent(AbstractAgent):
             return
 
         self.model = self._original_model
-        self.tools.config.parse_function = self._original_parser
+        self.tools.config.parse_function = self._original_parser  # type: ignore
         self._original_model = None
         self._original_parser = None
 

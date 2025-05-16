@@ -78,6 +78,9 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
     env_var_path: Path | None = None
     """Path to a .env file to load environment variables from."""
 
+    interactive: bool = False
+    """Whether to make the agent interactive (i.e., allow the human to jump in by pressing ^C)."""
+
     # pydantic config
     model_config = SettingsConfigDict(extra="forbid", env_prefix="SWE_AGENT_")
 
@@ -127,6 +130,7 @@ class RunSingle:
         output_dir: Path = Path("."),
         hooks: list[RunHook] | None = None,
         actions: RunSingleActionConfig | None = None,
+        interactive: bool = False,
     ):
         """Note: When initializing this class, make sure to add the hooks that are required by your actions.
         See `from_config` for an example.
@@ -151,6 +155,7 @@ class RunSingle:
         self.problem_statement = problem_statement
         for hook in hooks or []:
             self.add_hook(hook)
+        self.interactive = interactive
 
     @property
     def hooks(self) -> list[RunHook]:
@@ -169,6 +174,7 @@ class RunSingle:
             problem_statement=config.problem_statement,
             output_dir=config.output_dir,
             actions=config.actions,
+            interactive=config.interactive,
         )
         self.add_hook(SaveApplyPatchHook(apply_patch_locally=config.actions.apply_patch_locally))
         if config.actions.open_pr:
@@ -194,6 +200,7 @@ class RunSingle:
             problem_statement=self.problem_statement,
             env=self.env,
             output_dir=output_dir,
+            interactive=self.interactive,
         )
         self._chooks.on_instance_completed(result=result)
         self.logger.info("Done")
