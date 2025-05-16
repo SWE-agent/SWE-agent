@@ -224,8 +224,17 @@ class SWEEnv:
         """
         self.logger.log(logging.TRACE, "Input:\n%s", input)  # type: ignore
         rex_check = "silent" if check else "ignore"
+
+        bash_lines = [
+            f'export ENV_DIR="{env_dir}"',
+            f'export REPO_BASE_DIR="{repo_base_dir}"',
+            input
+        ]
+        # fix command when input is empty
+        full_command = " && ".join(bash_lines).strip().strip('&')
+
         r = asyncio.run(
-            self.deployment.runtime.run_in_session(BashAction(command=input, timeout=timeout, check=rex_check))
+            self.deployment.runtime.run_in_session(BashAction(command=full_command, timeout=timeout, check=rex_check))
         )
         output = r.output
         self.logger.log(logging.TRACE, "Output:\n%s", output)  # type: ignore
