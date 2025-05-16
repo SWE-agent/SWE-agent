@@ -1261,6 +1261,11 @@ class DefaultAgent(AbstractAgent):
                 self.logger.info("Detected ^D - switching back to AI mode")
                 self.human_step_out()
                 continue
+            if interactive and step_output.done and not isinstance(self.model, HumanModel):
+                # Human has to submit the solution
+                self.logger.info("Robot is done! Please submit the solution.")
+                self.human_step_in()
+                step_output.done = False
         self._chook.on_run_done(trajectory=self.trajectory, info=self.info)
 
         self.logger.info("Trajectory saved to %s", self.traj_path)
