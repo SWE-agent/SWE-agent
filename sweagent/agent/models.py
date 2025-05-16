@@ -223,6 +223,8 @@ class HumanModelConfig(GenericAPIModelConfig):
     )
     total_cost_limit: float = Field(default=0.0, description="Cost limit for all instances (tasks).")
     cost_per_call: float = 0.0
+    catch_eof: bool = True
+    """Whether to catch EOF and return 'exit' when ^D is pressed. Set to False when used in human_step_in mode."""
     model_config = ConfigDict(extra="forbid")
 
 
@@ -412,8 +414,12 @@ class HumanModel(AbstractModel):
                 print("^C (exit with ^D)")
                 out.append(self.query(history, action_prompt))
             except EOFError:
-                print("\nGoodbye!")
-                out.append({"message": "exit"})
+                if self.config.catch_eof:
+                    print("\nGoodbye!")
+                    out.append({"message": "exit"})
+                else:
+                    # Re-raise EOFError when catch_eof is disabled
+                    raise
         if n is None:
             return out[0]
         return out
@@ -773,6 +779,7 @@ class LiteLLMModel(AbstractModel):
                     litellm.exceptions.AuthenticationError,
                     ContentPolicyViolationError,
                     ModelConfigurationError,
+                    KeyboardInterrupt,
                 )
             ),
             before_sleep=retry_warning,
