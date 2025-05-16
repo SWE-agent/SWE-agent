@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import shlex
 from pathlib import PurePath
 from typing import Literal, Self
@@ -20,12 +21,14 @@ from sweagent.environment.hooks.abstract import CombinedEnvHooks, EnvHook
 from sweagent.environment.repo import Repo, RepoConfig
 from sweagent.utils.log import get_logger
 
+env_dir = os.environ.get('ENV_DIR', '/root').rstrip('/')
+repo_base_dir = os.environ.get('REPO_BASE_DIR', '').rstrip('/')
 
 class EnvironmentConfig(BaseModel):
     """Configure data sources and setup instructions for the environment in which we solve the tasks."""
 
     deployment: DeploymentConfig = Field(
-        default_factory=lambda: DockerDeploymentConfig(image="python:3.11", python_standalone_dir="/root"),
+        default_factory=lambda: DockerDeploymentConfig(image="python:3.11", python_standalone_dir=env_dir),
         description="Deployment options.",
     )
     repo: RepoConfig | None = Field(
@@ -153,7 +156,7 @@ class SWEEnv:
             # todo: Currently has swe-ft specific change: The original repo.copy isn't called, because the repo is already
             # present. However, reset --hard <BRANCH> also doesn't work. So modified it here to do a checkout instead.
             startup_commands = [
-                f"cd /{self.repo.repo_name}",
+                f"cd {repo_base_dir}/{self.repo.repo_name}",
                 "export ROOT=$(pwd -P)",
                 "git status",
                 "git fetch",
