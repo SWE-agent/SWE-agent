@@ -145,6 +145,10 @@ class SWEEnv:
             info: additional information (e.g. debugging information)
         """
         self.communicate(input="cd /", check="raise")
+        # Remove the tools directory if it's under /tmp to ensure a clean reset.
+        # Deleting from /tmp is safe and avoids leftover state from previous runs.
+        if env_dir.startswith('/tmp'):
+            self.communicate(f"rm -rf {env_dir}/tools", check="raise")
         self._copy_repo()
         self._reset_repository()
         self._chook.on_environment_startup()
@@ -159,7 +163,8 @@ class SWEEnv:
                 f"cd {repo_base_dir}/{self.repo.repo_name}",
                 "export ROOT=$(pwd -P)",
                 "git status",
-                "git fetch",
+                # "git fetch", # it seems useless
+                "git reset --hard", # solve typechange
                 f"git checkout {self.repo.base_commit}",
                 "git clean -fdq",
             ]
