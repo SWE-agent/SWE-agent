@@ -6,6 +6,7 @@ from typing import Any, Literal, Protocol
 from git import InvalidGitRepositoryError
 from git import Repo as GitRepo
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic_core import from_json
 from swerex.deployment.abstract import AbstractDeployment
 from swerex.runtime.abstract import Command, UploadRequest
 from typing_extensions import Self
@@ -181,11 +182,53 @@ class GithubRepoConfig(BaseModel):
         return _get_git_reset_commands(self.base_commit)
 
 
-RepoConfig = LocalRepoConfig | GithubRepoConfig | PreExistingRepoConfig
+class CTFRepoConfig(BaseModel):
+    path: Path
+    challenge_json_filename: str = Field(default="challenge.json")
+    """The JSON file containing the CTF challenge.
+    This filename should be a relative path inside the repository parent path.
+    """
+
+    base_commit: str = Field(default="HEAD")
+    """This field has no effect on CTF repo."""
+
+    type: Literal["ctf"]
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    @property
+    def repo_name(self) -> str:
+        """Set automatically based on the repository name. Cannot be set."""
+        return Path(self.path).resolve().name.replace(" ", "-").replace("'", "")
+
+    @property
+    def files(self) -> list[str]:
+        json_data = (self.path / self.challenge_json_filename).read_text()
+        return from_json(json_data)["files"]
+
+    def copy(self, deployment: AbstractDeployment):
+        for file in self.files:
+            asyncio.run(
+                deployment.runtime.upload(
+                    UploadRequest(source_path=str(self.path / Path(file)), target_path=f"/{self.repo_name}/{file}")
+                )
+            )
+        r = asyncio.run(deployment.runtime.execute(Command(command=f"chown -R root:root {self.repo_name}", shell=True)))
+        if r.exit_code != 0:
+            msg = f"Failed to change permissions on copied repository (exit code: {r.exit_code}, stdout: {r.stdout}, stderr: {r.stderr})"
+            raise RuntimeError(msg)
+
+    def get_reset_commands(self) -> list[str]:
+        """Issued after the copy operation or when the environment is reset."""
+        return ["git init"]
+
+
+RepoConfig = LocalRepoConfig | GithubRepoConfig | PreExistingRepoConfig | CTFRepoConfig
 
 
 def repo_from_simplified_input(
-    *, input: str, base_commit: str = "HEAD", type: Literal["local", "github", "preexisting", "auto"] = "auto"
+    *, input: str, base_commit: str = "HEAD", type: Literal["local", "github", "preexisting", "auto", "ctf"] = "auto"
 ) -> RepoConfig:
     """Get repo config from a simplified input.
 
@@ -205,5 +248,7 @@ def repo_from_simplified_input(
             return GithubRepoConfig(github_url=input, base_commit=base_commit)
         else:
             return LocalRepoConfig(path=Path(input), base_commit=base_commit)
+    if type == "ctf":
+        return CTFRepoConfig(path=Path(input))
     msg = f"Unknown repo type: {type}"
     raise ValueError(msg)
