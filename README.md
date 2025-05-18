@@ -70,6 +70,14 @@ In addition, you might be interested in the following projects:
   <a href="https://github.com/SWE-bench/sb-cli"><img src="docs/assets/sbcli_logo_text_below.svg" alt="sb-cli" height="120px"></a>
 </div>
 
+## 🧪 GitHub Codespaces Tips
+
+To automatically open a specific file (e.g., `README.md`) when a Codespace starts, you can add the following to your `.devcontainer.json`:
+
+```json
+"postCreateCommand": "code README.md"
+```
+
 ## Contributions <a name="contributions"></a>
 
 If you'd like to contribute to the codebase, we welcome [issues](https://github.com/SWE-agent/SWE-agent/issues) and [pull requests](https://github.com/SWE-agent/SWE-agent/pulls)! For larger code changes, we always encourage discussion in issues first.
