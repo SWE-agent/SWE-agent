@@ -75,7 +75,7 @@ In addition, you might be interested in the following projects:
 To automatically open a specific file (e.g., `README.md`) when a Codespace starts, you can add the following to your `.devcontainer.json`:
 
 ```json
-"postCreateCommand": "code README.md"
+"postCreateCommand": "code --reuse-window --preview README.md"
 ```
 
 ## Contributions <a name="contributions"></a>
