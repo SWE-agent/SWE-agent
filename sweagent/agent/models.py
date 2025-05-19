@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Lock
 from typing import Annotated, Any, Literal
-from transformers import AutoTokenizer
 
 import litellm
 import litellm.types.utils
@@ -25,6 +24,7 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
+from transformers import AutoTokenizer
 
 from sweagent import REPO_ROOT
 from sweagent.exceptions import (
@@ -597,21 +597,27 @@ class LiteLLMModel(AbstractModel):
                 )
 
         self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider", self.config.name)
-        if self.config.per_instance_cost_limit == 0 and self.config.total_cost_limit == 0: # Local model
-            if '/' in self.lm_provider:
+        if self.config.per_instance_cost_limit == 0 and self.config.total_cost_limit == 0:  # Local model
+            if "/" in self.lm_provider:
                 self.custom_tokenizer = {}
-                self.custom_tokenizer['provider'] = self.lm_provider.split('/')[0]
+                self.custom_tokenizer["provider"] = self.lm_provider.split("/")[0]
 
-                if self.custom_tokenizer['provider'] not in litellm.provider_list:
-                    self.logger.warning(f"Local model {self.lm_provider} not found in LiteLLM provider list. Using default tokenizer.")
+                if self.custom_tokenizer["provider"] not in litellm.provider_list:
+                    self.logger.warning(
+                        f"Local model {self.lm_provider} not found in LiteLLM provider list. Using default tokenizer."
+                    )
                     self.custom_tokenizer = None
                 else:
-                    self.custom_tokenizer['identifier'] = '/'.join(self.lm_provider.split('/')[1:])
-                    self.custom_tokenizer['type'] = "huggingface_tokenizer"
+                    self.custom_tokenizer["identifier"] = "/".join(self.lm_provider.split("/")[1:])
+                    self.custom_tokenizer["type"] = "huggingface_tokenizer"
                     # Use backend tokenizer as workaround for litellm HF tokenizer bug
-                    self.custom_tokenizer['tokenizer'] = AutoTokenizer.from_pretrained(self.custom_tokenizer['identifier']).backend_tokenizer
+                    self.custom_tokenizer["tokenizer"] = AutoTokenizer.from_pretrained(
+                        self.custom_tokenizer["identifier"]
+                    ).backend_tokenizer
             else:
-                self.logger.warning(f"Local model identifier {self.lm_provider} has an unknown format. Using default tokenizer.")
+                self.logger.warning(
+                    f"Local model identifier {self.lm_provider} has an unknown format. Using default tokenizer."
+                )
 
     @property
     def instance_cost_limit(self) -> float:
@@ -674,9 +680,11 @@ class LiteLLMModel(AbstractModel):
         for message in messages_no_cache_control:
             if "cache_control" in message:
                 del message["cache_control"]
-        input_tokens: int = litellm.utils.token_counter(messages=messages_no_cache_control, 
-                                                        model=self.custom_tokenizer['identifier'] if self.custom_tokenizer else self.config.name,
-                                                        custom_tokenizer=self.custom_tokenizer)
+        input_tokens: int = litellm.utils.token_counter(
+            messages=messages_no_cache_control,
+            model=self.custom_tokenizer["identifier"] if self.custom_tokenizer else self.config.name,
+            custom_tokenizer=self.custom_tokenizer,
+        )
         if self.model_max_input_tokens is None:
             msg = (
                 f"No max input tokens found for model {self.config.name!r}. "
@@ -737,9 +745,11 @@ class LiteLLMModel(AbstractModel):
         output_tokens = 0
         for i in range(n_choices):
             output = choices[i].message.content or ""
-            output_tokens += litellm.utils.token_counter(text=output, 
-                                                        model=self.custom_tokenizer['identifier'] if self.custom_tokenizer else self.config.name,
-                                                        custom_tokenizer=self.custom_tokenizer)
+            output_tokens += litellm.utils.token_counter(
+                text=output,
+                model=self.custom_tokenizer["identifier"] if self.custom_tokenizer else self.config.name,
+                custom_tokenizer=self.custom_tokenizer,
+            )
             output_dict = {"message": output}
             if self.tools.use_function_calling:
                 if response.choices[i].message.tool_calls:  # type: ignore
