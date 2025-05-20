@@ -599,6 +599,7 @@ class LiteLLMModel(AbstractModel):
         if self.config.per_instance_cost_limit == 0 and self.config.total_cost_limit == 0:  # Local model
             if "/" in self.lm_provider:
                 from transformers import AutoTokenizer
+
                 self.custom_tokenizer = {}
                 self.custom_tokenizer["provider"] = self.lm_provider.split("/")[0]
 
