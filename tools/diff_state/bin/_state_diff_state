@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os
+
+env_dir = os.environ.get("ENV_DIR", "/root").rstrip("/")
 
 def main() -> None:
     import json
@@ -8,7 +11,7 @@ def main() -> None:
 
     from registry import registry
 
-    state_path = Path("/root/state.json")
+    state_path = Path(f"{env_dir}/state.json")
     if state_path.exists():
         state = json.loads(state_path.read_text())
     else:
@@ -16,7 +19,7 @@ def main() -> None:
 
     repo_root = registry.get("ROOT", os.getenv("ROOT"))
 
-    patch_path = Path("/root/model.patch")
+    patch_path = Path(f"{env_dir}/model.patch")
 
     subprocess.run(
         f"git add -A && git diff --cached > {patch_path}",
@@ -36,7 +39,7 @@ def _del_diff():
     from pathlib import Path
     import json
 
-    state_path = Path("/root/state.json")
+    state_path = Path(f"{env_dir}/state.json")
     if state_path.exists():
         state = json.loads(state_path.read_text())
     else:

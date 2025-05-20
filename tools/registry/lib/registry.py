@@ -3,13 +3,15 @@ import os
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
+env_dir = os.environ.get("ENV_DIR", "/root").rstrip("/")
+
 
 class EnvRegistry:
     """Read and write variables into a file. This is used to persist state between tool
     calls without using environment variables (which are problematic because you cannot
     set them in a subprocess).
 
-    The default file location is `/root/.swe-agent-env`, though this can be overridden
+    The default file location is `{env_dir}/.swe-agent-env`, though this can be overridden
     by the `env_file` argument or the `SWE_AGENT_ENV_FILE` environment variable.
     """
 
@@ -19,7 +21,7 @@ class EnvRegistry:
     @property
     def env_file(self) -> Path:
         if self._env_file is None:
-            env_file = Path(os.environ.get("SWE_AGENT_ENV_FILE", "/root/.swe-agent-env"))
+            env_file = Path(os.environ.get("SWE_AGENT_ENV_FILE", f"{env_dir}/.swe-agent-env"))
         else:
             env_file = self._env_file
         if not env_file.exists():
