@@ -24,7 +24,6 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
-from transformers import AutoTokenizer
 
 from sweagent import REPO_ROOT
 from sweagent.exceptions import (
@@ -599,6 +598,7 @@ class LiteLLMModel(AbstractModel):
         self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider", self.config.name)
         if self.config.per_instance_cost_limit == 0 and self.config.total_cost_limit == 0:  # Local model
             if "/" in self.lm_provider:
+                from transformers import AutoTokenizer
                 self.custom_tokenizer = {}
                 self.custom_tokenizer["provider"] = self.lm_provider.split("/")[0]
 

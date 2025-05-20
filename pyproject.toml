@@ -60,7 +60,6 @@ dependencies = [
     "swe-rex>=1.2.0",
     "tabulate",
     "textual>=1.0.0",
-    "transformers",
 ]
 
 [project.scripts]
