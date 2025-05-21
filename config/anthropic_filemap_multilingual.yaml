@@ -1,4 +1,4 @@
-# This template is heavily inspired by anthropic and openhands. It is almost
+# This template is heavily inspired by anthropic, but you can use it with any LM. It is almost
 # identical to anthropic_filemap.yaml, but it removes python-specific language
 # and adds the multilingual_setup tool to support evaluation on the Multilingual dataset.
 agent:

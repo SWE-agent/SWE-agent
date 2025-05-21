@@ -1,3 +1,4 @@
+# This config uses the windowed-replace tools together with a prompt similar to
 agent:
   templates:
     system_template: |-
@@ -97,13 +98,6 @@ agent:
       (Open file: {{open_file}})
       (Current directory: {{working_dir}})
       bash-$
-    demonstration_template: |
-      Here is a demonstration of how to correctly accomplish this task.
-      It is included to show you how to correctly use the interface.
-      You do not need to follow exactly what is done in the demonstration.
-      --- DEMONSTRATION ---
-      {{demonstration}}
-      --- END OF DEMONSTRATION ---
     demonstrations:
       - trajectories/demonstrations/replay__marshmallow-code__marshmallow-1867__function_calling_replace__install-1/marshmallow-code__marshmallow-1867.traj
     put_demos_in_history: true
@@ -115,7 +109,6 @@ agent:
       - path: tools/registry
       - path: tools/defaults
       - path: tools/search
-      # - path: tools/edit_linting
       - path: tools/edit_replace
       - path: tools/submit
     enable_bash_tool: true

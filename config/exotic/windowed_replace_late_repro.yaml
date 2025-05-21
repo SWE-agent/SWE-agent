@@ -1,3 +1,5 @@
+# This config is similar to windowed_replace.yaml, but with a slightly tweaked prompt that encourages the model
+# to write the reproduction script _after_ it has investigated the codebase.
 agent:
   templates:
     system_template: |-
@@ -50,26 +52,39 @@ agent:
 
       NOTE ABOUT THE EDIT COMMAND: Indentation really matters! When editing a file, make sure to insert appropriate indentation before each line!
 
-      IMPORTANT TIPS:
-      1. Always start by trying to replicate the bug that the issues discusses.
+      GENERAL IMPORTANT TIPS:
+
+      1. If you run a command and it doesn't work, try running a different command. A command that did not work once will not work the second time unless you modify it!
+
+      2. If you open a file and need to get to an area around a specific line that is not in the first 100 lines, say line 583, don't just use the scroll_down command multiple times. Instead, use the goto 583 command. It's much quicker.
+
+      3. If the bug reproduction script requires inputting/reading a specific file, such as buggy-input.png, and you'd like to understand how to input that file, conduct a search in the existing repo code, to see whether someone else has already done that. Do this by running the command: find_file "buggy-input.png" If that doesn't work, use the linux 'find' command.
+
+      4. Always make sure to look at the currently open file and the current working directory (which appears right after the currently open file). The currently open file might be in a different directory than the working directory! Note that some commands, such as 'create', open files, so they might change the current open file.
+
+      5. When editing files, it is easy to accidentally to write code with incorrect indentation or make other mistakes. Always check the code after you issue an edit to make sure that it reflects what you wanted to accomplish. If it didn't, issue another command to fix it.
+
+      6. When editing files, first explain the code you want to edit and why it is causing the problem. Then explain the edit you want to make and how it fixes the problem. Explain how the edit does not break existing functionality.
+
+      7. Do not try to install any packages with `pip`, `conda`, or any other way. This will usually not work. If the environment is not set up correctly, try to fix the issue without executing python code or running any tests that require the package installed.
+
+      STRATEGY:
+
+      1. Locate relevant files using the find and search commands, then read the code related to the issue.
+
+      2. Try to replicate the bug that the issues discusses.
         If the issue includes code for reproducing the bug, we recommend that you re-implement that in your environment, and run it to make sure you can reproduce the bug.
         Then start trying to fix it.
-        When you think you've fixed the bug, re-run the bug reproduction script to make sure that the bug has indeed been fixed.
 
         If the bug reproduction script does not print anything when it successfully runs, we recommend adding a print("Script completed successfully, no errors.") command at the end of the file,
         so that you can be sure that the script indeed ran fine all the way through.
 
-      2. If you run a command and it doesn't work, try running a different command. A command that did not work once will not work the second time unless you modify it!
+      3. Use the `edit` command to perform edits on the files that cause the issue.
 
-      3. If you open a file and need to get to an area around a specific line that is not in the first 100 lines, say line 583, don't just use the scroll_down command multiple times. Instead, use the goto 583 command. It's much quicker.
+      4. When you think you've fixed the bug, re-run the bug reproduction script to make sure that the bug has indeed been fixed.
 
-      4. If the bug reproduction script requires inputting/reading a specific file, such as buggy-input.png, and you'd like to understand how to input that file, conduct a search in the existing repo code, to see whether someone else has already done that. Do this by running the command: find_file "buggy-input.png" If that doesn't work, use the linux 'find' command.
-
-      5. Always make sure to look at the currently open file and the current working directory (which appears right after the currently open file). The currently open file might be in a different directory than the working directory! Note that some commands, such as 'create', open files, so they might change the current open file.
-
-      6. When editing files, it is easy to accidentally to write code with incorrect indentation or make other mistakes. Always check the code after you issue an edit to make sure that it reflects what you wanted to accomplish. If it didn't, issue another command to fix it.
-
-      7. It may be necessary to install the repository from source before you can run code. Please think about how to install the environment from the repository directory if you need to do so.
+      5. Create additional tests to verify the fix in a style similar to the existing reproduction script. In particular, make sure to test edge cases.
+         If you find any issues, go back to the file you edited and perform further edits.
 
       (Open file: {{open_file}})
       (Current directory: {{working_dir}})
@@ -84,17 +99,11 @@ agent:
       (Open file: {{open_file}})
       (Current directory: {{working_dir}})
       bash-$
-    demonstration_template: |
-      Here is a demonstration of how to correctly accomplish this task.
-      It is included to show you how to correctly use the interface.
-      You do not need to follow exactly what is done in the demonstration.
-      --- DEMONSTRATION ---
-      {{demonstration}}
-      --- END OF DEMONSTRATION ---
     demonstrations:
-    - trajectories/demonstrations/replay__marshmallow-code__marshmallow-1867__function_calling_replace_from_source/marshmallow-code__marshmallow-1867.traj
+      - trajectories/demonstrations/function_calling_simple.traj
     put_demos_in_history: true
   tools:
+    submit_command: "submit -f"
     env_variables:
       WINDOW: 100
       OVERLAP: 2

@@ -1,3 +1,5 @@
+# This config shows the use of the thought action xml parser together with the line-range based replace tools
+# This config is close to SWE-agent 0.7
 agent:
   templates:
     system_template: |-

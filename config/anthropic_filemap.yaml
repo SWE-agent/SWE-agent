@@ -1,4 +1,5 @@
-# This template is heavily inspired by anthropic's computer use demo
+# This template is heavily inspired by anthropic's computer use demo, but you can use
+# it with any LM
 agent:
   templates:
     system_template: |-
