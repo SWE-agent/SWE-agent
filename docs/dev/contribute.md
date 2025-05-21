@@ -96,6 +96,15 @@ pdb -m sweagent <command> -- <more command line arguments> # (1)!
 1. Note the `--` before the options passed to sweagent. This is to separate
   options passed to `pdb` from those that are passed to `sweagent`.
 
+
+When working on a test that fails, you can use
+
+```
+pytest -k name_of_test -s --capture=no --log-cli-level=DEBUG
+```
+
+to see all debug output from the agent.
+
 ## Tips for pull requests
 
 * If you see a lot of formatting-related merge conflicts, please see [here](formatting_conflicts.md).
