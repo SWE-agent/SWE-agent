@@ -16,8 +16,8 @@ sweagent run-batch \\
     --instances.split dev  \\
     --instances.slice :50 \\     # first 50 instances
     --instances.shuffle=True \\  # shuffle instances (with fixed seed)
-    --config config/anthropic_filemap.yaml \\  # configure model
-    --agent.model.name gpt-4o
+    --config config/default.yaml \\
+    --agent.model.name gpt-4o  # configure model
 [/green]
 
 [cyan][bold]=== LOADING INSTANCES ===[/bold][/cyan]

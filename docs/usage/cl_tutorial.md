@@ -110,13 +110,13 @@ But we can also split it up into multiple files and additional command line opti
     second config would completely overwrite all `agent` settings of the first config.
     This is fixed since SWE-agent 1.1.0.
 
-The default config file is `config/anthropic_filemap.yaml`. Let's take a look at it:
+The default config file is `config/default.yaml`. Let's take a look at it:
 
 <details>
-<summary>Example: default config <code>anthropic_filemap.yaml</code></summary>
+<summary>Example: default config <code>default.yaml</code></summary>
 
 ```yaml
---8<-- "config/anthropic_filemap.yaml"
+--8<-- "config/default.yaml"
 ```
 </details>
 
@@ -126,7 +126,7 @@ This file is also loaded when no other `--config` options are specified.
 So to make sure that we get the default templates in the above examples with `--config`, we should have added
 
 ```bash
---config config/anthropic_filemap.yaml
+--config config/default.yaml
 ```
 
 in addition to all the other `--config` options for the two examples above.

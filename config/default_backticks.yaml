@@ -1,5 +1,6 @@
+# Formerly called: anthropic_filemap.yaml
 # This template is heavily inspired by anthropic's computer use demo, but you can use
-# it with any LM
+# it with any LM.
 agent:
   templates:
     system_template: |-
@@ -55,7 +56,7 @@ agent:
           </diff>
     enable_bash_tool: true
     parse_function:
-      type: function_calling
+      type: thought_action
   history_processors:
     - type: cache_control
       last_n_messages: 2

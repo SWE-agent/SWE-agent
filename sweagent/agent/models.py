@@ -543,7 +543,7 @@ class InstantEmptySubmitTestModel(AbstractModel):
                 "DISCUSSION\n"
                 "Let's reproduce the bug by creating a `reproduce.py` file.\n\n"
                 "```\n"
-                "create reproduce.py\n"
+                "touch reproduce.py\n"
                 "```\n"
             )
         elif self._action_idx == 1:

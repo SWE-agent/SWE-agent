@@ -6,10 +6,10 @@ To learn about the agent class itself, see the [agent class reference page](agen
 It might be easiest to simply look at some of our example configurations in the [config dir](https://github.com/SWE-agent/SWE-agent/tree/main/config).
 
 <details>
-<summary>Example: default config <code>anthropic_filemap.yaml</code></summary>
+<summary>Example: default config <code>default.yaml</code></summary>
 
 ```yaml
---8<-- "config/default_from_url.yaml"
+--8<-- "config/default.yaml"
 ```
 </details>
 

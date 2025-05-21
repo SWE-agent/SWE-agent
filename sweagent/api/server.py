@@ -114,7 +114,7 @@ def run():
     test_run: bool = run.extra.test_run
     if test_run:
         model_name = "instant_empty_submit"
-    default_config = yaml.safe_load(Path(CONFIG_DIR / "default_from_url.yaml").read_text())
+    default_config = yaml.safe_load(Path(CONFIG_DIR / "default.yaml").read_text())
     config = {
         **default_config,
         "agent": {

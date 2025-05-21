@@ -111,7 +111,7 @@ def test_run_ies_repo_ps_matrix(
         *ps_args,
         *repo_args,
         "--config",
-        str(CONFIG_DIR / "default_no_fcalls.yaml"),
+        str(CONFIG_DIR / "default_backticks.yaml"),
     ]
     print(args)
     rs_config = BasicCLI(RunSingleConfig).get_config(args)
@@ -121,5 +121,5 @@ def test_run_ies_repo_ps_matrix(
         # Test that we can run run.py also independently from repo dir
         rs.run()
     for fmt in output_formats:
-        assert len(list(Path(tmpdir).rglob(f"*.{fmt}"))) == 1
         print(fmt, list(Path(tmpdir).iterdir()))
+        assert len(list(Path(tmpdir).rglob(f"*.{fmt}"))) == 1

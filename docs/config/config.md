@@ -23,10 +23,10 @@ sweagent run-batch --config config/your_config.yaml
 This is the current default configuration file which is loaded when no `--config` flag is provided:
 
 <details>
-<summary><code>default_from_url.yaml</code></summary>
+<summary><code>default.yaml</code></summary>
 
-```yaml title="config/default_from_url.yaml"
---8<-- "config/default_from_url.yaml"
+```yaml title="config/default.yaml"
+--8<-- "config/default.yaml"
 ```
 </details>
 

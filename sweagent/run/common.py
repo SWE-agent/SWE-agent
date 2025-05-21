@@ -289,7 +289,7 @@ class BasicCLI:
                 _loaded = yaml.safe_load(txt)
                 merge_nested_dicts(config_merged, _loaded)
         elif self.default_settings and not cli_args.no_config_file:
-            config_file = CONFIG_DIR / "anthropic_filemap.yaml"
+            config_file = CONFIG_DIR / "default.yaml"
             config_files.append(config_file)
             msg = (
                 f"Loading default config from {config_file}, because no other "
