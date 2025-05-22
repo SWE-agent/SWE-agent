@@ -33,7 +33,7 @@ agent:
       OVERLAP: 2
     bundles:
       - path: tools/registry
-      - path: tools/defaults
+      - path: tools/windowed
       - path: tools/search
       - path: tools/edit_linting
       - path: tools/submit

@@ -87,7 +87,7 @@ agent:
       SEARCH_INDEX: 0
     bundles:
       - path: tools/registry
-      - path: tools/defaults
+      - path: tools/windowed
       - path: tools/search
       - path: tools/edit_replace
       - path: tools/submit

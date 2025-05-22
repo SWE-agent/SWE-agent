@@ -84,7 +84,7 @@ agent:
       WINDOW: 100
       OVERLAP: 2
     bundles:
-      - path: tools/defaults
+      - path: tools/windowed
       - path: tools/search
       - path: tools/edit_linting
       - path: tools/submit
