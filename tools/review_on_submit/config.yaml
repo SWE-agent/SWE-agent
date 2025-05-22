@@ -1,6 +1,0 @@
-tools:
-  submit:
-    signature: "submit"
-    docstring: "submits the current file"
-    # Do not actually show the -f argument to the model, only
-    # use it from the agent for submission after error
