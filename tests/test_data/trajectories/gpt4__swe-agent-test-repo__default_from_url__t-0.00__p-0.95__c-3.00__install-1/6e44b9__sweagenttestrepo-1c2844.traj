@@ -265,7 +265,7 @@
             "hidden_tools": []
           },
           {
-            "path": "tools/defaults",
+            "path": "tools/windowed",
             "hidden_tools": []
           },
           {
@@ -273,7 +273,7 @@
             "hidden_tools": []
           },
           {
-            "path": "tools/edit_replace",
+            "path": "tools/windowed_edit_replace",
             "hidden_tools": []
           },
           {

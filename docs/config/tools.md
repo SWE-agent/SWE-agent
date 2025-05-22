@@ -44,7 +44,7 @@ The `state` command is a special command that is executed after every action and
 The resulting dictionary can be used to format prompt templates.
 For example, for the classical SWE-agent tools, we extract the working directory and the currently open file like so:
 
-```python title="tools/defaults/bin/_state"
+```python title="tools/windowed/bin/_state"
 #!/usr/bin/env python3
 
 import json

@@ -34,7 +34,7 @@ def agent_config_with_commands():
     ac = DefaultAgentConfig(model=InstantEmptySubmitModelConfig())
     ac.tools.bundles = [
         Bundle(path=TOOLS_DIR / "registry"),
-        Bundle(path=TOOLS_DIR / "defaults"),
+        Bundle(path=TOOLS_DIR / "windowed"),
         Bundle(path=TOOLS_DIR / "submit"),
     ]
     ac.tools.env_variables = {"WINDOW": 100}
@@ -50,7 +50,7 @@ def test_hidden_tools(tmpdir):
     ac.tools.env_variables = {"WINDOW": 100}
     ac.tools.bundles = [
         Bundle(path=TOOLS_DIR / "registry"),
-        Bundle(path=TOOLS_DIR / "defaults", hidden_tools=["scroll_up"]),
+        Bundle(path=TOOLS_DIR / "windowed", hidden_tools=["scroll_up"]),
         Bundle(path=TOOLS_DIR / "submit"),
     ]
     ac.model.name = "instant_empty_submit"

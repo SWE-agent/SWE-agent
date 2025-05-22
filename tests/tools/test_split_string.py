@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from tests.utils import make_python_tool_importable
 
-make_python_tool_importable("tools/defaults/lib/flake8_utils.py", "flake8_utils")
+make_python_tool_importable("tools/windowed/lib/flake8_utils.py", "flake8_utils")
 from flake8_utils import Flake8Error, format_flake8_output  # type: ignore
 
 
