@@ -582,7 +582,7 @@ class LiteLLMModel(AbstractModel):
             self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
             # Special handling for Claude 3.7 models to set 64k context by default when beta header not present
             # See https://github.com/SWE-agent/SWE-agent/pull/1016
-            is_claude_3_7 = "claude-3-7-sonnet" in self.config.name
+            is_claude_3_7 = "claude-3-7-sonnet" in self.config.name or "claude-sonnet-4" in self.config.name
             has_128k_beta_header = (
                 self.config.completion_kwargs.get("extra_headers", {}).get("anthropic-beta") == "output-128k-2025-02-19"
             )
