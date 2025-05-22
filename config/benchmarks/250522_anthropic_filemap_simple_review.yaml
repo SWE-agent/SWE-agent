@@ -2,6 +2,7 @@
 # For running on lite:
 # sweagent run-batch --config config/benchmarks/250522_anthropic_filemap_simple_review.yaml --num_workers=20
 # For running on test:
+random_delay_multiplier: 1.0
 instances:
   type: swe_bench
   subset: verified
@@ -52,6 +53,12 @@ agent:
     enable_bash_tool: true
     parse_function:
       type: function_calling
+    env_variables:
+      PAGER: cat
+      MANPAGER: cat
+      LESS: -R
+      PIP_PROGRESS_BAR: 'off'
+      TQDM_DISABLE: '1'
     registry_variables:
       USE_FILEMAP: 'true'
       SUBMIT_REVIEW_MESSAGES:
@@ -77,7 +84,7 @@ agent:
   model:
     name: claude-sonnet-4-20250514
     api_key: $CLAUDE_API_KEY_ROTATION
-    per_instance_cost_limit: 2
+    per_instance_cost_limit: 3
     per_instance_call_limit: 150
     total_cost_limit: 1000.0
     temperature: 0.0
