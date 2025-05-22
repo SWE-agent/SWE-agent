@@ -9,6 +9,7 @@ import io
 
 from registry import registry
 
+env_dir = os.environ.get("ENV_DIR", "/root").rstrip("/")
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Submit changes for review")
@@ -18,7 +19,7 @@ def main() -> None:
     repo_root = registry.get("ROOT", os.getenv("ROOT"))
     assert repo_root
 
-    patch_path = Path("/root/model.patch")
+    patch_path = Path(f"{env_dir}/model.patch")
 
     subprocess.run(
         f"git add -A && git diff --cached > {patch_path}",

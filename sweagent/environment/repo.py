@@ -15,6 +15,8 @@ from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
 
+repo_base_dir = os.environ.get("REPO_BASE_DIR", "").rstrip("/")
+
 
 class Repo(Protocol):
     """Protocol for repository configurations."""
@@ -100,9 +102,10 @@ class LocalRepoConfig(BaseModel):
 
     def copy(self, deployment: AbstractDeployment):
         self.check_valid_repo()
-        asyncio.run(
-            deployment.runtime.upload(UploadRequest(source_path=str(self.path), target_path=f"/{self.repo_name}"))
-        )
+        target_path = f"{repo_base_dir}/{self.repo_name}"
+
+        asyncio.run(deployment.runtime.upload(UploadRequest(source_path=str(self.path), target_path=target_path)))
+
         r = asyncio.run(deployment.runtime.execute(Command(command=f"chown -R root:root {self.repo_name}", shell=True)))
         if r.exit_code != 0:
             msg = f"Failed to change permissions on copied repository (exit code: {r.exit_code}, stdout: {r.stdout}, stderr: {r.stderr})"
@@ -160,8 +163,8 @@ class GithubRepoConfig(BaseModel):
                 Command(
                     command=" && ".join(
                         (
-                            f"mkdir /{self.repo_name}",
-                            f"cd /{self.repo_name}",
+                            f"mkdir {repo_base_dir}/{self.repo_name}",
+                            f"cd {repo_base_dir}/{self.repo_name}",
                             "git init",
                             f"git remote add origin {url}",
                             f"git fetch --depth 1 origin {base_commit}",

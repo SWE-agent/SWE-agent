@@ -6,9 +6,10 @@ from pathlib import Path
 
 from registry import registry  # type: ignore
 
+env_dir = os.environ.get("ENV_DIR", "/root").rstrip("/")
 
 def main():
-    state_path = Path("/root/state.json")
+    state_path = Path(f"{env_dir}/state.json")
 
     if state_path.exists():
         state = json.loads(state_path.read_text())
