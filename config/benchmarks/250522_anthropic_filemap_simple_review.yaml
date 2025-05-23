@@ -1,6 +1,7 @@
-# This template is heavily inspired by anthropic and openhands
+# This template only features minor adaptions from the 250225 config.
 # For running on lite:
 # sweagent run-batch --config config/benchmarks/250522_anthropic_filemap_simple_review.yaml --num_workers=20
+# To fully reproduce, please run from the submissions/250225-sonnet-4 branch
 # For running on test:
 random_delay_multiplier: 1.0
 instances:
