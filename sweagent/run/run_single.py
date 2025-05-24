@@ -47,7 +47,7 @@ from sweagent.run.common import AutoCorrectSuggestion as ACS
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
-from sweagent.run.hooks.open_pr import OpenPRConfig, OpenPRHook
+from sweagent.run.hooks.open_pr import GithubPRConfig, OpenPRConfig, OpenPRHook
 from sweagent.utils.config import load_environment_variables
 from sweagent.utils.log import add_file_handler, get_logger
 
@@ -57,7 +57,7 @@ class RunSingleActionConfig(BaseModel):
 
     # Open a PR with the patch if we can solve the issue
     open_pr: bool = False
-    pr_config: OpenPRConfig = Field(default_factory=OpenPRConfig)
+    pr_config: OpenPRConfig = Field(default_factory=GithubPRConfig)
     # When working with local repository: Apply patch
     apply_patch_locally: bool = False
 

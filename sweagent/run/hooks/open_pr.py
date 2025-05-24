@@ -1,10 +1,13 @@
 import os
 import random
 import shlex
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Type, TypeAlias
 
 from ghapi.all import GhApi
 from pydantic import BaseModel
 
+from sweagent.agent.problem_statement import GithubIssue, ProblemStatement
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.run.hooks.abstract import RunHook
 from sweagent.types import AgentRunResult
@@ -15,9 +18,85 @@ from sweagent.utils.github import (
     _parse_gh_issue_url,
 )
 from sweagent.utils.log import get_logger
+from sweagent.utils.plugin_base import PluginBaseModel
 
 # NOTE
 # THE IMPLEMENTATION DETAILS HERE WILL CHANGE SOON!
+
+
+class PRBackend(ABC):
+    @abstractmethod
+    def open_pr(
+        self,
+        target_branch: str,
+        result: AgentRunResult,
+        env: SWEEnv,
+        draft: bool = False,
+        skip: bool = False,
+    ) -> None:
+        """Open a pull request and return its URL."""
+
+    @abstractmethod
+    def should_open_pr(self, result: AgentRunResult) -> bool:
+        """Determine if a PR should be opened based on the result of the agent run."""
+
+
+class BasePRConfig(PluginBaseModel, plugin_category="pr_configs"):
+    # Option to be used with open_pr: Skip action if there are already commits claiming
+    # to fix the issue. Please only set this to False if you are sure the commits are
+    # not fixes or if this is your own repository!
+    skip_if_commits_reference_issue: bool = True
+    dry_run: bool = False
+    target_branch: str = "main"
+    backend_cls: ClassVar[type[PRBackend]]
+    type: Literal["github"] = "github"  # github by default
+
+
+class OpenPRHook(RunHook):
+    def __init__(self, config: BasePRConfig):
+        self.logger = get_logger("swea-open_pr", emoji="⚡️")
+        self._config = config
+
+    @property
+    def _backend(self) -> PRBackend:
+        kwargs = {
+            "problem_statement": self._problem_statement,
+            "config": self._config,
+        }
+        return self._config.backend_cls(**kwargs)
+
+    def on_init(self, *, run):
+        self._env = run.env
+        self._problem_statement = run.problem_statement
+
+    def on_instance_completed(self, result: AgentRunResult):
+        if self.should_open_pr(result):
+            self._backend.open_pr(
+                target_branch=self._config.target_branch,
+                result=result,
+                env=self._env,
+            )
+
+    def should_open_pr(self, result: AgentRunResult) -> bool:
+        # Core logic to determine if a PR should be opened
+        if not result.info.get("submission"):
+            self.logger.info("Not opening PR because no submission was made.")
+            return False
+        if result.info.get("exit_status") != "submitted":
+            self.logger.info(
+                "Not opening PR because exit status was %s and not submitted.",
+                result.info.get("exit_status"),
+            )
+            return False
+
+        # Delegate to PR backend method (for backend-specific logic)
+        if not self._backend.should_open_pr(result):
+            self.logger.info("PR backend decided to open a PR.")
+            return False
+
+        return True
+
+        # return self._backend.should_open_pr(result)
 
 
 # fixme: Bring back the ability to open the PR to a fork
@@ -116,45 +195,31 @@ def open_pr(*, logger, token, env: SWEEnv, github_url, trajectory, _dry_run: boo
         )
 
 
-class OpenPRConfig(BaseModel):
-    # Option to be used with open_pr: Skip action if there are already commits claiming
-    # to fix the issue. Please only set this to False if you are sure the commits are
-    # not fixes or if this is your own repository!
-    skip_if_commits_reference_issue: bool = True
-
-
-class OpenPRHook(RunHook):
-    """This hook opens a PR if the issue is solved and the user has enabled the option."""
-
-    def __init__(self, config: OpenPRConfig):
+class GithubPRBackend(PRBackend):
+    def __init__(self, problem_statement: GithubIssue, config: BasePRConfig):
         self.logger = get_logger("swea-open_pr", emoji="⚡️")
+        self._problem_statement = problem_statement
+        self._token: str = os.getenv("GITHUB_TOKEN", "")
         self._config = config
 
-    def on_init(self, *, run):
-        self._env = run.env
-        self._token: str = os.getenv("GITHUB_TOKEN", "")
-        self._problem_statement = run.problem_statement
-
-    def on_instance_completed(self, result: AgentRunResult):
-        if self.should_open_pr(result):
-            open_pr(
-                logger=self.logger,
-                token=self._token,
-                env=self._env,
-                github_url=self._problem_statement.github_url,
-                trajectory=result.trajectory,
-            )
+    def open_pr(
+        self,
+        target_branch: str,
+        result: AgentRunResult,
+        env: SWEEnv,
+        draft: bool = False,
+    ) -> None:
+        open_pr(
+            logger=self.logger,
+            token=self._token,
+            env=env,
+            github_url=self._problem_statement.github_url,
+            trajectory=result.trajectory,
+            _dry_run=self._config.dry_run,
+        )
 
     def should_open_pr(self, result: AgentRunResult) -> bool:
         """Does opening a PR make sense?"""
-        if not result.info.get("submission"):
-            self.logger.info("Not opening PR because no submission was made.")
-            return False
-        if result.info.get("exit_status") != "submitted":
-            self.logger.info(
-                "Not opening PR because exit status was %s and not submitted.", result.info.get("exit_status")
-            )
-            return False
         try:
             issue = _get_gh_issue_data(self._problem_statement.github_url, token=self._token)
         except InvalidGithubURL:
@@ -183,6 +248,11 @@ class OpenPRHook(RunHook):
                     "or after verifying that the existing commits do not fix the issue.",
                 )
         return True
+
+
+class GithubPRConfig(BasePRConfig):
+    type: Literal["github"] = "github"
+    backend_cls: ClassVar[Type[PRBackend]] = GithubPRBackend
 
 
 def _remove_triple_backticks(text: str) -> str:
@@ -241,3 +311,6 @@ def format_trajectory_markdown(trajectory: list[dict[str, str]], char_limit: int
         current_length += len(step_text)
 
     return prefix_text + "".join(steps) + suffix_text
+
+
+OpenPRConfig: TypeAlias = BasePRConfig.any()  # pyright: ignore

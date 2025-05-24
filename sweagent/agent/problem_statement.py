@@ -2,12 +2,13 @@ import hashlib
 import os
 import uuid
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from sweagent.utils.github import _get_problem_statement_from_github_issue, _parse_gh_issue_url
 from sweagent.utils.log import get_logger
+from sweagent.utils.plugin_base import PluginBaseModel
 
 logger = get_logger("swea-config", emoji="🔧")
 
@@ -22,7 +23,10 @@ class ProblemStatement(Protocol):
     def get_extra_fields(self) -> dict[str, Any]: ...
 
 
-class EmptyProblemStatement(BaseModel):
+class BaseProblemStatement(PluginBaseModel, plugin_category="problem_statements"): ...
+
+
+class EmptyProblemStatement(BaseProblemStatement):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     type: Literal["empty"] = "empty"
     """Discriminator for (de)serialization/CLI. Do not change."""
@@ -36,7 +40,7 @@ class EmptyProblemStatement(BaseModel):
         return {}
 
 
-class TextProblemStatement(BaseModel):
+class TextProblemStatement(BaseProblemStatement):
     text: str
 
     extra_fields: dict[str, Any] = Field(default_factory=dict)
@@ -69,7 +73,7 @@ class TextProblemStatement(BaseModel):
         return f"id={self.id}, text={self.text[:30]}..."
 
 
-class FileProblemStatement(BaseModel):
+class FileProblemStatement(BaseProblemStatement):
     path: Path
 
     extra_fields: dict[str, Any] = Field(default_factory=dict)
@@ -96,7 +100,7 @@ class FileProblemStatement(BaseModel):
         return self.extra_fields
 
 
-class GithubIssue(BaseModel):
+class GithubIssue(BaseProblemStatement):
     github_url: str
 
     extra_fields: dict[str, Any] = Field(default_factory=dict)
@@ -125,7 +129,7 @@ class GithubIssue(BaseModel):
         return self.extra_fields
 
 
-ProblemStatementConfig = TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement
+ProblemStatementConfig: TypeAlias = BaseProblemStatement.any()  # pyright: ignore
 
 
 def problem_statement_from_simplified_input(

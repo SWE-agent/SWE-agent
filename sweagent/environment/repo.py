@@ -1,7 +1,7 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, TypeAlias
 
 from git import InvalidGitRepositoryError
 from git import Repo as GitRepo
@@ -12,6 +12,7 @@ from typing_extensions import Self
 
 from sweagent.utils.github import _parse_gh_repo_url
 from sweagent.utils.log import get_logger
+from sweagent.utils.plugin_base import PluginBaseModel
 
 logger = get_logger("swea-config", emoji="🔧")
 
@@ -27,6 +28,9 @@ class Repo(Protocol):
     def get_reset_commands(self) -> list[str]: ...
 
 
+class BaseRepoConfig(PluginBaseModel, plugin_category="repo_configs"): ...
+
+
 def _get_git_reset_commands(base_commit: str) -> list[str]:
     return [
         "git status",
@@ -36,7 +40,7 @@ def _get_git_reset_commands(base_commit: str) -> list[str]:
     ]
 
 
-class PreExistingRepoConfig(BaseModel):
+class PreExistingRepoConfig(BaseRepoConfig):
     """Use this to specify a repository that already exists on the deployment.
     This is important because we need to cd to the repo before running the agent.
 
@@ -66,7 +70,7 @@ class PreExistingRepoConfig(BaseModel):
         return _get_git_reset_commands(self.base_commit)
 
 
-class LocalRepoConfig(BaseModel):
+class LocalRepoConfig(BaseRepoConfig):
     path: Path
     base_commit: str = Field(default="HEAD")
     """The commit to reset the repository to. The default is HEAD,
@@ -113,7 +117,7 @@ class LocalRepoConfig(BaseModel):
         return _get_git_reset_commands(self.base_commit)
 
 
-class GithubRepoConfig(BaseModel):
+class GithubRepoConfig(BaseRepoConfig):
     github_url: str
 
     base_commit: str = Field(default="HEAD")
@@ -181,7 +185,7 @@ class GithubRepoConfig(BaseModel):
         return _get_git_reset_commands(self.base_commit)
 
 
-RepoConfig = LocalRepoConfig | GithubRepoConfig | PreExistingRepoConfig
+RepoConfig: TypeAlias = BaseRepoConfig.any()  # pyright: ignore
 
 
 def repo_from_simplified_input(
