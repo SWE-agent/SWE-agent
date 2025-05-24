@@ -4,7 +4,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Literal, Protocol, TypeAlias
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
 from sweagent.utils.github import _get_problem_statement_from_github_issue, _parse_gh_issue_url
 from sweagent.utils.log import get_logger

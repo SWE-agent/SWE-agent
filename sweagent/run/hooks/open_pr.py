@@ -1,13 +1,13 @@
+import builtins
 import os
 import random
 import shlex
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Type, TypeAlias
+from typing import ClassVar, Literal, TypeAlias
 
 from ghapi.all import GhApi
-from pydantic import BaseModel
 
-from sweagent.agent.problem_statement import GithubIssue, ProblemStatement
+from sweagent.agent.problem_statement import GithubIssue
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.run.hooks.abstract import RunHook
 from sweagent.types import AgentRunResult
@@ -252,7 +252,7 @@ class GithubPRBackend(PRBackend):
 
 class GithubPRConfig(BasePRConfig):
     type: Literal["github"] = "github"
-    backend_cls: ClassVar[Type[PRBackend]] = GithubPRBackend
+    backend_cls: ClassVar[builtins.type[PRBackend]] = GithubPRBackend
 
 
 def _remove_triple_backticks(text: str) -> str:
