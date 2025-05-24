@@ -50,8 +50,8 @@ def open_pr(*, logger, token, env: SWEEnv, github_url, trajectory, _dry_run: boo
     env.communicate(input="git add .", error_msg="Failed to add commits", timeout=10, check="raise")
     dry_run_flag = "--allow-empty" if _dry_run else ""
     commit_msg = [
-        shlex.quote("Fix: {issue.title}"),
-        shlex.quote("Closes #{issue.number}"),
+        shlex.quote(f"Fix: {issue.title}"),
+        shlex.quote(f"Closes #{issue.number}"),
     ]
     out = env.communicate(
         input=f"git commit -m {commit_msg[0]} -m  {commit_msg[1]} {dry_run_flag}",
