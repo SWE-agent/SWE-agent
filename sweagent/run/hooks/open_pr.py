@@ -97,13 +97,14 @@ def open_pr(*, logger, token, env: SWEEnv, github_url, trajectory, _dry_run: boo
     )
     body += "\n\n" + format_trajectory_markdown(trajectory, char_limit=60_000)
     api = GhApi(token=token)
+    default_branch = api.repos.get(owner, repo).default_branch
     if not _dry_run:
         args = dict(
             owner=owner,
             repo=repo,
             title=f"SWE-agent[bot] PR to fix: {issue.title}",
             head=head,
-            base="main",
+            base=default_branch,
             body=body,
             draft=True,
         )
