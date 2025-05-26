@@ -24,9 +24,9 @@ from __future__ import annotations
 from functools import reduce
 from importlib.metadata import entry_points
 from operator import or_
-from typing import Annotated, Any, ClassVar
+from typing import Any, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 class PluginBaseModel(BaseModel):
