@@ -1,7 +1,7 @@
-import pytest
-from unittest import mock
-import requests
 from unittest.mock import Mock, patch
+
+import pytest
+import requests
 
 from sweagent.utils.gitlab import (
     InvalidGitlabURL,
@@ -332,9 +332,7 @@ class TestGitlabMergeRequests:
         mock_get_client.return_value = mock_client
 
         # Test getting associated commit URLs
-        commit_urls = _get_associated_commit_urls(
-            "gitlab.com", "user", "repo", "1", token="test_token"
-        )
+        commit_urls = _get_associated_commit_urls("gitlab.com", "user", "repo", "1", token="test_token")
 
         # Verify calls were made correctly
         mock_get_client.assert_called_once_with("gitlab.com", "test_token", "project")

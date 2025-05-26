@@ -1,18 +1,20 @@
 import os
+from collections.abc import Generator
+from typing import Any
 from unittest import mock
+from unittest.mock import Mock, patch
+
 import pytest
 
+from sweagent.environment.swe_env import SWEEnv
 from sweagent.run.hooks.open_pr_gitlab import (
     OpenMRConfig,
     OpenMRHook,
+    open_mr,
 )
-from typing import Any, Generator
-from sweagent.environment.swe_env import SWEEnv
 from sweagent.types import AgentRunResult
 from sweagent.utils.gitlab import InvalidGitlabURL
-from sweagent.run.hooks.open_pr_gitlab import open_mr
 
-from unittest.mock import Mock, patch
 
 @pytest.fixture
 def open_mr_hook() -> OpenMRHook:
@@ -25,6 +27,7 @@ def open_mr_hook() -> OpenMRHook:
     hook._problem_statement = mock.Mock()
     hook._problem_statement.gitlab_url = "https://gitlab.com/jpaodev/test-repo/-/issues/1"
     return hook
+
 
 @mock.patch.dict(os.environ, {"GITLAB_TOKEN": "test_token", "GITLAB_TOKEN_TYPE": "oauth2"})
 class TestOpenMRHookWithGitlab:
@@ -236,7 +239,7 @@ class TestOpenMRHookWithGitlab:
         assert not result, "should_open_mr should return False for locked issue"
 
     @mock.patch("sweagent.run.hooks.open_pr_gitlab._get_gitlab_issue_data", side_effect=InvalidGitlabURL)
-    @mock.patch("sweagent.utils.gitlab._is_gitlab_issue_url", return_value=True) # Ensure this mock is active
+    @mock.patch("sweagent.utils.gitlab._is_gitlab_issue_url", return_value=True)  # Ensure this mock is active
     def test_should_open_mr_gitlab_invalid_url_exception(
         self, mock_is_url: Mock, mock_get_issue_data: Mock, open_mr_hook: OpenMRHook, agent_run_result: AgentRunResult
     ):
@@ -278,7 +281,7 @@ def open_mr_hook_ready_for_mr_check(open_mr_hook: OpenMRHook) -> Generator[OpenM
 
 class TestOpenMRHookOnInstanceCompleted:
     """Tests for the on_instance_completed method of OpenMRHook."""
-    
+
     @pytest.fixture
     def agent_run_result_for_mr(self) -> AgentRunResult:
         """Create an AgentRunResult that should trigger MR creation."""
@@ -286,31 +289,31 @@ class TestOpenMRHookOnInstanceCompleted:
             info={"submission": "Test Submission", "exit_status": "submitted"},
             trajectory=[
                 {
-                    "action": "test_action", 
+                    "action": "test_action",
                     "observation": "test_observation",
                     "response": "test_response",
                     "state": {"key": "value"},
                     "thought": "test_thought",
                     "execution_time": 0.1,
                     "messages": [],
-                    "extra_info": {}
+                    "extra_info": {},
                 },
-            ]
+            ],
         )
         return result
-    
+
     @mock.patch("sweagent.run.hooks.open_pr_gitlab.open_mr")
     def test_on_instance_completed_no_mr_when_should_not(self, mock_open_mr: Mock, open_mr_hook: OpenMRHook):
         """Test that on_instance_completed doesn't call open_mr when should_open_mr returns False."""
-            # Mock should_open_mr to return False
+        # Mock should_open_mr to return False
         with mock.patch.object(open_mr_hook, "should_open_mr", return_value=False):
             # Call on_instance_completed
             result = AgentRunResult(info={}, trajectory=[])  # Initialize AgentRunResult with info and trajectory
             open_mr_hook.on_instance_completed(result)
-            
+
             # Verify open_mr was not called
             assert mock_open_mr.call_count == 0
-    
+
     @mock.patch("sweagent.run.hooks.open_pr_gitlab.open_mr")
     def test_on_instance_completed_no_gitlab_url(self, mock_open_mr: Mock, open_mr_hook: OpenMRHook):
         """Test that on_instance_completed logs warning when no gitlab_url is present."""
@@ -318,18 +321,15 @@ class TestOpenMRHookOnInstanceCompleted:
         with mock.patch.object(open_mr_hook, "should_open_mr", return_value=True):
             # Remove gitlab_url from problem_statement
             delattr(open_mr_hook._problem_statement, "gitlab_url")  # type: ignore[misc]
-            
+
             # Mock logger to check warning
             mock_logger = Mock()
             open_mr_hook.logger = mock_logger
-            
+
             # Call on_instance_completed
-            result = AgentRunResult(
-                info={},
-                trajectory=[]
-            )
+            result = AgentRunResult(info={}, trajectory=[])
             open_mr_hook.on_instance_completed(result)
-            
+
             # Verify open_mr was not called and warning was logged
             assert mock_open_mr.call_count == 0
             mock_logger.warning.assert_called_once()
@@ -415,7 +415,7 @@ class TestOpenMR:
         # Verify the expected calls were made
         assert mock_env.communicate.call_count >= 4, "Should make multiple git commands"
         assert mock_create_mr.call_count == 1, "Should create one merge request"
-        
+
         # Verify merge request creation parameters
         mr_call_kwargs = mock_create_mr.call_args[1]
         assert mr_call_kwargs["gitlab_instance"] == "https://gitlab.com"
@@ -500,7 +500,7 @@ class TestOpenMR:
 
         # Verify create_merge_request was not called
         assert mock_create_mr.call_count == 0, "Should not create merge request in dry run mode"
-        
+
         # Verify git commands were still called
         assert mock_env.communicate.call_count >= 4, "Should make git commands even in dry run mode"
 
