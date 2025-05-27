@@ -94,8 +94,7 @@ class PluginBaseModel(BaseModel):
     @classmethod
     def any(cls) -> Any:
         """
-        Return an Annotated Union of registered plugin classes for
-        Pydantic type discrimination.
+        Return an Union of registered plugin classes for Pydantic type discrimination.
 
         Returns:
             Any: Annotated Union of plugin classes with discriminator 'type'.
@@ -105,8 +104,5 @@ class PluginBaseModel(BaseModel):
         if not cls.registry:
             msg = "Plugin registry is empty."
             raise RuntimeError(msg)
-
-        # union_type = reduce(or_, cls.registry)
-        # return Annotated[union_type, Field(discriminator="type")]
 
         return reduce(or_, cls.registry)

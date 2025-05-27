@@ -96,8 +96,6 @@ class OpenPRHook(RunHook):
 
         return True
 
-        # return self._backend.should_open_pr(result)
-
 
 # fixme: Bring back the ability to open the PR to a fork
 def open_pr(*, logger, token, env: SWEEnv, github_url, trajectory, _dry_run: bool = False) -> None:
