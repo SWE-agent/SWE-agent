@@ -285,7 +285,7 @@ class TestOpenMRHookOnInstanceCompleted:
     @pytest.fixture
     def agent_run_result_for_mr(self) -> AgentRunResult:
         """Create an AgentRunResult that should trigger MR creation."""
-        result = AgentRunResult(
+        return AgentRunResult(
             info={"submission": "Test Submission", "exit_status": "submitted"},
             trajectory=[
                 {
@@ -300,7 +300,6 @@ class TestOpenMRHookOnInstanceCompleted:
                 },
             ],
         )
-        return result
 
     @mock.patch("sweagent.run.hooks.open_pr_gitlab.open_mr")
     def test_on_instance_completed_no_mr_when_should_not(self, mock_open_mr: Mock, open_mr_hook: OpenMRHook):
