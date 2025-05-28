@@ -3,6 +3,7 @@
 * `sweagent_0_7`: Configs from SWE-agent 0.7, similar to the one used in the paper
 * `exotic`: Various specific configurations that might be more of niche interest
 * `human`: Demo/debug configs that have the human type commands and run without a LM
+* Configs for running with SWE-smith are at https://github.com/SWE-bench/SWE-smith/blob/main/agent/swesmith_infer.yaml
 
 🔗 For more information on config files, visit [our documentation website][docs].
 
