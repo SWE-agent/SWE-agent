@@ -7,6 +7,7 @@ The `ToolHandler` class is used to handle the tools that are available to the ag
 
 import asyncio
 import json
+import os
 import re
 from functools import cached_property
 from pathlib import Path
@@ -81,6 +82,14 @@ class ToolConfig(BaseModel):
 
     bundles: list[Bundle] = Field(default_factory=list)
     """The tool bundles to load."""
+
+    propagate_env_variables: list[str] = []
+    """Environment variables to propagate to the environment.
+    This is useful if you want to propagate API keys or similar from your own environment to the
+    environment in which the tools run.
+    IMPORTANT NOTE: The value of the environment variables can be read in debug log files,
+    so be careful with your API keys!
+    """
 
     env_variables: dict[str, Any] = {}
     """Shorthand to set environment variables for the tools, effectively
@@ -239,7 +248,10 @@ class ToolHandler:
 
     def reset(self, env: SWEEnv) -> None:
         self.logger.info("Resetting tools")
-        env.set_env_variables(self.config.env_variables)
+        env_variables = self.config.env_variables.copy() | {
+            var: os.getenv(var) for var in self.config.propagate_env_variables
+        }
+        env.set_env_variables(env_variables)
         env.write_file("/root/.swe-agent-env", json.dumps(self.config.registry_variables))
         env.write_file("/root/state.json", "{}")
         env.communicate(" && ".join(self._reset_commands), check="raise", timeout=self.config.install_timeout)
