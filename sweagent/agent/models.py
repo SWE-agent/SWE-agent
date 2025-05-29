@@ -387,8 +387,6 @@ class HumanModel(AbstractModel):
             while True:
                 action = input("... ")
                 if action.rstrip() == "end_multiline_command":
-                    return self._query(history, action_prompt)
-                if action.rstrip() == "end_multiline_command":
                     break
                 buffer.append(action)
             action = "\n".join(buffer)
