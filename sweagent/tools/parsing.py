@@ -276,7 +276,11 @@ class XMLFunctionCallingParser(AbstractParseFunction, BaseModel):
             msg = f"Command '{fn_name}' not found in list of available commands."
             raise FormatError(msg)
 
-        params_dict = {param[0]: param[1].strip() for param in re.findall(FN_PARAM_REGEX_PATTERN, fn_body, re.DOTALL)}
+        params_dict = {
+            param[0]: re.sub(r"^\n|\n$", "", param[1])
+            for param in re.findall(FN_PARAM_REGEX_PATTERN, fn_body, re.DOTALL)
+        }
+
         if "view_range" in params_dict:
             # Check that value is format as [x, y]
             v = params_dict["view_range"]
