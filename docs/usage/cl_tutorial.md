@@ -30,7 +30,7 @@ python run.py \
 ```bash title="Fix a bug in a local repository using a custom docker image" hl_lines="4 5 6"
 git clone https://github.com/SWE-agent/test-repo.git
 python run.py \
-  --agent.model.name=claude-3.5 \
+  --agent.model.name=claude-sonnet-4-20250514\
   --env.repo.path=test-repo \
   --problem_statement.path=test-repo/problem_statements/1.md \
   --env.deployment.image=python:3.12

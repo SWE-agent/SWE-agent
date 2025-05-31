@@ -48,7 +48,7 @@ We recommend that you check how often you hit the cache. A very simple way is to
 grep -o "cached_tokens=[0-9]*" django__django-11299.debug.log
 ```
 
-Note that the maximum number of output tokens of Claude 3.7 can be extended with extra headers.
+Note that the maximum number of output tokens of Claude 3.7/4 can be extended with extra headers.
 See [this issue in litellm](https://github.com/BerriAI/litellm/issues/8984) and and [swe-agent PR #1035](https://github.com/SWE-agent/SWE-agent/issues/1035)
 for omore information.
 Since [#1036](https://github.com/SWE-agent/SWE-agent/pull/1036) you can also manually set the maximum output tokens and override the information
