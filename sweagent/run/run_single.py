@@ -1,4 +1,4 @@
-"""[cyan][bold]Run SWE-agent on a single instance taken from github or similar.[/bold][/cyan]
+"""[cyan][bold]Run SWE-agent on a single instance taken from github, gitlab, or similar.[/bold][/cyan]
 
 [cyan][bold]=== BASIC OPTIONS ===[/bold][/cyan]
 
@@ -14,6 +14,20 @@ Basic usage: Run over a [bold][cyan]github issue[/bold][/cyan][green]:
 sweagent run --config config/default.yaml --agent.model.name "gpt-4o" \\
     --env.repo.github_url=https://github.com/SWE-agent/test-repo/ \\
     --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
+[/green]
+
+Run over a [bold][cyan]gitlab issue[/bold][/cyan][green]:
+
+sweagent run --config config/default.yaml --agent.model.name "gpt-4o" \
+    --env.repo.gitlab_url=https://gitlab.com/jpaodev/test-repo \
+    --problem_statement.gitlab_url=https://gitlab.com/jpaodev/test-repo/-/issues/1
+[/green]
+
+Run over an [bold][cyan]auto-detected issue[/bold][/cyan] (GitHub or GitLab)[green]:
+
+sweagent run --config config/default.yaml --agent.model.name "gpt-4o" \
+    --env.repo.type=auto --env.repo.input=https://gitlab.com/jpaodev/test-repo \
+    --problem_statement.type=issue --problem_statement.input=https://gitlab.com/jpaodev/test-repo/-/issues/1
 [/green]
 
 By default this will start a docker container and run the agent in there.
@@ -42,12 +56,13 @@ from sweagent.agent.problem_statement import (
     ProblemStatement,
     ProblemStatementConfig,
 )
+from sweagent.environment.repo import GithubRepoConfig, GitlabRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
 from sweagent.run.common import AutoCorrectSuggestion as ACS
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
-from sweagent.run.hooks.open_pr import OpenPRConfig, OpenPRHook
+from sweagent.run.hooks.open_pr import OpenPRConfig
 from sweagent.utils.config import load_environment_variables
 from sweagent.utils.log import add_file_handler, get_logger
 
@@ -163,8 +178,10 @@ class RunSingle:
         config.output_dir.mkdir(parents=True, exist_ok=True)
         agent = get_agent_from_config(config.agent)
         agent.replay_config = config  # type: ignore[attr-defined]
+        env = SWEEnv.from_config(config.env)
+        config_repo = env.repo
         self = cls(
-            env=SWEEnv.from_config(config.env),
+            env=env,
             agent=agent,
             problem_statement=config.problem_statement,
             output_dir=config.output_dir,
@@ -172,8 +189,16 @@ class RunSingle:
         )
         self.add_hook(SaveApplyPatchHook(apply_patch_locally=config.actions.apply_patch_locally))
         if config.actions.open_pr:
-            self.logger.debug("Adding OpenPRHook")
-            self.add_hook(OpenPRHook(config.actions.pr_config))
+            if isinstance(config_repo, GithubRepoConfig):
+                self.logger.debug("Adding GitHub OpenPRHook")
+                from sweagent.run.hooks.open_pr import OpenPRHook
+
+                self.add_hook(OpenPRHook(config.actions.pr_config))
+            elif isinstance(config_repo, GitlabRepoConfig):
+                self.logger.debug("Adding GitLab OpenMRHook")
+                from sweagent.run.hooks.open_pr_gitlab import OpenMRHook
+
+                self.add_hook(OpenMRHook(config.actions.pr_config))
         return self
 
     def add_hook(self, hook: RunHook) -> None:
