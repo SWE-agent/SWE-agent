@@ -310,13 +310,15 @@ class FileViewerScreen(ModalScreen):
         vs = self.query_one(VerticalScroll)
         vs.scroll_to(y=vs.scroll_target_y - 15)
 
-    def action_open_editor(self) -> None:
+    async def action_open_editor(self) -> None:
         editor = os.environ.get("EDITOR")
         if not editor:
             self.app.notify("No editor found in $EDITOR environment variable, cannot perform action", severity="error")
             return
         try:
-            subprocess.run([editor, str(self.path)], check=True)
+            # Suspend the TUI app to restore terminal state before launching editor
+            with self.app.suspend():
+                subprocess.run([editor, str(self.path)], check=True)
         except subprocess.CalledProcessError:
             pass
 
