@@ -426,7 +426,7 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             # See https://github.com/SWE-agent/SWE-agent/issues/1159
             if value is None:
                 return ""
-            return str(value)
+            return value
 
         formatted_args = {
             arg.name: Template(arg.argument_format).render(value=get_quoted_arg(values[arg.name]))
