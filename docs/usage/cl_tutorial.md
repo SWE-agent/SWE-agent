@@ -13,7 +13,7 @@
 Before we start with a more structured explanation of the command line options, here are a few examples that you might find immediately useful:
 
 ```bash title="Fix a github issue"
-python run.py \
+sweagent run \
   --agent.model.name=gpt4 \
   --agent.model.per_instance_cost_limit=2.00 \
   --env.repo.github_url=https://github.com/SWE-agent/test-repo \
@@ -21,7 +21,7 @@ python run.py \
 ```
 
 ```bash title="Work on a github repo with a custom problem statement" hl_lines="4"
-python run.py \
+sweagent run \
   ...
   --env.repo.github_url=https://github.com/SWE-agent/test-repo \
   --problem_statement.text="Hey, can you fix all the bugs?"
@@ -29,7 +29,7 @@ python run.py \
 
 ```bash title="Fix a bug in a local repository using a custom docker image" hl_lines="4 5 6"
 git clone https://github.com/SWE-agent/test-repo.git
-python run.py \
+sweagent run \
   --agent.model.name=claude-sonnet-4-20250514\
   --env.repo.path=test-repo \
   --problem_statement.path=test-repo/problem_statements/1.md \
@@ -44,14 +44,14 @@ For the next example, we will use a cloud-based execution environment instead of
 For this, you first need to set up a modal account, install the necessary extra dependencies `pip install 'swe-rex[modal]'`, then run:
 
 ```bash title="Deployment on modal (cloud-based execution)" hl_lines="3"
-python run.py \
+sweagent run \
   ...
   --env.deployment.type=modal \
   --env.deployment.image=python:3.12
 ```
 
 !!! tip "All options"
-    Run `python run.py --help` to see all available options for `run.py`. This tutorial will only cover a subset of options.
+    Run `sweagent run --help` to see all available options for `run.py`. This tutorial will only cover a subset of options.
 
 ## Configuration files
 
@@ -60,7 +60,7 @@ All configuration options can be specified either in one or more `.yaml` files, 
 === "Command line"
 
     ```bash
-    python run.py --config my_run.yaml
+    sweagent run --config my_run.yaml
     ```
 
 === "Configuration file"
@@ -83,7 +83,7 @@ But we can also split it up into multiple files and additional command line opti
 
     ```bash
     # Note that you need --config in front of every config file
-    python run.py --config agent.yaml --config env.yaml \
+    sweagent run --config agent.yaml --config env.yaml \
         --problem_statement.text="Hey, can you fix all the bugs?"
     ```
 
