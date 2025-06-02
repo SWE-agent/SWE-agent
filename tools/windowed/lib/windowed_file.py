@@ -121,7 +121,7 @@ class WindowedFile:
     def first_line(self, value: Union[int, float]):
         self._original_first_line = self.first_line
         value = int(value)
-        self._first_line = max(0, min(value, self.n_lines - 1 - self.window))
+        self._first_line = max(0, min(value, self.n_lines - self.window))
         registry["FIRST_LINE"] = self.first_line
 
     @property
