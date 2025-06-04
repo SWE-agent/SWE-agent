@@ -12,9 +12,11 @@
 """
 
 import argparse
+import logging
 from pathlib import Path
 
 import yaml
+from rich.prompt import Prompt
 from swerex.deployment.config import DockerDeploymentConfig
 
 from sweagent import CONFIG_DIR
@@ -22,8 +24,10 @@ from sweagent.agent.agents import AbstractAgent, ShellAgentConfig
 from sweagent.agent.extra.shell_agent import ShellAgent
 from sweagent.agent.problem_statement import (
     EmptyProblemStatement,
+    GithubIssue,
     ProblemStatement,
     ProblemStatementConfig,
+    TextProblemStatement,
 )
 from sweagent.environment.repo import PreExistingRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
@@ -31,7 +35,8 @@ from sweagent.run.common import save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
 from sweagent.run.run_single import _get_default_output_dir
 from sweagent.utils.config import load_environment_variables
-from sweagent.utils.log import add_file_handler, get_logger
+from sweagent.utils.github import _is_github_issue_url
+from sweagent.utils.log import add_file_handler, get_logger, set_stream_handler_levels
 
 
 class RunShell:
@@ -95,7 +100,7 @@ class RunShell:
 
 def get_cli():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(dest="repo", type=Path, help="Path to the repository.")
+    parser.add_argument("-r", "--repo", type=Path, help="Path to the repository.", default=None)
     # parser.add_argument(dest="--model", type=str, help="Model to use.", default="claude-sonnet-4-20250514")
     parser.add_argument(
         "--config",
@@ -103,10 +108,17 @@ def get_cli():
         help="Path to the agent config file.",
         default=CONFIG_DIR / "exotic" / "default_shell.yaml",
     )
+    parser.add_argument(
+        "-p",
+        type=str,
+        help="Problem statement.",
+        default="",
+    )
     return parser
 
 
 def run_from_cli(args: list[str] | None = None):
+    set_stream_handler_levels(logging.INFO)
     cli_args = get_cli().parse_args(args)
     try:
         load_environment_variables(Path(".env"))
@@ -120,15 +132,27 @@ def run_from_cli(args: list[str] | None = None):
                 "-v",
                 f"{cli_args.repo}:/repo",
             ],
+            python_standalone_dir="/root",
         ),
     )
     agent_config = ShellAgentConfig.model_validate(yaml.safe_load(cli_args.config.read_text())["agent"])
     agent = ShellAgent.from_config(agent_config)
     env = SWEEnv.from_config(env_config)
+    if cli_args.repo is None:
+        cli_args.repo = Path(Prompt.ask("[cyan]Repository path[/cyan]", default="", show_default=False))
+    problem_input = cli_args.p
+    if not problem_input:
+        problem_input = Prompt.ask("[cyan]Problem statement or GitHub issue URL[/cyan]", default="", show_default=False)
+    if _is_github_issue_url(problem_input):
+        problem_statement = GithubIssue(github_url=problem_input)
+    else:
+        problem_statement = TextProblemStatement(
+            text=problem_input,
+        )
     run_shell = RunShell(
         env,
         agent,
-        problem_statement=EmptyProblemStatement(),
+        problem_statement=problem_statement,
         output_dir=_get_default_output_dir(cli_args.repo, EmptyProblemStatement(), agent_config),
     )
     run_shell.run()
