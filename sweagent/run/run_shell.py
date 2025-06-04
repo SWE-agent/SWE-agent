@@ -1,4 +1,6 @@
-"""[cyan][bold]Run SWE-agent on a single instance taken from github or similar.[/bold][/cyan]
+"""[cyan][bold]Run SWE-agent in semi-interactive mode.[/bold][/cyan]
+
+[cyan][bold]sweagen-sh is EXPERIMENTAL[/bold][/cyan]
 
 [cyan][bold]=== BASIC OPTIONS ===[/bold][/cyan]
 
@@ -7,24 +9,6 @@
   --config CONFIG     Load additional config files. Use this option multiple times to load
                       multiple files, e.g., --config config1.yaml --config config2.yaml
 
-[cyan][bold]=== EXAMPLES ===[/bold][/cyan]
-
-Basic usage: Run over a [bold][cyan]github issue[/bold][/cyan][green]:
-
-sweagent run --config config/default.yaml --agent.model.name "gpt-4o" \\
-    --env.repo.github_url=https://github.com/SWE-agent/test-repo/ \\
-    --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
-[/green]
-
-By default this will start a docker container and run the agent in there.
-You can set the image with [green]--env.docker.image[/green].
-
-Here's an example that uses [bold][cyan]modal[/bold][/cyan] instead of docker and also a [bold][cyan]local repository[/bold][/cyan]:
-
-[green]sweagent run --config config/default.yaml --agent.model.name "gpt-4o" \\
-    --env.deployment.type=modal --env.repo.path /path/to/repo \\
-    --problem_statement.path=path/to/problem_statement.md
-[/green]
 """
 
 import getpass
@@ -33,7 +17,7 @@ from pathlib import Path
 from typing import Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from sweagent.agent.agents import AbstractAgent, AgentConfig, get_agent_from_config
@@ -46,23 +30,8 @@ from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
 from sweagent.run.common import AutoCorrectSuggestion as ACS
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
-from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
-from sweagent.run.hooks.open_pr import OpenPRConfig, OpenPRHook
 from sweagent.utils.config import load_environment_variables
 from sweagent.utils.log import add_file_handler, get_logger
-
-
-class RunSingleActionConfig(BaseModel):
-    """Run real-life actions (opening PRs, etc.) if we can solve the issue."""
-
-    # Open a PR with the patch if we can solve the issue
-    open_pr: bool = False
-    pr_config: OpenPRConfig = Field(default_factory=OpenPRConfig)
-    # When working with local repository: Apply patch
-    apply_patch_locally: bool = False
-
-    # pydantic config
-    model_config = ConfigDict(extra="forbid")
 
 
 class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
@@ -73,10 +42,11 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
     )
     output_dir: Path = Field(default=Path("DEFAULT"), description="Output directory.")
 
-    actions: RunSingleActionConfig = Field(default_factory=RunSingleActionConfig)
-
     env_var_path: Path | None = None
     """Path to a .env file to load environment variables from."""
+
+    interactive: bool = False
+    """Whether to make the agent interactive (i.e., allow the human to jump in by pressing ^C)."""
 
     # pydantic config
     model_config = SettingsConfigDict(extra="forbid", env_prefix="SWE_AGENT_")
@@ -105,15 +75,6 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
             ACS("per_instance_cost_limit", "agent.model.per_instance_cost_limit"),
             ACS("model.per_instance_cost_limit", "agent.model.per_instance_cost_limit"),
             ACS("config_file", "config"),
-            ACS(
-                "data_path",
-                help="--data_path is no longer support for SWE-A 1.0. Please check the tutorial and use one of the --problem_statement options, e.g., --problem_statement.github_url or --problem_statement.path",
-            ),
-            ACS(
-                "repo_path",
-                help="--repo_path is no longer support for SWE-A 1.0. Please check the tutorial and use one of the --env.repo options, e.g., --env.repo.github_url or --env.repo.path",
-            ),
-            ACS("repo.path", "env.repo.path"),
         ]
 
 
@@ -126,7 +87,7 @@ class RunSingle:
         *,
         output_dir: Path = Path("."),
         hooks: list[RunHook] | None = None,
-        actions: RunSingleActionConfig | None = None,
+        interactive: bool = False,
     ):
         """Note: When initializing this class, make sure to add the hooks that are required by your actions.
         See `from_config` for an example.
@@ -144,13 +105,11 @@ class RunSingle:
         self.agent = agent
         self.output_dir = output_dir
         self._hooks = []
-        if actions is not None:
-            actions = RunSingleActionConfig()
-        self.actions = actions
         self._chooks = CombinedRunHooks()
         self.problem_statement = problem_statement
         for hook in hooks or []:
             self.add_hook(hook)
+        self.interactive = interactive
 
     @property
     def hooks(self) -> list[RunHook]:
@@ -163,18 +122,13 @@ class RunSingle:
         config.output_dir.mkdir(parents=True, exist_ok=True)
         agent = get_agent_from_config(config.agent)
         agent.replay_config = config  # type: ignore[attr-defined]
-        self = cls(
+        return cls(
             env=SWEEnv.from_config(config.env),
             agent=agent,
             problem_statement=config.problem_statement,
             output_dir=config.output_dir,
-            actions=config.actions,
+            interactive=config.interactive,
         )
-        self.add_hook(SaveApplyPatchHook(apply_patch_locally=config.actions.apply_patch_locally))
-        if config.actions.open_pr:
-            self.logger.debug("Adding OpenPRHook")
-            self.add_hook(OpenPRHook(config.actions.pr_config))
-        return self
 
     def add_hook(self, hook: RunHook) -> None:
         hook.on_init(run=self)
