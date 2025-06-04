@@ -23,7 +23,6 @@ from sweagent import CONFIG_DIR
 from sweagent.agent.agents import AbstractAgent, ShellAgentConfig
 from sweagent.agent.extra.shell_agent import ShellAgent
 from sweagent.agent.problem_statement import (
-    EmptyProblemStatement,
     GithubIssue,
     ProblemStatement,
     ProblemStatementConfig,
@@ -33,7 +32,6 @@ from sweagent.environment.repo import PreExistingRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
 from sweagent.run.common import save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
-from sweagent.run.run_single import _get_default_output_dir
 from sweagent.utils.config import load_environment_variables
 from sweagent.utils.github import _is_github_issue_url
 from sweagent.utils.log import add_file_handler, get_logger, set_stream_handler_levels
@@ -149,12 +147,7 @@ def run_from_cli(args: list[str] | None = None):
         problem_statement = TextProblemStatement(
             text=problem_input,
         )
-    run_shell = RunShell(
-        env,
-        agent,
-        problem_statement=problem_statement,
-        output_dir=_get_default_output_dir(cli_args.repo, EmptyProblemStatement(), agent_config),
-    )
+    run_shell = RunShell(env, agent, problem_statement=problem_statement, output_dir=Path.home() / "sweagent_shell")
     run_shell.run()
 
 
