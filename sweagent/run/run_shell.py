@@ -11,15 +11,14 @@
 
 """
 
-import getpass
 import sys
 from pathlib import Path
 from typing import Self
 
-import yaml
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from sweagent import CONFIG_DIR
 from sweagent.agent.agents import AbstractAgent, AgentConfig, get_agent_from_config
 from sweagent.agent.problem_statement import (
     EmptyProblemStatement,
@@ -30,11 +29,12 @@ from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
 from sweagent.run.common import AutoCorrectSuggestion as ACS
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
+from sweagent.run.run_single import _set_default_output_dir
 from sweagent.utils.config import load_environment_variables
 from sweagent.utils.log import add_file_handler, get_logger
 
 
-class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
+class RunShellConfig(BaseSettings, cli_implicit_flags=False):
     env: EnvironmentConfig = Field(default_factory=EnvironmentConfig, description="Environment options.")
     agent: AgentConfig = Field(description="Agent options.")
     problem_statement: ProblemStatementConfig = Field(
@@ -45,26 +45,13 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
     env_var_path: Path | None = None
     """Path to a .env file to load environment variables from."""
 
-    interactive: bool = False
-    """Whether to make the agent interactive (i.e., allow the human to jump in by pressing ^C)."""
-
     # pydantic config
     model_config = SettingsConfigDict(extra="forbid", env_prefix="SWE_AGENT_")
 
     def set_default_output_dir(self) -> None:
         # Needs to be called explicitly, because self._config_files will be setup
         # post-init.
-        if self.output_dir == Path("DEFAULT"):
-            user_id = getpass.getuser()
-            problem_id = self.problem_statement.id
-            try:
-                model_id = self.agent.model.id  # type: ignore[attr-defined]
-            except AttributeError:
-                model_id = "unknown_model"
-            config_file = getattr(self, "_config_files", ["no_config"])[0]
-            if isinstance(config_file, Path):
-                config_file = config_file.stem
-            self.output_dir = Path.cwd() / "trajectories" / user_id / f"{config_file}__{model_id}___{problem_id}"
+        self.output_dir = _set_default_output_dir(self.output_dir, self.problem_statement, self.agent)
 
     @classmethod
     def _get_auto_correct(cls) -> list[ACS]:
@@ -87,7 +74,6 @@ class RunSingle:
         *,
         output_dir: Path = Path("."),
         hooks: list[RunHook] | None = None,
-        interactive: bool = False,
     ):
         """Note: When initializing this class, make sure to add the hooks that are required by your actions.
         See `from_config` for an example.
@@ -109,14 +95,13 @@ class RunSingle:
         self.problem_statement = problem_statement
         for hook in hooks or []:
             self.add_hook(hook)
-        self.interactive = interactive
 
     @property
     def hooks(self) -> list[RunHook]:
         return self._chooks.hooks
 
     @classmethod
-    def from_config(cls, config: RunSingleConfig) -> Self:
+    def from_config(cls, config: RunShellConfig) -> Self:
         load_environment_variables(config.env_var_path)
         config.set_default_output_dir()
         config.output_dir.mkdir(parents=True, exist_ok=True)
@@ -127,7 +112,6 @@ class RunSingle:
             agent=agent,
             problem_statement=config.problem_statement,
             output_dir=config.output_dir,
-            interactive=config.interactive,
         )
 
     def add_hook(self, hook: RunHook) -> None:
@@ -142,8 +126,6 @@ class RunSingle:
         self._chooks.on_instance_start(index=0, env=self.env, problem_statement=self.problem_statement)
         output_dir = self.output_dir / self.problem_statement.id
         output_dir.mkdir(parents=True, exist_ok=True)
-        if self.agent.replay_config is not None:  # type: ignore[attr-defined]
-            (output_dir / "config.yaml").write_text(yaml.dump(self.agent.replay_config.model_dump_json(), indent=2))  # type: ignore[attr-defined]
         result = self.agent.run(
             problem_statement=self.problem_statement,
             env=self.env,
@@ -156,7 +138,7 @@ class RunSingle:
         self.env.close()
 
 
-def run_from_config(config: RunSingleConfig):
+def run_from_config(config: RunShellConfig):
     RunSingle.from_config(config).run()
 
 
@@ -165,9 +147,13 @@ def run_from_cli(args: list[str] | None = None):
         args = sys.argv[1:]
     assert __doc__ is not None
     help_text = (  # type: ignore
-        __doc__ + "\n[cyan][bold]=== ALL THE OPTIONS ===[/bold][/cyan]\n\n" + ConfigHelper().get_help(RunSingleConfig)
+        __doc__ + "\n[cyan][bold]=== ALL THE OPTIONS ===[/bold][/cyan]\n\n" + ConfigHelper().get_help(RunShellConfig)
     )
-    run_from_config(BasicCLI(RunSingleConfig, help_text=help_text).get_config(args))  # type: ignore
+    run_from_config(
+        BasicCLI(  # type: ignore[reportUnknownReturnType]
+            RunShellConfig, help_text=help_text, default_config_file=CONFIG_DIR / "exotic" / "default_shell.yaml"
+        ).get_config(args)
+    )
 
 
 if __name__ == "__main__":

@@ -1,10 +1,12 @@
 from pathlib import Path
+from typing import Self
 
-from sweagent.agent.agents import DefaultAgent
+from sweagent.agent.agents import DefaultAgent, ShellAgentConfig
 from sweagent.agent.models import HumanModel, HumanModelConfig, get_model
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.tools.parsing import ActionOnlyParser
+from sweagent.tools.tools import ToolHandler
 from sweagent.types import AgentRunResult, StepOutput
 
 
@@ -12,6 +14,20 @@ from sweagent.types import AgentRunResult, StepOutput
 class ShellAgent(DefaultAgent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    @classmethod
+    def from_config(cls, config: ShellAgentConfig) -> Self:
+        # To ensure that all models stay completely independent, we deepcopy the
+        # model config, because it lives on as a property in the model, tools, etc.
+        config = config.model_copy(deep=True)
+        model = get_model(config.model, config.tools)
+        return cls(
+            templates=config.templates,
+            tools=ToolHandler(config.tools),
+            history_processors=config.history_processors,
+            model=model,
+            max_requeries=config.max_requeries,
+        )
 
     def human_step_in(self) -> None:
         """Replace the current model with a HumanModel instance.
@@ -47,7 +63,6 @@ class ShellAgent(DefaultAgent):
         problem_statement: ProblemStatement | ProblemStatementConfig,
         *,
         output_dir: Path = Path("."),
-        interactive: bool = False,
     ) -> AgentRunResult:
         """Run the agent on a problem instance. This method contains the
         main loop that repeatedly calls `self._step` until the problem is solved.
@@ -68,18 +83,16 @@ class ShellAgent(DefaultAgent):
                 step_output = self.step()
                 self.save_trajectory()
             except KeyboardInterrupt:
-                if interactive and not isinstance(self.model, HumanModel):
+                if not isinstance(self.model, HumanModel):
                     self.human_step_in()
                     continue
                 raise
             except EOFError:
-                if not interactive:
-                    raise
                 # Can only happen if we have a human model, so switch back
                 self.logger.info("Detected ^D - switching back to AI mode")
                 self.human_step_out()
                 continue
-            if interactive and step_output.done and not isinstance(self.model, HumanModel):
+            if step_output.done and not isinstance(self.model, HumanModel):
                 # Human has to submit the solution
                 self.logger.info("Robot is done! Please submit the solution.")
                 self.human_step_in()

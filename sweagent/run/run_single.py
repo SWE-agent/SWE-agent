@@ -65,6 +65,21 @@ class RunSingleActionConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+def _set_default_output_dir(output_dir: Path, problem_statement: ProblemStatement, agent: AgentConfig) -> Path:
+    if output_dir == Path("DEFAULT"):
+        user_id = getpass.getuser()
+        problem_id = problem_statement.id
+        try:
+            model_id = agent.model.id  # type: ignore[attr-defined]
+        except AttributeError:
+            model_id = "unknown_model"
+        config_file = getattr(agent, "_config_files", ["no_config"])[0]
+        if isinstance(config_file, Path):
+            config_file = config_file.stem
+        return Path.cwd() / "trajectories" / user_id / f"{config_file}__{model_id}___{problem_id}"
+    return output_dir
+
+
 class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
     env: EnvironmentConfig = Field(default_factory=EnvironmentConfig, description="Environment options.")
     agent: AgentConfig = Field(description="Agent options.")
@@ -84,17 +99,7 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
     def set_default_output_dir(self) -> None:
         # Needs to be called explicitly, because self._config_files will be setup
         # post-init.
-        if self.output_dir == Path("DEFAULT"):
-            user_id = getpass.getuser()
-            problem_id = self.problem_statement.id
-            try:
-                model_id = self.agent.model.id  # type: ignore[attr-defined]
-            except AttributeError:
-                model_id = "unknown_model"
-            config_file = getattr(self, "_config_files", ["no_config"])[0]
-            if isinstance(config_file, Path):
-                config_file = config_file.stem
-            self.output_dir = Path.cwd() / "trajectories" / user_id / f"{config_file}__{model_id}___{problem_id}"
+        self.output_dir = _set_default_output_dir(self.output_dir, self.problem_statement, self.agent)
 
     @classmethod
     def _get_auto_correct(cls) -> list[ACS]:

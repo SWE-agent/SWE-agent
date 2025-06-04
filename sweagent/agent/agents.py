@@ -161,6 +161,24 @@ class DefaultAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ShellAgentConfig(BaseModel):
+    name: str = "main"
+    templates: TemplateConfig = Field(default_factory=TemplateConfig)
+    tools: ToolConfig = Field(default_factory=ToolConfig)
+    history_processors: list[HistoryProcessor] = Field(default_factory=lambda: [DefaultHistoryProcessor()])
+    model: ModelConfig = Field(description="Model options.")
+
+    max_requeries: int = 3
+    """Maximum number of times to requery the model after an error, such as a
+    formatting error, a blocked action, or a bash syntax error.
+    """
+
+    type: Literal["shell"] = "shell"
+
+    # pydantic config
+    model_config = ConfigDict(extra="forbid")
+
+
 class RetryAgentConfig(BaseModel):
     name: str = "retry_main"
     agent_configs: list[DefaultAgentConfig]
@@ -169,7 +187,7 @@ class RetryAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig, Field(union_mode="left_to_right")]
+AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig | ShellAgentConfig, Field(union_mode="left_to_right")]
 
 
 class _BlockedActionError(Exception):
@@ -220,6 +238,11 @@ def get_agent_from_config(config: AgentConfig) -> AbstractAgent:
         return DefaultAgent.from_config(config)
     elif config.type == "retry":
         return RetryAgent.from_config(config)
+    elif config.type == "shell":
+        # Need to defer import to avoid circular dependency
+        from sweagent.agent.extra.shell_agent import ShellAgent
+
+        return ShellAgent.from_config(config)
     else:
         msg = f"Unknown agent type: {config.type}"
         raise ValueError(msg)
