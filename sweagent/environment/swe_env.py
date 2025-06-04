@@ -155,10 +155,7 @@ class SWEEnv:
             startup_commands = [
                 f"cd /{self.repo.repo_name}",
                 "export ROOT=$(pwd -P)",
-                "git status",
-                "git fetch",
-                f"git checkout {self.repo.base_commit}",
-                "git clean -fdq",
+                *self.repo.get_reset_commands(),
             ]
             self.communicate(
                 input=" && ".join(startup_commands),
