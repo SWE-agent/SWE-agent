@@ -65,7 +65,7 @@ class RunSingleActionConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-def _set_default_output_dir(output_dir: Path, problem_statement: ProblemStatement, agent: AgentConfig) -> Path:
+def _get_default_output_dir(output_dir: Path, problem_statement: ProblemStatement, agent: AgentConfig) -> Path:
     if output_dir == Path("DEFAULT"):
         user_id = getpass.getuser()
         problem_id = problem_statement.id
@@ -99,7 +99,7 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
     def set_default_output_dir(self) -> None:
         # Needs to be called explicitly, because self._config_files will be setup
         # post-init.
-        self.output_dir = _set_default_output_dir(self.output_dir, self.problem_statement, self.agent)
+        self.output_dir = _get_default_output_dir(self.output_dir, self.problem_statement, self.agent)
 
     @classmethod
     def _get_auto_correct(cls) -> list[ACS]:

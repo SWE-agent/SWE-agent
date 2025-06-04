@@ -55,6 +55,9 @@ class PreExistingRepoConfig(BaseModel):
     type: Literal["preexisting"] = "preexisting"
     """Discriminator for (de)serialization/CLI. Do not change."""
 
+    reset: bool = True
+    """If True, reset the repository to the base commit after the copy operation."""
+
     model_config = ConfigDict(extra="forbid")
 
     def copy(self, deployment: AbstractDeployment):
@@ -63,7 +66,9 @@ class PreExistingRepoConfig(BaseModel):
 
     def get_reset_commands(self) -> list[str]:
         """Issued after the copy operation or when the environment is reset."""
-        return _get_git_reset_commands(self.base_commit)
+        if self.reset:
+            return _get_git_reset_commands(self.base_commit)
+        return []
 
 
 class LocalRepoConfig(BaseModel):

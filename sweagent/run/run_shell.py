@@ -11,61 +11,30 @@
 
 """
 
-import sys
+import argparse
 from pathlib import Path
-from typing import Self
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import yaml
+from swerex.deployment.config import DockerDeploymentConfig
 
 from sweagent import CONFIG_DIR
-from sweagent.agent.agents import AbstractAgent, AgentConfig, get_agent_from_config
+from sweagent.agent.agents import AbstractAgent, ShellAgentConfig
+from sweagent.agent.extra.shell_agent import ShellAgent
 from sweagent.agent.problem_statement import (
     EmptyProblemStatement,
     ProblemStatement,
     ProblemStatementConfig,
 )
+from sweagent.environment.repo import PreExistingRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
-from sweagent.run.common import AutoCorrectSuggestion as ACS
-from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
+from sweagent.run.common import save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
-from sweagent.run.run_single import _set_default_output_dir
+from sweagent.run.run_single import _get_default_output_dir
 from sweagent.utils.config import load_environment_variables
 from sweagent.utils.log import add_file_handler, get_logger
 
 
-class RunShellConfig(BaseSettings, cli_implicit_flags=False):
-    env: EnvironmentConfig = Field(default_factory=EnvironmentConfig, description="Environment options.")
-    agent: AgentConfig = Field(description="Agent options.")
-    problem_statement: ProblemStatementConfig = Field(
-        default_factory=EmptyProblemStatement, description="Problem statement options."
-    )
-    output_dir: Path = Field(default=Path("DEFAULT"), description="Output directory.")
-
-    env_var_path: Path | None = None
-    """Path to a .env file to load environment variables from."""
-
-    # pydantic config
-    model_config = SettingsConfigDict(extra="forbid", env_prefix="SWE_AGENT_")
-
-    def set_default_output_dir(self) -> None:
-        # Needs to be called explicitly, because self._config_files will be setup
-        # post-init.
-        self.output_dir = _set_default_output_dir(self.output_dir, self.problem_statement, self.agent)
-
-    @classmethod
-    def _get_auto_correct(cls) -> list[ACS]:
-        return [
-            ACS("model", "agent.model.name"),
-            ACS("agent.model", "agent.model.name"),
-            ACS("model.name", "agent.model.name"),
-            ACS("per_instance_cost_limit", "agent.model.per_instance_cost_limit"),
-            ACS("model.per_instance_cost_limit", "agent.model.per_instance_cost_limit"),
-            ACS("config_file", "config"),
-        ]
-
-
-class RunSingle:
+class RunShell:
     def __init__(
         self,
         env: SWEEnv,
@@ -100,20 +69,6 @@ class RunSingle:
     def hooks(self) -> list[RunHook]:
         return self._chooks.hooks
 
-    @classmethod
-    def from_config(cls, config: RunShellConfig) -> Self:
-        load_environment_variables(config.env_var_path)
-        config.set_default_output_dir()
-        config.output_dir.mkdir(parents=True, exist_ok=True)
-        agent = get_agent_from_config(config.agent)
-        agent.replay_config = config  # type: ignore[attr-defined]
-        return cls(
-            env=SWEEnv.from_config(config.env),
-            agent=agent,
-            problem_statement=config.problem_statement,
-            output_dir=config.output_dir,
-        )
-
     def add_hook(self, hook: RunHook) -> None:
         hook.on_init(run=self)
         self._chooks.add_hook(hook)
@@ -138,22 +93,45 @@ class RunSingle:
         self.env.close()
 
 
-def run_from_config(config: RunShellConfig):
-    RunSingle.from_config(config).run()
+def get_cli():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(dest="repo", type=Path, help="Path to the repository.")
+    # parser.add_argument(dest="--model", type=str, help="Model to use.", default="claude-sonnet-4-20250514")
+    parser.add_argument(
+        "--config",
+        type=Path,
+        help="Path to the agent config file.",
+        default=CONFIG_DIR / "exotic" / "default_shell.yaml",
+    )
+    return parser
 
 
 def run_from_cli(args: list[str] | None = None):
-    if args is None:
-        args = sys.argv[1:]
-    assert __doc__ is not None
-    help_text = (  # type: ignore
-        __doc__ + "\n[cyan][bold]=== ALL THE OPTIONS ===[/bold][/cyan]\n\n" + ConfigHelper().get_help(RunShellConfig)
+    cli_args = get_cli().parse_args(args)
+    try:
+        load_environment_variables(Path(".env"))
+    except FileNotFoundError:
+        print("Env file .env not found, please set API key as env variables.")
+    env_config = EnvironmentConfig(
+        repo=PreExistingRepoConfig(repo_name="repo", reset=False),
+        deployment=DockerDeploymentConfig(
+            image="python:3.11",
+            docker_args=[
+                "-v",
+                f"{cli_args.repo}:/repo",
+            ],
+        ),
     )
-    run_from_config(
-        BasicCLI(  # type: ignore[reportUnknownReturnType]
-            RunShellConfig, help_text=help_text, default_config_file=CONFIG_DIR / "exotic" / "default_shell.yaml"
-        ).get_config(args)
+    agent_config = ShellAgentConfig.model_validate(yaml.safe_load(cli_args.config.read_text())["agent"])
+    agent = ShellAgent.from_config(agent_config)
+    env = SWEEnv.from_config(env_config)
+    run_shell = RunShell(
+        env,
+        agent,
+        problem_statement=EmptyProblemStatement(),
+        output_dir=_get_default_output_dir(cli_args.repo, EmptyProblemStatement(), agent_config),
     )
+    run_shell.run()
 
 
 if __name__ == "__main__":

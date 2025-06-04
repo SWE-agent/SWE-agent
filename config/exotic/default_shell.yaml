@@ -41,3 +41,5 @@ agent:
   history_processors:
     - type: cache_control
       last_n_messages: 2
+  model:
+    name: claude-sonnet-4-20250514
