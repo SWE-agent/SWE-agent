@@ -67,7 +67,7 @@ class TemplateConfig(BaseModel):
     next_step_template: str = "Observation: {{observation}}"
 
     next_step_truncated_observation_template: str = (
-        "Observation: {{observation}}<response clipped>"
+        "Observation: {{observation[:max_observation_length]}}<response clipped>"
         "<NOTE>Observations should not exceeded {{max_observation_length}} characters. "
         "{{elided_chars}} characters were elided. Please try a different command that produces less output "
         "or use head/tail/grep/redirect the output to a file. Do not use interactive pagers.</NOTE>"
@@ -716,7 +716,6 @@ class DefaultAgent(AbstractAgent):
         elif len(step.observation) > self.templates.max_observation_length:
             templates = [self.templates.next_step_truncated_observation_template]
             elided_chars = len(step.observation) - self.templates.max_observation_length
-            step.observation = step.observation[: self.templates.max_observation_length]
         else:
             # Show standard output template if there is observation content
             templates = [self.templates.next_step_template]
