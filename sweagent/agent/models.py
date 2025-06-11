@@ -138,6 +138,11 @@ class GenericAPIModelConfig(PydanticBaseModel):
     Set this to 0 to disable this check.
     """
 
+    litellm_model_registry: str | None = None
+    """If set, this will override the default model registry for litellm.
+    Use this for local models or models not (yet) in the default litellm model registry for tracking costs.
+    """
+
     # pydantic
     model_config = ConfigDict(extra="forbid")
 
@@ -574,7 +579,10 @@ class LiteLLMModel(AbstractModel):
                     "See https://swe-agent.com/latest/faq/ for more information."
                 )
                 self.logger.warning(msg)
-
+        if self.config.litellm_model_registry is not None:
+            with open(self.config.litellm_model_registry, "r") as f:
+                model_costs = json.load(f)
+                litellm.register_model(model_costs)
         if self.config.max_input_tokens is not None:
             self.model_max_input_tokens = self.config.max_input_tokens
         else:
