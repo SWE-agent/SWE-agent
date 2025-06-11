@@ -107,12 +107,12 @@ and set `agent.model.api_key` to the key you've configured for your proxy (or a 
 !!! warning "Cost/token limits"
 
     If you do not disable the default cost limits, you will see an error because the cost calculator will not be able to find the model in the `litellm` model cost dictionary.
-    
+
     You have two options:
-    
+
     1. **Disable cost tracking** (recommended for most users): Set `per_instance_cost_limit` to 0 and use the `per_instance_call_limit` instead to limit the runtime per issue.
     2. **Use a custom model registry**: If you want to track costs for your local model, you can provide a custom `litellm_model_registry` file with cost information for your model (see below).
-    
+
     Please also make sure to set `max_input_tokens` to a non-`None` value to avoid other warnings.
 
 ### Custom model registry for cost tracking
@@ -130,10 +130,10 @@ Create a JSON file with your model's cost information following the litellm mode
 ```json title="my_model_registry.json"
 {
   "ollama/llama2": {
-    "max_tokens": 8192, 
-    "input_cost_per_token": 0.00002, 
-    "output_cost_per_token": 0.00006, 
-    "litellm_provider": "ollama", 
+    "max_tokens": 8192,
+    "input_cost_per_token": 0.00002,
+    "output_cost_per_token": 0.00006,
+    "litellm_provider": "ollama",
     "mode": "chat"
   },
   "my-custom-provider/my-new-model": {

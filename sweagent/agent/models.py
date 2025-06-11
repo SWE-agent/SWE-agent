@@ -580,7 +580,7 @@ class LiteLLMModel(AbstractModel):
                 )
                 self.logger.warning(msg)
         if self.config.litellm_model_registry is not None:
-            with open(self.config.litellm_model_registry, "r") as f:
+            with open(self.config.litellm_model_registry) as f:
                 model_costs = json.load(f)
                 litellm.register_model(model_costs)
         if self.config.max_input_tokens is not None:
