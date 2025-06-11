@@ -16,6 +16,10 @@
 See [the model section](../installation/keys.md) in the installation guide.
 Remember to unset spending limits and configure the action parser if you cannot support function calling.
 
+For "cost" tracking with local models, you can optionally provide a custom `litellm_model_registry` file in your configuration.
+This allows you to define custom pricing information for your local models instead of disabling cost limits entirely.
+See the [local models section](../installation/keys.md#custom-model-registry-for-cost-tracking) for detailed instructions.
+
 ### Anthropic Claude
 
 Prompt caching makes SWE-agent several times more affordable. While this is done automatically for models like `gpt-4o`,
