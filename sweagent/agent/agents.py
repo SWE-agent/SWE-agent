@@ -107,7 +107,9 @@ class TemplateConfig(BaseModel):
 
     command_cancelled_timeout_template: str = (
         "The command '{{command}}' was cancelled because it took more than {{timeout}} seconds. "
-        "Please try a different command that completes more quickly."
+        "Please try a different command that completes more quickly. "
+        "Note: A common source of this error is if the command is interactive or requires user input "
+        "(it is impossible to receive user input in the current environment, so the command will never complete)."
     )
     """Message template for when the agent's command was cancelled because it took too long.
     Available variables: `timeout`, `command`
