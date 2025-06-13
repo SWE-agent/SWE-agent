@@ -31,6 +31,13 @@ agent:
     next_step_no_output_template: |-
       Your command ran successfully and did not produce any output.
   tools:
+    env_variables:
+      PAGER: cat
+      MANPAGER: cat
+      LESS: -R
+      PIP_PROGRESS_BAR: 'off'
+      TQDM_DISABLE: '1'
+      GIT_PAGER: cat
     bundles:
       - path: tools/registry
       - path: tools/submit

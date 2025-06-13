@@ -85,6 +85,12 @@ agent:
       SEARCH_RESULTS: ()
       SEARCH_FILES: ()
       SEARCH_INDEX: 0
+      PAGER: cat
+      MANPAGER: cat
+      LESS: -R
+      PIP_PROGRESS_BAR: 'off'
+      TQDM_DISABLE: '1'
+      GIT_PAGER: cat
     bundles:
       - path: tools/registry
       - path: tools/windowed
