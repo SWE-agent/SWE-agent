@@ -9,7 +9,10 @@
 
 ## Current competitive configurations
 
-We recently used two configurations for SWE-bench submissions
+!!! hint "Most recent configs"
+    You can find all benchmark submission configs [here](https://github.com/SWE-agent/SWE-agent/tree/main/config/benchmarks)
+
+Examples of configurations for SWE-bench submissions:
 
 * [250225_anthropic_filemap_simple_review.yaml](https://github.com/SWE-agent/SWE-agent/blob/main/config/250225_anthropic_filemap_simple_review.yaml):
   This is our current default one-attempt config. It uses `claude-3-7-sonnet-20250219`.
@@ -26,7 +29,7 @@ We recently used two configurations for SWE-bench submissions
 
 You can find the command with which to run each config at the top of the config file.
 
-In order to run on multiple workers with Claude, you need to use multiple API keys in order to have enough cache break points
+In order to run on multiple workers with Claude, you need to use multiple API keys in order to have enough cache break points.
 For this, please set the following environment variable before running
 
 ```bash
