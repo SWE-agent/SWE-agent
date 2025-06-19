@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+from argparse import ArgumentParser
+
+lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'lib')
+sys.path.insert(0, lib_path)
+
+from sweer_config import ClientConfig
+from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave_screenshot_from_response, _print_error, send_request
+
+config = ClientConfig()
+
+
+def reload():
+    """Reload the current webpage."""
+    response = send_request(config.port, "reload", "POST", {"return_screenshot": config.autoscreenshot})
+    if response is None:
+        return
+    _print_response_with_metadata(response)
+    _autosave_screenshot_from_response(response, config.screenshot_mode)
+
+
+if __name__ == "__main__":
+    reload()

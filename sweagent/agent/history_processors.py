@@ -54,8 +54,8 @@ def _set_content_text(entry: HistoryItem, text: str) -> None:
 
 def _clear_cache_control(entry: HistoryItem) -> None:
     if isinstance(entry["content"], list):
-        assert len(entry["content"]) == 1, "Expected single message in content"
-        entry["content"][0].pop("cache_control", None)
+        for item in entry["content"]:
+            item.pop("cache_control", None)
     entry.pop("cache_control", None)
 
 
