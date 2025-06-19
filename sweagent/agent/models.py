@@ -450,7 +450,7 @@ class HumanThoughtModel(HumanModel):
             thought_all += thought
             thought = input("... ")
 
-        action = super()._query(history, action_prompt="Action: ")
+        action = super()._query(history, action_prompt="Action: ")["message"]
 
         return {"message": f"{thought_all}\n```\n{action}\n```"}
 
