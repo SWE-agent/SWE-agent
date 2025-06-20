@@ -36,7 +36,7 @@ when you installed SWE-agent.
    ([follow the docs](https://github.com/docker/docker-install) or use the [get-docker.sh script for linux](https://github.com/docker/docker-install)),
    then start Docker locally. Problems? See [docker issues](tips.md#docker).
    If you do not want to use docker, you can still use SWE-agent with code evaluation in the cloud.
-2. If you plan on using the web-based GUI: Install [`nodejs`][nodejs-install].
+2. If you plan on using the web-based GUI: Install [`Node.js`][nodejs-install].
 
 [nodejs-install]: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
 
