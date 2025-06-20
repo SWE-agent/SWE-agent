@@ -95,6 +95,10 @@ class TemplateConfig(BaseModel):
     put_demos_in_history: bool = False
     """If True, add demonstration to history instead of as a single message"""
 
+    disable_image_processing: bool = False
+    """If True, disable image processing for multimodal problem statements (i.e. SWEBenchMultimodalProblemStatement).
+    """
+
     shell_check_error_template: str = (
         "Your bash command contained syntax errors and was NOT executed. "
         "Please fix the syntax errors and try again. This can be the result "
@@ -564,6 +568,15 @@ class DefaultAgent(AbstractAgent):
         This method is called by `self.run`.
         """
         output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # apply template configuration to multimodal problem statements
+        if hasattr(problem_statement, 'type') and problem_statement.type == "swe_bench_multimodal":
+            from sweagent.agent.problem_statement import SWEBenchMultimodalProblemStatement
+            if isinstance(problem_statement, SWEBenchMultimodalProblemStatement):
+                # apply the global disable_image_processing setting if it's not explicitly set
+                if not problem_statement.disable_image_processing and self.templates.disable_image_processing:
+                    problem_statement.disable_image_processing = True
+                    
         self._problem_statement = problem_statement
         self._env = env
         iid = self._problem_statement.id

@@ -151,6 +151,10 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
     """List of image asset URLs.
     """
     
+    disable_image_processing: bool = False
+    """If True, skip image downloading and processing, treating this as a text-only problem statement.
+    """
+    
     extra_fields: dict[str, Any] = Field(default_factory=dict)
     """Any additional data to be added to the instance.
     This data will be available when formatting prompt templates.
@@ -178,6 +182,10 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
         return self.text
 
     def get_problem_statement(self) -> str:
+        if self.disable_image_processing:
+            logger.info("Image processing disabled, returning text-only problem statement")
+            return self.text
+            
         if self._cached_problem_statement is not None:
             return self._cached_problem_statement
             
