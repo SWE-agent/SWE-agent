@@ -8,7 +8,7 @@ from typing import Any, Literal, Protocol
 from urllib.parse import urlparse
 
 import requests
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from sweagent.utils.github import _get_problem_statement_from_github_issue, _parse_gh_issue_url
 from sweagent.utils.log import get_logger
@@ -153,6 +153,8 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
     """Discriminator for (de)serialization/CLI. Do not change."""
 
     id: str = None  # type: ignore
+    
+    _cached_problem_statement: str | None = PrivateAttr(default=None)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -162,6 +164,9 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
             self.id = hashlib.sha256(self.text.encode()).hexdigest()[:6]
 
     def get_problem_statement(self) -> str:
+        if self._cached_problem_statement is not None:
+            return self._cached_problem_statement
+            
         processed_text = self.text
         for link in self.issue_images:
             try:
@@ -170,6 +175,9 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
                     processed_text += f"\n\n{image_markdown}"
             except Exception as e:
                 logger.warning(f"Failed to process image from {link}: {e}")
+        
+        # cache to avoid re-processing images
+        self._cached_problem_statement = processed_text
         return processed_text
 
     def get_extra_fields(self) -> dict[str, Any]:
@@ -201,7 +209,7 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
             if content_type == 'image/jpg':
                 content_type = 'image/jpeg'
             if content_type not in VALID_IMAGE_MIME_TYPES:
-                logger.warning(f"Unsupported image MIME type '{content_type}' for URL: {url}")
+                logger.warning(f"Unsupported image MIME type '{content_type}' for URL: {url}. Not encoding image.")
                 return None
             max_size = 10 * 1024 * 1024  # 10MB
             content_length = response.headers.get('content-length')
