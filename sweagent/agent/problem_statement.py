@@ -31,6 +31,13 @@ class ProblemStatement(Protocol):
 
     def get_problem_statement(self) -> str: ...
 
+    def get_problem_statement_for_env(self) -> str:
+        """Used for setting environment variables in the container.
+
+        By default, this is the same as get_problem_statement().
+        """
+        return self.get_problem_statement()
+
     def get_extra_fields(self) -> dict[str, Any]: ...
 
 
@@ -162,6 +169,13 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
         if self.id is None:
             logger.info("Setting problem statement id to hash of text")
             self.id = hashlib.sha256(self.text.encode()).hexdigest()[:6]
+
+    def get_problem_statement_for_env(self) -> str:
+        """Return the problem statement without images.
+        
+        Images are not supported in the environment.
+        """
+        return self.text
 
     def get_problem_statement(self) -> str:
         if self._cached_problem_statement is not None:
