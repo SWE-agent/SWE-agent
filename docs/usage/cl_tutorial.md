@@ -14,7 +14,7 @@ Before we start with a more structured explanation of the command line options, 
 
 ```bash title="Fix a github issue"
 sweagent run \
-  --agent.model.name=gpt4 \
+  --agent.model.name=gpt-4o \
   --agent.model.per_instance_cost_limit=2.00 \
   --env.repo.github_url=https://github.com/SWE-agent/test-repo \
   --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
@@ -30,7 +30,7 @@ sweagent run \
 ```bash title="Fix a bug in a local repository using a custom docker image" hl_lines="4 5 6"
 git clone https://github.com/SWE-agent/test-repo.git
 sweagent run \
-  --agent.model.name=claude-sonnet-4-20250514\
+  --agent.model.name=claude-sonnet-4-20250514 \
   --env.repo.path=test-repo \
   --problem_statement.path=test-repo/problem_statements/1.md \
   --env.deployment.image=python:3.12
@@ -68,7 +68,7 @@ All configuration options can be specified either in one or more `.yaml` files, 
     ```yaml title="my_run.yaml"
     agent:
       model:
-        name: gpt4
+        name: gpt-4o
         per_instance_cost_limit: 2.00
     env:
       repo:
@@ -92,7 +92,7 @@ But we can also split it up into multiple files and additional command line opti
     ```yaml title="agent.yaml"
     agent:
       model:
-        name: gpt4
+        name: gpt-4o
         per_instance_cost_limit: 2.00
     ```
 

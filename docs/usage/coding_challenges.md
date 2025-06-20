@@ -59,7 +59,7 @@ sweagent run \
     --config config/coding_challenge.yaml \
     --problem_statement.path=problem.md \
     --env.repo.path=/path/to/empty \
-    --agent.model.name=gpt4 \
+    --agent.model.name=gpt-4o \
     --agent.model.per_instance_cost_limit 3.0 \
     --actions.apply_patch_locally=True
 ```
