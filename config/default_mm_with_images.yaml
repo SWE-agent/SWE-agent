@@ -73,5 +73,11 @@ agent:
       type: function_calling
   history_processors:
     - type: image_parsing  # parses base64 encoded images in the observation
-    - type: cache_control
-      last_n_messages: 2
+    # - type: cache_control  # enable for claude
+    #   last_n_messages: 2  # enable for claude
+instances:
+  type: swe_bench
+  subset: multimodal
+  split: dev
+  shuffle: true
+  # filter: processing__p5.js-6069
