@@ -44,7 +44,7 @@ Here are a few options for `--agent.model.name`:
 
 | Model | API key | Comment |
 | ----- | ------- | ------- |
-| `claude-sonnet-4-20250514)` | `ANTHROPIC_API_KEY` | Our recommended model |
+| `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` | Our recommended model |
 | `gpt-4o` | `OPENAI_API_KEY` | |
 | `o1-preview` | `OPENAI_API_KEY` | You might need to set temperature and sampling to the supported values. |
 

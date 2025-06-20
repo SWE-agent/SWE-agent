@@ -20,13 +20,13 @@ Let's start with an absolutely trivial example and solve an issue about a simple
 
 ```bash
 sweagent run \
-  --agent.model.name=claude-sonnet-4-20250514) \
+  --agent.model.name=claude-sonnet-4-20250514 \
   --agent.model.per_instance_cost_limit=2.00 \
   --env.repo.github_url=https://github.com/SWE-agent/test-repo \
   --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
 ```
 
-The example above uses the `Claude 3.5 Sonnet` model from Anthropic. Alternatively, you can for example use `GPT-4o` (from OpenAI)
+The example above uses the `Claude Sonnet 4` model from Anthropic. Alternatively, you can for example use `GPT-4o` (from OpenAI)
 by setting `--agent.model.name=gpt-4o`.
 In order to use it, you need to add your keys to the environment:
 
