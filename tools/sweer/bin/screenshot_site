@@ -30,4 +30,6 @@ def screenshot():
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    args = parser.parse_args()
     screenshot()

@@ -16,9 +16,11 @@ from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave
 config = ClientConfig()
 
 
-def back():
-    """Navigate back in the browser history."""
-    response = send_request(config.port, "back", "POST", {"return_screenshot": config.autoscreenshot})
+def open(url):
+    """Open the specified website URL."""
+    if Path(url).is_file():
+        url = f"file://{Path(url).resolve()}"
+    response = send_request(config.port, "goto", "POST", {"url": url, "return_screenshot": config.autoscreenshot})
     if response is None:
         return
     _print_response_with_metadata(response)
@@ -27,5 +29,6 @@ def back():
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("url", type=str, help="The URL of the website to open")
     args = parser.parse_args()
-    back()
+    open(args.url)

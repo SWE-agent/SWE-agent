@@ -147,9 +147,3 @@ tools:
         type: integer
         description: "Window height in pixels"
         required: true
-      
-    
-  get_console_output:
-    signature: "get_console_output"
-    docstring: "Get console output messages from the browser (logs, errors, warnings, etc.)"
-    arguments: []

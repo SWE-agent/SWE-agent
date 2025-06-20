@@ -1,7 +1,6 @@
 # Configuration for SWE-agent with image viewing capabilities
 # This extends the default config with image parsing history processor
 # and the image_tools bundle for viewing images as base64-encoded markdown.
-
 agent:
   templates:
     system_template: |-
@@ -74,7 +73,3 @@ agent:
     - type: image_parsing
     - type: cache_control
       last_n_messages: 2
-env:
-  deployment:
-    # needed for multimodal dataset
-    python_standalone_dir: /root

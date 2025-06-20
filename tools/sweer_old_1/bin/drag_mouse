@@ -16,9 +16,15 @@ from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave
 config = ClientConfig()
 
 
-def back():
-    """Navigate back in the browser history."""
-    response = send_request(config.port, "back", "POST", {"return_screenshot": config.autoscreenshot})
+def drag(path):
+    """Drag mouse along a path. Path should be a JSON list of x, y lists: '[[0, 0], [100, 100]]'."""
+    import json
+    try:
+        path_data = json.loads(path)
+    except json.JSONDecodeError:
+        _print_error("Path must be valid JSON")
+        return
+    response = send_request(config.port, "drag", "POST", {"path": path_data, "return_screenshot": config.autoscreenshot})
     if response is None:
         return
     _print_response_with_metadata(response)
@@ -27,5 +33,6 @@ def back():
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("path", type=str, help="The path to drag the mouse along (JSON list of x, y lists) e.g. '[[0, 0], [100, 100]]'")
     args = parser.parse_args()
-    back()
+    drag(args.path)

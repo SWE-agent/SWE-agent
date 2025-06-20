@@ -16,9 +16,10 @@ from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave
 config = ClientConfig()
 
 
-def back():
-    """Navigate back in the browser history."""
-    response = send_request(config.port, "back", "POST", {"return_screenshot": config.autoscreenshot})
+
+def scroll(scroll_x, scroll_y):
+    """Scroll by (scroll_x, scroll_y) pixels at current mouse position."""
+    response = send_request(config.port, "scroll", "POST", {"scroll_x": scroll_x, "scroll_y": scroll_y, "return_screenshot": config.autoscreenshot})
     if response is None:
         return
     _print_response_with_metadata(response)
@@ -27,5 +28,7 @@ def back():
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("scroll_x", type=int, help="The number of pixels to scroll horizontally")
+    parser.add_argument("scroll_y", type=int, help="The number of pixels to scroll vertically")
     args = parser.parse_args()
-    back()
+    scroll(args.scroll_x, args.scroll_y)

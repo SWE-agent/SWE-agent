@@ -16,9 +16,11 @@ from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave
 config = ClientConfig()
 
 
-def back():
-    """Navigate back in the browser history."""
-    response = send_request(config.port, "back", "POST", {"return_screenshot": config.autoscreenshot})
+def wait(ms):
+    """Wait for the specified number of milliseconds."""
+    response = send_request(config.port, 
+        "wait", "POST", {"ms": ms, "return_screenshot": config.autoscreenshot},
+    )
     if response is None:
         return
     _print_response_with_metadata(response)
@@ -27,5 +29,6 @@ def back():
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("ms", type=int, help="The number of milliseconds to wait")
     args = parser.parse_args()
-    back()
+    wait(args.ms)

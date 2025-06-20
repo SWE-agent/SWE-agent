@@ -358,19 +358,6 @@ def goto():
         return create_response(data, return_screenshot)
 
 
-@app.route("/console", methods=["GET"])
-@catch_error
-@require_website_open
-def get_console():
-    console_messages = browser_manager.get_console_output()
-    data = {
-        "status": "success", 
-        "message": f"Retrieved {len(console_messages)} console messages",
-        "console_messages": console_messages
-    }
-    return create_response(data, False)
-
-
 def main():
     """Run the Flask server with proper cleanup handling."""
     try:

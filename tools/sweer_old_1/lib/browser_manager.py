@@ -154,7 +154,6 @@ class BrowserManager:
         self.screenshot_delay = config.screenshot_delay
         self.reconnect_timeout = config.reconnect_timeout
         self.crosshair_id = config.crosshair_id
-        self.console_messages: list[dict[str, Any]] = []
         self._init_browser()
     
     def _validate_browser_type(self, browser_type: str) -> str:
@@ -204,7 +203,6 @@ class BrowserManager:
             viewport={"width": self.window_width, "height": self.window_height}
         )
         self.page = ctx.new_page()
-        self._setup_console_listener(self.page)
         self.page.mouse.move(0, 0)
         self.mouse_x = self.mouse_y = 0
         return self.page
@@ -306,21 +304,3 @@ class BrowserManager:
         """Release a key."""
         playwright_key = self.get_key(key)
         self.page.keyboard.up(playwright_key)
-
-    def _setup_console_listener(self, page: Page):
-        """Set up console message listener for the page."""
-        def on_console(msg):
-            self.console_messages.append({
-                "type": msg.type,
-                "text": msg.text,
-                "timestamp": time.time(),
-                "location": msg.location
-            })
-        page.on("console", on_console)
-    
-    def get_console_output(self) -> list[dict[str, Any]]:
-        """Get all console messages and clear the buffer."""
-        with self._lock:
-            messages = self.console_messages.copy()
-            self.console_messages.clear()
-            return messages

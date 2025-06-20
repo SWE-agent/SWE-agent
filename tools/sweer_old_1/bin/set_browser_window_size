@@ -16,9 +16,13 @@ from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave
 config = ClientConfig()
 
 
-def back():
-    """Navigate back in the browser history."""
-    response = send_request(config.port, "back", "POST", {"return_screenshot": config.autoscreenshot})
+def set_window_size(width, height):
+    """Set the browser window size to the specified width and height."""
+    response = send_request(config.port, 
+        "set_window_size",
+        "POST",
+        {"width": width, "height": height, "return_screenshot": config.autoscreenshot},
+    )
     if response is None:
         return
     _print_response_with_metadata(response)
@@ -27,5 +31,7 @@ def back():
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("width", type=int, help="The new width of the browser window")
+    parser.add_argument("height", type=int, help="The new height of the browser window")
     args = parser.parse_args()
-    back()
+    set_window_size(args.width, args.height)

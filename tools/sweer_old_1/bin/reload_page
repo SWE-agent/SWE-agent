@@ -16,9 +16,9 @@ from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave
 config = ClientConfig()
 
 
-def back():
-    """Navigate back in the browser history."""
-    response = send_request(config.port, "back", "POST", {"return_screenshot": config.autoscreenshot})
+def reload():
+    """Reload the current webpage."""
+    response = send_request(config.port, "reload", "POST", {"return_screenshot": config.autoscreenshot})
     if response is None:
         return
     _print_response_with_metadata(response)
@@ -26,6 +26,4 @@ def back():
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    args = parser.parse_args()
-    back()
+    reload()

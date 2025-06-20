@@ -16,9 +16,13 @@ from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave
 config = ClientConfig()
 
 
-def back():
-    """Navigate back in the browser history."""
-    response = send_request(config.port, "back", "POST", {"return_screenshot": config.autoscreenshot})
+def click(x, y, button):
+    """Click at the specified coordinates (x, y)."""
+    response = send_request(config.port, 
+        "click",
+        "POST",
+        {"x": x, "y": y, "button": button, "return_screenshot": config.autoscreenshot},
+    )
     if response is None:
         return
     _print_response_with_metadata(response)
@@ -27,5 +31,8 @@ def back():
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("x", type=int)
+    parser.add_argument("y", type=int)
+    parser.add_argument("button", nargs="?", default="left", choices=["left", "right"])
     args = parser.parse_args()
-    back()
+    click(args.x, args.y, args.button)
