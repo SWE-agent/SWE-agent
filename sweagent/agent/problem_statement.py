@@ -1,15 +1,27 @@
 import hashlib
 import os
 import uuid
+import base64
+import mimetypes
 from pathlib import Path
 from typing import Any, Literal, Protocol
+from urllib.parse import urlparse
 
+import requests
 from pydantic import BaseModel, ConfigDict, Field
 
 from sweagent.utils.github import _get_problem_statement_from_github_issue, _parse_gh_issue_url
 from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
+
+# Constants for image processing
+VALID_IMAGE_MIME_TYPES = {
+    "image/png",
+    "image/jpeg", 
+    "image/jpg",  # Some servers return jpg instead of jpeg
+    "image/webp",
+}
 
 
 class ProblemStatement(Protocol):
@@ -125,11 +137,121 @@ class GithubIssue(BaseModel):
         return self.extra_fields
 
 
-ProblemStatementConfig = TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement
+class SWEBenchMultimodalProblemStatement(BaseModel):
+    text: str
+    
+    issue_images: list[str] = Field(default_factory=list)
+    """List of image asset URLs.
+    """
+    
+    extra_fields: dict[str, Any] = Field(default_factory=dict)
+    """Any additional data to be added to the instance.
+    This data will be available when formatting prompt templates.
+    """
+
+    type: Literal["swe_bench_multimodal"] = "swe_bench_multimodal"
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    id: str = None  # type: ignore
+
+    model_config = ConfigDict(extra="forbid")
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.id is None:
+            logger.info("Setting problem statement id to hash of text")
+            self.id = hashlib.sha256(self.text.encode()).hexdigest()[:6]
+
+    def get_problem_statement(self) -> str:
+        processed_text = self.text
+        for link in self.issue_images:
+            try:
+                image_markdown = self._download_and_convert_image(link)
+                if image_markdown:
+                    processed_text += f"\n\n{image_markdown}"
+            except Exception as e:
+                logger.warning(f"Failed to process image from {link}: {e}")
+        return processed_text
+
+    def get_extra_fields(self) -> dict[str, Any]:
+        return self.extra_fields
+
+    def _download_and_convert_image(self, url: str) -> str | None:
+        """Download an image from URL and convert it to base64 markdown format.
+        
+        Args:
+            url: The URL of the image to download
+            
+        Returns:
+            Base64 markdown string if successful, None if failed
+            
+        Raises:
+            Various exceptions for network/processing errors
+        """
+        try:
+            parsed_url = urlparse(url)
+            if not parsed_url.scheme or not parsed_url.netloc:
+                logger.warning(f"Invalid URL format: {url}")
+                return None
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.133 Safari/537.36"
+            }
+            response = requests.get(url, headers=headers, timeout=30, stream=True)
+            response.raise_for_status()
+            content_type = response.headers.get('content-type', '').lower()
+            if content_type == 'image/jpg':
+                content_type = 'image/jpeg'
+            if content_type not in VALID_IMAGE_MIME_TYPES:
+                logger.warning(f"Unsupported image MIME type '{content_type}' for URL: {url}")
+                return None
+            max_size = 10 * 1024 * 1024  # 10MB
+            content_length = response.headers.get('content-length')
+            if content_length and int(content_length) > max_size:
+                logger.warning(f"Image too large ({content_length} bytes) for URL: {url}")
+                return None
+            image_data = b""
+            for chunk in response.iter_content(chunk_size=8192):
+                image_data += chunk
+                if len(image_data) > max_size:
+                    logger.warning(f"Image too large (>{max_size} bytes) for URL: {url}")
+                    return None
+            if not image_data:
+                logger.warning(f"Empty image data for URL: {url}")
+                return None            
+            b64_data = base64.b64encode(image_data).decode('ascii')
+            markdown = f"![{url}](data:{content_type};base64,{b64_data})"
+            logger.info(f"Successfully processed image from {url} ({len(image_data)} bytes, {content_type})")
+            return markdown
+            
+        except requests.exceptions.Timeout:
+            logger.warning(f"Timeout downloading image from {url}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Network error downloading image from {url}: {e}")
+            return None
+        except Exception as e:
+            logger.warning(f"Unexpected error processing image from {url}: {e}")
+            return None
+
+    def __repr__(self) -> str:
+        n_images = len(self.issue_images)
+        return f"SWEBenchMultimodalProblemStatement(id={self.id}, text={self.text[:30]}..., images={n_images})"
+
+    def __str__(self) -> str:
+        n_images = len(self.issue_images)
+        return f"id={self.id}, text={self.text[:30]}..., images={n_images}"
+
+
+ProblemStatementConfig = (
+    TextProblemStatement | 
+    SWEBenchMultimodalProblemStatement |
+    GithubIssue | 
+    EmptyProblemStatement | 
+    FileProblemStatement
+)
 
 
 def problem_statement_from_simplified_input(
-    *, input: str, type: Literal["text", "text_file", "github_issue"]
+    *, input: str, type: Literal["text", "text_file", "github_issue", "swe_bench_multimodal"]
 ) -> ProblemStatementConfig:
     """Get a problem statement from an `input` string and a `type`.
 
@@ -143,6 +265,8 @@ def problem_statement_from_simplified_input(
         return FileProblemStatement(path=Path(input))
     elif type == "github_issue":
         return GithubIssue(github_url=input)
+    elif type == "swe_bench_multimodal":
+        return SWEBenchMultimodalProblemStatement(text=input)
     else:
         msg = f"Unknown problem statement type: {type}"
         raise ValueError(msg)
