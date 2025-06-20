@@ -41,6 +41,7 @@ agent:
       Your command ran successfully and did not produce any output.
     max_observation_length: 10_000_000
   tools:
+    execution_timeout: 300  # need longer for builds
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
