@@ -52,6 +52,37 @@ Kind of slow, isn't it?
     If you are using [`sb-cli`](https://www.swebench.com/sb-cli/), you can automatically evaluate on SWE-bench by adding the `--evaluate=True` flag.
     This will already submit submissions to `sb-cli` while you are running, so that you should receive results within a minute of finishing your run.
 
+## Multimodal SWE-bench
+
+SWE-agent supports the **SWE-bench Multimodal** dataset, which includes GitHub issues with associated images (screenshots, diagrams, UI mockups). To run on multimodal instances:
+
+```bash
+sweagent run-batch \
+    --config config/default_mm_with_images.yaml \
+    --agent.model.name claude-sonnet-4-20250514 \
+    --agent.model.per_instance_cost_limit 2.00 \
+    --instances.type swe_bench \
+    --instances.subset multimodal \
+    --instances.split dev  \
+    --instances.slice :3 \
+    --instances.shuffle=True
+```
+
+Key differences for multimodal runs:
+
+- **Configuration**: Use `config/default_mm_with_images.yaml` which includes image processing capabilities
+- **Subset**: Use `--instances.subset multimodal` to access the multimodal dataset
+- **Token limits**: Consider higher cost limits as images consume more tokens
+- **Multimodal Tools**: `tools/image_tools` and `tools/sweer` include useful tools for viewing images and web browsers
+
+The system automatically:
+- Downloads images from GitHub issue URLs
+- Converts them to base64 markdown format
+- Provides visual context to the AI model
+
+!!! tip "Multimodal Configuration"
+    See the [multimodal guide](multimodal.md) for detailed configuration options and troubleshooting.
+
 ## Running in parallel
 
 Let's speed things up and run on 5 instances at once. Only a single line to change:

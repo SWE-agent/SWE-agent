@@ -12,6 +12,8 @@ A configuration is represented in one or more `.yaml` files, specified by the `-
 
 !!! tip "Default config files"
     Our default config files are in the [`config/`](https://github.com/SWE-agent/SWE-agent/tree/main/config) directory.
+    
+    For multimodal support, use `config/default_mm_with_images.yaml` which includes image processing capabilities.
 
 To use a config file, you can use the `--config` flag in the command line interface.
 
@@ -38,3 +40,33 @@ This is the current default configuration file which is loaded when no `--config
     Relative paths in config files are resolved to the `SWE_AGENT_CONFIG_ROOT` environment variable (if set)
     or the SWE-agent repository root.
 
+## Multimodal Configuration
+
+For working with images and vision-capable models, SWE-agent provides specialized multimodal configuration options.
+
+These options are best demonstrated in `default_mm_with_images.yaml`.
+
+This configuration enables full image processing capabilities:
+
+- **SWE-bench Multimodal Image processing**: Downloads and converts GitHub issue images to base64 format for SWE-bench Multimodal instances.
+- **Extended observation length**: Increases observation token limits to accommodate images
+- **Image tools**: Includes `image_tools` bundle for viewing images
+- **Web browsing tools**: Includes `sweer` bundle for using web browsers
+- **History processing**: Enables `image_parsing` history processor for parsing 
+
+### Key Multimodal Settings
+
+```yaml
+agent:
+  templates:
+    disable_image_processing: false  # enable/disable image processing
+    max_observation_length: 10_000_000  # increased for images
+  tools:
+    bundles:
+      - path: tools/image_tools  # image viewing capabilities
+      - path: tools/sweer  # web browsing tools
+  history_processors:
+    - type: image_parsing  # process image tools outputs (required for tools to work)
+```
+
+See the [multimodal guide](../usage/multimodal.md) for detailed configuration options.
