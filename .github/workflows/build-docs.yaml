@@ -8,6 +8,12 @@ on:
   pull_request:
     branches:
       - main
+
+# Prevent concurrent runs that could conflict when pushing to gh-pages
+concurrency:
+  group: build-docs-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 jobs:
