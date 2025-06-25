@@ -32,4 +32,12 @@ This is probably because of union types.
 See [this section](usage/cl_tutorial.md#union-types) for more information, but the short version is that some options (e.g., the repository or problem statement) can be specified in multiple ways, so we try every option until we find the one that works based on your inputs.
 If none of them work, we throw an error which then tells you why we cannot initialize any of the types, so this will get somewhat long and confusing.
 
+> Does SWE-agent support multimodal models and images?
+
+Yes! SWE-agent supports vision-capable models that can process images from GitHub issues. Use `--config config/default_mm_with_images.yaml` and specify a multimodal model like Claude Sonnet 4 or GPT-4o. See the [multimodal guide](usage/multimodal.md) for details.
+
+> Why are my images not being processed?
+
+Check that you're using a multimodal configuration (see `default_mm_with_images.yaml` as an example), have internet connectivity, and images are under 10MB. See [Multimodal usage notes](usage/multimodal.md) for more details.
+
 {% include-markdown "_footer.md" %}

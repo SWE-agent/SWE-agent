@@ -20,6 +20,14 @@ class AbstractHistoryProcessor(Protocol):
 # -----------------
 
 
+def _get_content_stats(entry: HistoryItem) -> tuple[int, int]:
+    if isinstance(entry["content"], str):
+        return len(entry["content"].splitlines()), 0
+    n_text_lines = sum(len(item["text"].splitlines()) for item in entry["content"] if item.get("type") == "text")
+    n_images = sum(1 for item in entry["content"] if item.get("type") == "image_url")
+    return n_text_lines, n_images
+
+
 def _get_content_text(entry: HistoryItem) -> str:
     if isinstance(entry["content"], str):
         return entry["content"]
@@ -37,8 +45,8 @@ def _set_content_text(entry: HistoryItem, text: str) -> None:
 
 def _clear_cache_control(entry: HistoryItem) -> None:
     if isinstance(entry["content"], list):
-        assert len(entry["content"]) == 1, "Expected single message in content"
-        entry["content"][0].pop("cache_control", None)
+        for item in entry["content"]:
+            item.pop("cache_control", None)
     entry.pop("cache_control", None)
 
 
@@ -160,8 +168,10 @@ class LastNObservations(BaseModel):
                 assert data.get("message_type") == "observation", (
                     f"Expected observation for dropped entry, got: {data.get('message_type')}"
                 )
-                text = _get_content_text(data)
-                _set_content_text(data, f"Old environment output: ({len(text.splitlines())} lines omitted)")
+                num_text_lines, num_images = _get_content_stats(data)
+                data["content"] = f"Old environment output: ({num_text_lines} lines omitted)"
+                if num_images > 0:
+                    data["content"] += f" ({num_images} images omitted)"
                 new_history.append(data)
         return new_history
 
@@ -314,12 +324,67 @@ class RemoveRegex(BaseModel):
             if i_entry < self.keep_last:
                 new_history.append(entry)
             else:
-                text = _get_content_text(entry)
-                for pattern in self.remove:
-                    text = re.sub(pattern, "", text, flags=re.DOTALL)
-                    _set_content_text(entry, text)
+                if isinstance(entry["content"], list):
+                    for item in entry["content"]:
+                        if item["type"] == "text":
+                            for pattern in self.remove:
+                                item["text"] = re.sub(pattern, "", item["text"], flags=re.DOTALL)
+                else:
+                    assert isinstance(entry["content"], str), "Expected string content"
+                    for pattern in self.remove:
+                        entry["content"] = re.sub(pattern, "", entry["content"], flags=re.DOTALL)
                 new_history.append(entry)
         return list(reversed(new_history))
+
+
+class ImageParsingHistoryProcessor(BaseModel):
+    """Parse embedded base64 images from markdown and convert to multi-modal format."""
+
+    type: Literal["image_parsing"] = "image_parsing"
+    allowed_mime_types: set[str] = {"image/png", "image/jpeg", "image/webp"}
+
+    _pattern = re.compile(r"(!\[([^\]]*)\]\(data:)([^;]+);base64,([^)]+)(\))")
+    model_config = ConfigDict(extra="forbid")
+
+    def __call__(self, history: History) -> History:
+        return [self._process_entry(entry) for entry in history]
+
+    def _process_entry(self, entry: HistoryItem) -> HistoryItem:
+        if entry.get("role") not in ["user", "tool"]:
+            return entry
+        entry = copy.deepcopy(entry)
+        content = _get_content_text(entry)
+        segments = self._parse_images(content)
+        if any(seg["type"] == "image_url" for seg in segments):
+            entry["content"] = segments
+        return entry
+
+    def _parse_images(self, content: str) -> list[dict]:
+        segments = []
+        last_end = 0
+        has_images = False
+
+        def add_text(text: str) -> None:
+            """Add text to the last segment if it's text, otherwise create new text segment."""
+            if text and segments and segments[-1]["type"] == "text":
+                segments[-1]["text"] += text
+            elif text:
+                segments.append({"type": "text", "text": text})
+
+        for match in self._pattern.finditer(content):
+            markdown_prefix, alt_text, mime_type, base64_data, markdown_suffix = match.groups()
+            add_text(content[last_end : match.start()])
+            mime_type = "image/jpeg" if mime_type == "image/jpg" else mime_type
+            if mime_type in self.allowed_mime_types:
+                add_text(markdown_prefix)
+                segments.append({"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_data}"}})
+                add_text(markdown_suffix)
+                has_images = True
+            else:
+                add_text(match.group(0))
+            last_end = match.end()
+        add_text(content[last_end:])
+        return segments if has_images else [{"type": "text", "text": content}]
 
 
 HistoryProcessor = Annotated[
@@ -328,6 +393,7 @@ HistoryProcessor = Annotated[
     | ClosedWindowHistoryProcessor
     | TagToolCallObservations
     | CacheControlHistoryProcessor
-    | RemoveRegex,
+    | RemoveRegex
+    | ImageParsingHistoryProcessor,
     Field(discriminator="type"),
 ]

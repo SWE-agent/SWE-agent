@@ -1,3 +1,4 @@
+import json
 import random
 import re
 from abc import ABC, abstractmethod
@@ -13,7 +14,11 @@ from swerex.deployment.config import (
 )
 from typing_extensions import Self
 
-from sweagent.agent.problem_statement import ProblemStatementConfig, TextProblemStatement
+from sweagent.agent.problem_statement import (
+    ProblemStatementConfig,
+    SWEBenchMultimodalProblemStatement,
+    TextProblemStatement,
+)
 from sweagent.environment.repo import GithubRepoConfig, LocalRepoConfig, PreExistingRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.utils.files import load_file
@@ -108,9 +113,19 @@ class SimpleBatchInstance(BaseModel):
         """Merge the deployment options into the `SimpleBatchInstance` object to get a full `BatchInstance`."""
         # Very important: Make a copy of the deployment config because it will be shared among instances!!!
         deployment = deployment.model_copy(deep=True)
-        problem_statement = TextProblemStatement(
-            text=self.problem_statement, id=self.instance_id, extra_fields=self.extra_fields
-        )
+
+        if "issue_images" in self.extra_fields:
+            problem_statement = SWEBenchMultimodalProblemStatement(
+                text=self.problem_statement,
+                issue_images=self.extra_fields.pop("issue_images"),
+                id=self.instance_id,
+                extra_fields=self.extra_fields,
+            )
+        else:
+            problem_statement = TextProblemStatement(
+                text=self.problem_statement, id=self.instance_id, extra_fields=self.extra_fields
+            )
+
         if not self.repo_name:
             repo = None
         elif "github" in self.repo_name:
@@ -161,12 +176,17 @@ class SimpleBatchInstance(BaseModel):
             # Docker doesn't allow double underscore, so we replace them with a magic token
             id_docker_compatible = iid.replace("__", "_1776_")
             image_name = f"swebench/sweb.eval.x86_64.{id_docker_compatible}:latest".lower()
+        extra_fields = {}
+        if "image_assets" in instance:
+            issue_images = json.loads(instance["image_assets"])["problem_statement"]
+            extra_fields["issue_images"] = issue_images
         return cls(
             image_name=image_name,
             problem_statement=instance["problem_statement"],
             instance_id=iid,
             repo_name="testbed",
             base_commit=instance["base_commit"],
+            extra_fields=extra_fields,
         )
 
 

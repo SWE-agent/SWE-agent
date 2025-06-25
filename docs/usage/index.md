@@ -29,4 +29,12 @@ Just want to run it? See [getting started](../index.md) instead!
 
     [:octicons-arrow-right-24: Configuration](../config/config.md)
 
+-   :material-image:{ .lg .middle } __Multimodal Support__
+
+    ---
+
+    Use SWE-agent with vision-capable AI models for image processing.
+
+    [:octicons-arrow-right-24: Multimodal Guide](multimodal.md)
+
 </div>
