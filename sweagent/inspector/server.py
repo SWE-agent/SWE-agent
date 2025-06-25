@@ -14,7 +14,7 @@ import yaml
 
 def add_problem_statement(content):
     """The problem statement is the first 'user' message in the history.
-    
+
     We'll prepend the trajectory with the problem statement.
     """
     problem_statement = ""
@@ -23,13 +23,16 @@ def add_problem_statement(content):
             problem_statement = item["content"]
             break
     if problem_statement:
-        content["trajectory"].insert(0, {
-            "thought": "",
-            "action": "",
-            "response": "",
-            "observation": problem_statement,
-            "messages": [{"role": "system", "content": "Problem Statement placeholder"}],
-        })
+        content["trajectory"].insert(
+            0,
+            {
+                "thought": "",
+                "action": "",
+                "response": "",
+                "observation": problem_statement,
+                "messages": [{"role": "system", "content": "Problem Statement placeholder"}],
+            },
+        )
     return content
 
 

@@ -1,8 +1,7 @@
+import base64
 import hashlib
 import os
 import uuid
-import base64
-import mimetypes
 from pathlib import Path
 from typing import Any, Literal, Protocol
 from urllib.parse import urlparse
@@ -18,7 +17,7 @@ logger = get_logger("swea-config", emoji="🔧")
 # Constants for image processing
 VALID_IMAGE_MIME_TYPES = {
     "image/png",
-    "image/jpeg", 
+    "image/jpeg",
     "image/jpg",  # Some servers return jpg instead of jpeg
     "image/webp",
 }
@@ -146,15 +145,15 @@ class GithubIssue(BaseModel):
 
 class SWEBenchMultimodalProblemStatement(BaseModel):
     text: str
-    
+
     issue_images: list[str] = Field(default_factory=list)
     """List of image asset URLs.
     """
-    
+
     disable_image_processing: bool = False
     """If True, skip image downloading and processing, treating this as a text-only problem statement.
     """
-    
+
     extra_fields: dict[str, Any] = Field(default_factory=dict)
     """Any additional data to be added to the instance.
     This data will be available when formatting prompt templates.
@@ -164,7 +163,7 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
     """Discriminator for (de)serialization/CLI. Do not change."""
 
     id: str = None  # type: ignore
-    
+
     _cached_problem_statement: str | None = PrivateAttr(default=None)
 
     model_config = ConfigDict(extra="forbid")
@@ -176,7 +175,7 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
 
     def get_problem_statement_for_env(self) -> str:
         """Return the problem statement without images.
-        
+
         Images are not supported in the environment.
         """
         return self.text
@@ -185,10 +184,10 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
         if self.disable_image_processing:
             logger.info("Image processing disabled, returning text-only problem statement")
             return self.text
-            
+
         if self._cached_problem_statement is not None:
             return self._cached_problem_statement
-            
+
         processed_text = self.text
         for link in self.issue_images:
             try:
@@ -197,7 +196,7 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
                     processed_text += f"\n\n{image_markdown}"
             except Exception as e:
                 logger.warning(f"Failed to process image from {link}: {e}")
-        
+
         # cache to avoid re-processing images
         self._cached_problem_statement = processed_text
         return processed_text
@@ -207,13 +206,13 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
 
     def _download_and_convert_image(self, url: str) -> str | None:
         """Download an image from URL and convert it to base64 markdown format.
-        
+
         Args:
             url: The URL of the image to download
-            
+
         Returns:
             Base64 markdown string if successful, None if failed
-            
+
         Raises:
             Various exceptions for network/processing errors
         """
@@ -227,14 +226,14 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
             }
             response = requests.get(url, headers=headers, timeout=30, stream=True)
             response.raise_for_status()
-            content_type = response.headers.get('content-type', '').lower()
-            if content_type == 'image/jpg':
-                content_type = 'image/jpeg'
+            content_type = response.headers.get("content-type", "").lower()
+            if content_type == "image/jpg":
+                content_type = "image/jpeg"
             if content_type not in VALID_IMAGE_MIME_TYPES:
                 logger.warning(f"Unsupported image MIME type '{content_type}' for URL: {url}. Not encoding image.")
                 return None
             max_size = 10 * 1024 * 1024  # 10MB
-            content_length = response.headers.get('content-length')
+            content_length = response.headers.get("content-length")
             if content_length and int(content_length) > max_size:
                 logger.warning(f"Image too large ({content_length} bytes) for URL: {url}")
                 return None
@@ -246,12 +245,12 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
                     return None
             if not image_data:
                 logger.warning(f"Empty image data for URL: {url}")
-                return None            
-            b64_data = base64.b64encode(image_data).decode('ascii')
+                return None
+            b64_data = base64.b64encode(image_data).decode("ascii")
             markdown = f"![{url}](data:{content_type};base64,{b64_data})"
             logger.info(f"Successfully processed image from {url} ({len(image_data)} bytes, {content_type})")
             return markdown
-            
+
         except requests.exceptions.Timeout:
             logger.warning(f"Timeout downloading image from {url}")
             return None
@@ -272,11 +271,11 @@ class SWEBenchMultimodalProblemStatement(BaseModel):
 
 
 ProblemStatementConfig = (
-    TextProblemStatement | 
-    SWEBenchMultimodalProblemStatement |
-    GithubIssue | 
-    EmptyProblemStatement | 
-    FileProblemStatement
+    TextProblemStatement
+    | SWEBenchMultimodalProblemStatement
+    | GithubIssue
+    | EmptyProblemStatement
+    | FileProblemStatement
 )
 
 

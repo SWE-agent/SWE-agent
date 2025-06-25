@@ -568,15 +568,16 @@ class DefaultAgent(AbstractAgent):
         This method is called by `self.run`.
         """
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # apply template configuration to multimodal problem statements
-        if hasattr(problem_statement, 'type') and problem_statement.type == "swe_bench_multimodal":
+        if hasattr(problem_statement, "type") and problem_statement.type == "swe_bench_multimodal":
             from sweagent.agent.problem_statement import SWEBenchMultimodalProblemStatement
+
             if isinstance(problem_statement, SWEBenchMultimodalProblemStatement):
                 # apply the global disable_image_processing setting if it's not explicitly set
                 if not problem_statement.disable_image_processing and self.templates.disable_image_processing:
                     problem_statement.disable_image_processing = True
-                    
+
         self._problem_statement = problem_statement
         self._env = env
         iid = self._problem_statement.id
@@ -596,9 +597,7 @@ class DefaultAgent(AbstractAgent):
         self.info["swe_rex_hash"] = get_rex_commit_hash()
         assert self._env is not None
         assert self._problem_statement is not None
-        self._env.set_env_variables({
-                "PROBLEM_STATEMENT": self._problem_statement.get_problem_statement_for_env()
-            })
+        self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement_for_env()})
         self.add_system_message_to_history()
         self.add_demonstrations_to_history()
         self.add_instance_template_to_history(state=self.tools.get_state(self._env))

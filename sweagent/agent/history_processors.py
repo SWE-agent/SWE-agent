@@ -8,7 +8,6 @@ from typing import Annotated, Literal, Protocol
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from sweagent.types import History, HistoryItem
-from sweagent.utils.log import get_logger
 
 
 class AbstractHistoryProcessor(Protocol):
@@ -24,16 +23,8 @@ class AbstractHistoryProcessor(Protocol):
 def _get_content_stats(entry: HistoryItem) -> tuple[int, int]:
     if isinstance(entry["content"], str):
         return len(entry["content"].splitlines()), 0
-    n_text_lines = sum(
-        len(item["text"].splitlines())
-        for item in entry["content"]
-        if item.get("type") == "text"
-    )
-    n_images = sum(
-        1
-        for item in entry["content"]
-        if item.get("type") == "image_url"
-    )
+    n_text_lines = sum(len(item["text"].splitlines()) for item in entry["content"] if item.get("type") == "text")
+    n_images = sum(1 for item in entry["content"] if item.get("type") == "image_url")
     return n_text_lines, n_images
 
 
@@ -352,7 +343,7 @@ class ImageParsingHistoryProcessor(BaseModel):
     type: Literal["image_parsing"] = "image_parsing"
     allowed_mime_types: set[str] = {"image/png", "image/jpeg", "image/webp"}
 
-    _pattern = re.compile(r'(!\[([^\]]*)\]\(data:)([^;]+);base64,([^)]+)(\))')
+    _pattern = re.compile(r"(!\[([^\]]*)\]\(data:)([^;]+);base64,([^)]+)(\))")
     model_config = ConfigDict(extra="forbid")
 
     def __call__(self, history: History) -> History:
@@ -372,22 +363,21 @@ class ImageParsingHistoryProcessor(BaseModel):
         segments = []
         last_end = 0
         has_images = False
+
         def add_text(text: str) -> None:
             """Add text to the last segment if it's text, otherwise create new text segment."""
             if text and segments and segments[-1]["type"] == "text":
                 segments[-1]["text"] += text
             elif text:
                 segments.append({"type": "text", "text": text})
+
         for match in self._pattern.finditer(content):
             markdown_prefix, alt_text, mime_type, base64_data, markdown_suffix = match.groups()
-            add_text(content[last_end:match.start()])
+            add_text(content[last_end : match.start()])
             mime_type = "image/jpeg" if mime_type == "image/jpg" else mime_type
             if mime_type in self.allowed_mime_types:
                 add_text(markdown_prefix)
-                segments.append({
-                    "type": "image_url",
-                    "image_url": {"url": f"data:{mime_type};base64,{base64_data}"}
-                })
+                segments.append({"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_data}"}})
                 add_text(markdown_suffix)
                 has_images = True
             else:

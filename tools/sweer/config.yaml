@@ -7,17 +7,17 @@ tools:
         type: string
         description: "The URL to open (can be a web URL or file path)"
         required: true
-  
+
   close_site:
     signature: "close_site"
     docstring: "Close the currently open browser window"
     arguments: []
-  
+
   screenshot_site:
     signature: "screenshot_site"
     docstring: "Take a screenshot of the current page"
     arguments: []
-  
+
   click_mouse:
     signature: "click_mouse <x> <y> [<button>]"
     docstring: "Click at the specified coordinates (shown as a red crosshair) on the current page"
@@ -35,7 +35,7 @@ tools:
         description: "Mouse button to click (left or right, default: left)"
         required: false
         enum: ["left", "right"]
-  
+
   double_click_mouse:
     signature: "double_click_mouse <x> <y>"
     docstring: "Double-click at the specified coordinates (shown as a red crosshair) on the current page"
@@ -48,7 +48,7 @@ tools:
         type: integer
         description: "Y coordinate"
         required: true
-  
+
   move_mouse:
     signature: "move_mouse <x> <y>"
     docstring: "Move mouse to the specified coordinates (shown as a red crosshair) on the current page"
@@ -61,7 +61,7 @@ tools:
         type: integer
         description: "Y coordinate"
         required: true
-  
+
   drag_mouse:
     signature: "drag_mouse <path>"
     docstring: "Drag mouse along a path (JSON format: [[x1,y1],[x2,y2],...]) on the current page"
@@ -70,7 +70,7 @@ tools:
         type: string
         description: "JSON array of coordinate pairs for the drag path (e.g., '[[0,0],[100,100]]')"
         required: true
-  
+
   type_text:
     signature: "type_text <text>"
     docstring: "Type the given text at the current focused element on the current page"
@@ -79,7 +79,7 @@ tools:
         type: string
         description: "Text to type"
         required: true
-  
+
   scroll_on_page:
     signature: "scroll_on_page <scroll_x> <scroll_y>"
     docstring: "Scroll by the specified number of pixels on the current page"
@@ -92,7 +92,7 @@ tools:
         type: integer
         description: "Vertical scroll amount in pixels"
         required: true
-  
+
   execute_script_on_page:
     signature: "execute_script_on_page <script>"
     docstring: "Execute a custom JavaScript code snippet on the current page"
@@ -101,22 +101,22 @@ tools:
         type: string
         description: "JavaScript code to execute"
         required: true
-  
+
   navigate_back:
     signature: "navigate_back"
     docstring: "Navigate back in the browser history"
     arguments: []
-  
+
   navigate_forward:
     signature: "navigate_forward"
     docstring: "Navigate forward in the browser history"
     arguments: []
-  
+
   reload_page:
     signature: "reload_page"
     docstring: "Reload the current webpage"
     arguments: []
-  
+
   wait_time:
     signature: "wait_time <ms>"
     docstring: "Wait for the specified number of milliseconds"
@@ -125,7 +125,7 @@ tools:
         type: integer
         description: "Time to wait in milliseconds"
         required: true
-  
+
   press_keys_on_page:
     signature: "press_keys_on_page <keys>"
     docstring: "Press the specified keys (JSON format: [\"key1\", \"key2\"]) on the current page"
@@ -134,7 +134,7 @@ tools:
         type: string
         description: "JSON array of keys to press (e.g., '[\"ctrl\", \"c\"]')"
         required: true
-  
+
   set_browser_window_size:
     signature: "set_browser_window_size <width> <height>"
     docstring: "Set the browser window size to the specified dimensions"
@@ -147,8 +147,8 @@ tools:
         type: integer
         description: "Window height in pixels"
         required: true
-      
-    
+
+
   get_console_output:
     signature: "get_console_output"
     docstring: "Get console output messages from the browser (logs, errors, warnings, etc.)"

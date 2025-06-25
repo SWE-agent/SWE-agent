@@ -7,7 +7,7 @@ SWE-agent supports multimodal AI models that can process both text and images. T
 The multimodal implementation automatically:
 
 - **Detects multimodal instances** from SWE-bench Multimodal datasets
-- **Downloads images** from GitHub issue URLs  
+- **Downloads images** from GitHub issue URLs
 - **Converts to base64 markdown** format for AI model consumption
 - **Handles errors gracefully** with fallback to text-only processing
 
@@ -16,7 +16,7 @@ The multimodal implementation automatically:
 Currently, SWE-agent processes images from the `problem_statement` category, which includes:
 
 - Screenshots showing bugs or issues
-- UI mockups and design specifications  
+- UI mockups and design specifications
 - Diagrams explaining the problem
 - Error screenshots and visual evidence
 

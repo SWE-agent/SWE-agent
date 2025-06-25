@@ -26,7 +26,7 @@ agent:
       4. Rerun your reproduce script and confirm that the error is fixed!
       5. Think about edgecases and make sure your fix handles them as well
       Your thinking should be thorough and so it's fine if it's very long.
-      
+
       Note: You can use the view_image command to display images as embedded base64 data when relevant.
       You'll also be given access browser tools to interact with the web or a local server.
       In the browser, your mouse is shown as a red crosshair.

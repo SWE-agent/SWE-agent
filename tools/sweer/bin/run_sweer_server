@@ -1,6 +1,6 @@
 #!/root/python3.11/bin/python3
-"""Sweer server ‒ Flask + Playwright backend.
-"""
+"""Sweer server ‒ Flask + Playwright backend."""
+
 from __future__ import annotations
 
 import atexit
@@ -11,12 +11,11 @@ import sys
 import time
 from typing import Any
 
-lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'lib')
+lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lib")
 sys.path.insert(0, lib_path)
 
-from flask import Flask, Response, jsonify, request
-
 from browser_manager import BrowserManager
+from flask import Flask, Response, jsonify, request
 from sweer_config import ServerConfig
 from sweer_utils import catch_error, normalize_url, validate_request
 
@@ -49,11 +48,13 @@ app = Flask(__name__)
 
 def require_website_open(func):
     """Decorator to ensure a website is open before executing the route."""
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if not browser_manager.is_website_open():
             return create_response({"status": "error", "message": "Please open a website first."}, False)
         return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -67,7 +68,7 @@ def _get_response_metadata() -> dict[str, Any]:
         with browser_manager._browser_lock() as page:
             metadata["Current URL"] = page.url
             metadata["Page Title"] = page.title()
-            
+
             scroll_info = page.evaluate("""() => ({
                 scroll_position: { x: window.pageXOffset || document.documentElement.scrollLeft, y: window.pageYOffset || document.documentElement.scrollTop },
                 page_dimensions: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
@@ -121,10 +122,9 @@ def set_window_size():
     width, height = request.json["width"], request.json["height"]
     return_screenshot = request.json["return_screenshot"]
     if width <= 0 or height <= 0:
-        return create_response({
-            "status": "error", 
-            "message": f"Invalid dimensions ({width},{height}). Must be positive"
-        }, False)
+        return create_response(
+            {"status": "error", "message": f"Invalid dimensions ({width},{height}). Must be positive"}, False
+        )
     with browser_manager._browser_lock() as page:
         page.set_viewport_size({"width": width, "height": height})
         browser_manager.window_width = width
@@ -151,10 +151,13 @@ def click():
     return_screenshot = request.json["return_screenshot"]
     x_valid, y_valid = browser_manager.validate_coordinates(x, y)
     if not x_valid or not y_valid:
-        return create_response({
-            "status": "error", 
-            "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}"
-        }, False)
+        return create_response(
+            {
+                "status": "error",
+                "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}",
+            },
+            False,
+        )
     with browser_manager._browser_lock() as page:
         page.mouse.click(x, y, button=button)
         browser_manager.mouse_x, browser_manager.mouse_y = x, y
@@ -171,10 +174,13 @@ def double_click():
     return_screenshot = request.json["return_screenshot"]
     x_valid, y_valid = browser_manager.validate_coordinates(x, y)
     if not x_valid or not y_valid:
-        return create_response({
-            "status": "error", 
-            "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}"
-        }, False)
+        return create_response(
+            {
+                "status": "error",
+                "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}",
+            },
+            False,
+        )
     with browser_manager._browser_lock() as page:
         page.mouse.dblclick(x, y)
         browser_manager.mouse_x, browser_manager.mouse_y = x, y
@@ -191,10 +197,13 @@ def move():
     return_screenshot = request.json["return_screenshot"]
     x_valid, y_valid = browser_manager.validate_coordinates(x, y)
     if not x_valid or not y_valid:
-        return create_response({
-            "status": "error", 
-            "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}"
-        }, False)
+        return create_response(
+            {
+                "status": "error",
+                "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}",
+            },
+            False,
+        )
     with browser_manager._browser_lock() as page:
         page.mouse.move(x, y)
         browser_manager.mouse_x, browser_manager.mouse_y = x, y
@@ -213,15 +222,20 @@ def drag():
         return create_response({"status": "error", "message": "Path needs at least two points"}, False)
     for ix, point in enumerate(path):
         if len(point) != 2:
-            return create_response({"status": "error", "message": f"Path point {ix} must have exactly 2 coordinates"}, False)
+            return create_response(
+                {"status": "error", "message": f"Path point {ix} must have exactly 2 coordinates"}, False
+            )
         x, y = point
         x_valid, y_valid = browser_manager.validate_coordinates(x, y)
         if not x_valid or not y_valid:
-            return create_response({
-                "status": "error", 
-                "message": f"Invalid coordinates ({x},{y}) at path point {ix}. Must be within {browser_manager.window_width}x{browser_manager.window_height}"
-            }, False)
-    
+            return create_response(
+                {
+                    "status": "error",
+                    "message": f"Invalid coordinates ({x},{y}) at path point {ix}. Must be within {browser_manager.window_width}x{browser_manager.window_height}",
+                },
+                False,
+            )
+
     with browser_manager._browser_lock() as page:
         page.mouse.move(*path[0])
         page.mouse.down()
@@ -268,12 +282,7 @@ def exec_script():
     return_screenshot = request.json["return_screenshot"]
     with browser_manager._browser_lock() as page:
         result = page.evaluate(script)
-        data = {
-            "status": "success",
-            "message": (
-                f"Script executed.\n<script_result>\n{result}\n</script_result>"
-            )
-        }
+        data = {"status": "success", "message": (f"Script executed.\n<script_result>\n{result}\n</script_result>")}
         return create_response(data, return_screenshot)
 
 
@@ -294,7 +303,7 @@ def back():
 @catch_error
 @require_website_open
 def forward():
-    return_screenshot = request.json["return_screenshot"]    
+    return_screenshot = request.json["return_screenshot"]
     with browser_manager._browser_lock() as page:
         page.go_forward()
         data = {"status": "success", "message": "Navigated forward"}
@@ -364,9 +373,9 @@ def goto():
 def get_console():
     console_messages = browser_manager.get_console_output()
     data = {
-        "status": "success", 
+        "status": "success",
         "message": f"Retrieved {len(console_messages)} console messages",
-        "console_messages": console_messages
+        "console_messages": console_messages,
     }
     return create_response(data, False)
 

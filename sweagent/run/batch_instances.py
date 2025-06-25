@@ -1,6 +1,6 @@
+import json
 import random
 import re
-import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal
@@ -14,7 +14,11 @@ from swerex.deployment.config import (
 )
 from typing_extensions import Self
 
-from sweagent.agent.problem_statement import ProblemStatementConfig, TextProblemStatement, SWEBenchMultimodalProblemStatement
+from sweagent.agent.problem_statement import (
+    ProblemStatementConfig,
+    SWEBenchMultimodalProblemStatement,
+    TextProblemStatement,
+)
 from sweagent.environment.repo import GithubRepoConfig, LocalRepoConfig, PreExistingRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.utils.files import load_file
@@ -109,19 +113,19 @@ class SimpleBatchInstance(BaseModel):
         """Merge the deployment options into the `SimpleBatchInstance` object to get a full `BatchInstance`."""
         # Very important: Make a copy of the deployment config because it will be shared among instances!!!
         deployment = deployment.model_copy(deep=True)
-        
+
         if "issue_images" in self.extra_fields:
             problem_statement = SWEBenchMultimodalProblemStatement(
                 text=self.problem_statement,
                 issue_images=self.extra_fields.pop("issue_images"),
                 id=self.instance_id,
-                extra_fields=self.extra_fields
+                extra_fields=self.extra_fields,
             )
         else:
             problem_statement = TextProblemStatement(
                 text=self.problem_statement, id=self.instance_id, extra_fields=self.extra_fields
             )
-        
+
         if not self.repo_name:
             repo = None
         elif "github" in self.repo_name:

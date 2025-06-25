@@ -3,23 +3,29 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
-
 from argparse import ArgumentParser
 
-lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'lib')
+lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lib")
 sys.path.insert(0, lib_path)
 
 from sweer_config import ClientConfig
-from sweer_utils import ScreenshotMode, _print_response_with_metadata, _autosave_screenshot_from_response, _print_error, send_request
+from sweer_utils import (
+    _autosave_screenshot_from_response,
+    _print_response_with_metadata,
+    send_request,
+)
 
 config = ClientConfig()
 
 
-
 def scroll(scroll_x, scroll_y):
     """Scroll by (scroll_x, scroll_y) pixels at current mouse position."""
-    response = send_request(config.port, "scroll", "POST", {"scroll_x": scroll_x, "scroll_y": scroll_y, "return_screenshot": config.autoscreenshot})
+    response = send_request(
+        config.port,
+        "scroll",
+        "POST",
+        {"scroll_x": scroll_x, "scroll_y": scroll_y, "return_screenshot": config.autoscreenshot},
+    )
     if response is None:
         return
     _print_response_with_metadata(response)

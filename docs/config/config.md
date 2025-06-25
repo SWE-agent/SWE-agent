@@ -12,7 +12,7 @@ A configuration is represented in one or more `.yaml` files, specified by the `-
 
 !!! tip "Default config files"
     Our default config files are in the [`config/`](https://github.com/SWE-agent/SWE-agent/tree/main/config) directory.
-    
+
     For multimodal support, use `config/default_mm_with_images.yaml` which includes image processing capabilities.
 
 To use a config file, you can use the `--config` flag in the command line interface.
@@ -52,7 +52,7 @@ This configuration enables full image processing capabilities:
 - **Extended observation length**: Increases observation token limits to accommodate images
 - **Image tools**: Includes `image_tools` bundle for viewing images
 - **Web browsing tools**: Includes `sweer` bundle for using web browsers
-- **History processing**: Enables `image_parsing` history processor for parsing 
+- **History processing**: Enables `image_parsing` history processor for parsing
 
 ### Key Multimodal Settings
 
