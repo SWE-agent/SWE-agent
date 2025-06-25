@@ -18,6 +18,22 @@ In most cases, you will want to use the `GenericAPIModelConfig` object.
     options:
         heading_level: 3
 
+::: sweagent.agent.models.HumanModelConfig
+    options:
+        heading_level: 3
+
+::: sweagent.agent.models.HumanThoughtModelConfig
+    options:
+        heading_level: 3
+
+::: sweagent.agent.models.ReplayModelConfig
+    options:
+        heading_level: 3
+
+::: sweagent.agent.models.InstantEmptySubmitModelConfig
+    options:
+        heading_level: 3
+
 ## Manual models for testing
 
 The following two models allow you to test your environment by prompting you for actions.
