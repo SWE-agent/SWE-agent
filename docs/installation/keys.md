@@ -115,7 +115,7 @@ and set `agent.model.api_key` to the key you've configured for your proxy (or a 
 
     Please also make sure to set `max_input_tokens` to a non-`None` value to avoid other warnings.
 
-### Custom model registry for cost tracking
+### Custom cost tracking
 
 If you want to track costs for models not in the default litellm registry, you can provide a custom model registry file. This is particularly useful for:
 
@@ -156,6 +156,8 @@ agent:
     litellm_model_registry: "my_model_registry.json"  # Path to your custom registry
     ...
 ```
+
+If you need to modify the tokenizer that is used when calculating costs, you can set the `custom_tokenizer` setting in the [model config](../reference/model_config.md).
 
 !!! warning "Parsing functions"
 

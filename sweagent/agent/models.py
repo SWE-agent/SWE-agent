@@ -143,6 +143,12 @@ class GenericAPIModelConfig(PydanticBaseModel):
     Use this for local models or models not (yet) in the default litellm model registry for tracking costs.
     """
 
+    custom_tokenizer: dict[str, Any] | None = None
+    """Override the default tokenizer for the model.
+    Use the arguments of `litellm.create_pretrained_tokenizer`.
+    Basic example: `{"identifier": "hf-internal-testing/llama-tokenizer"}`
+    """
+
     # pydantic
     model_config = ConfigDict(extra="forbid")
 
@@ -577,7 +583,6 @@ class LiteLLMModel(AbstractModel):
         self.stats = InstanceStats()
         self.tools = tools
         self.logger = get_logger("swea-lm", emoji="🤖")
-        self.custom_tokenizer = None
 
         if tools.use_function_calling:
             if not litellm.utils.supports_function_calling(model=self.config.name):
@@ -615,29 +620,9 @@ class LiteLLMModel(AbstractModel):
                 )
 
         self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider", self.config.name)
-        if self.config.per_instance_cost_limit == 0 and self.config.total_cost_limit == 0:  # Local model
-            if "/" in self.lm_provider:
-                from transformers import AutoTokenizer
-
-                self.custom_tokenizer = {}
-                self.custom_tokenizer["provider"] = self.lm_provider.split("/")[0]
-
-                if self.custom_tokenizer["provider"] not in litellm.provider_list:
-                    self.logger.warning(
-                        f"Local model {self.lm_provider} not found in LiteLLM provider list. Using default tokenizer."
-                    )
-                    self.custom_tokenizer = None
-                else:
-                    self.custom_tokenizer["identifier"] = "/".join(self.lm_provider.split("/")[1:])
-                    self.custom_tokenizer["type"] = "huggingface_tokenizer"
-                    # Use backend tokenizer as workaround for litellm HF tokenizer bug
-                    self.custom_tokenizer["tokenizer"] = AutoTokenizer.from_pretrained(
-                        self.custom_tokenizer["identifier"]
-                    ).backend_tokenizer
-            else:
-                self.logger.warning(
-                    f"Local model identifier {self.lm_provider} has an unknown format. Using default tokenizer."
-                )
+        self.custom_tokenizer = None
+        if self.config.custom_tokenizer is not None:
+            self.custom_tokenizer = litellm.utils.create_pretrained_tokenizer(**self.config.custom_tokenizer)
 
     @property
     def instance_cost_limit(self) -> float:
@@ -702,7 +687,7 @@ class LiteLLMModel(AbstractModel):
                 del message["cache_control"]
         input_tokens: int = litellm.utils.token_counter(
             messages=messages_no_cache_control,
-            model=self.custom_tokenizer["identifier"] if self.custom_tokenizer else self.config.name,
+            model=self.custom_tokenizer["identifier"] if self.custom_tokenizer is not None else self.config.name,
             custom_tokenizer=self.custom_tokenizer,
         )
         if self.model_max_input_tokens is None:
@@ -767,7 +752,7 @@ class LiteLLMModel(AbstractModel):
             output = choices[i].message.content or ""
             output_tokens += litellm.utils.token_counter(
                 text=output,
-                model=self.custom_tokenizer["identifier"] if self.custom_tokenizer else self.config.name,
+                model=self.custom_tokenizer["identifier"] if self.custom_tokenizer is not None else self.config.name,
                 custom_tokenizer=self.custom_tokenizer,
             )
             output_dict = {"message": output}
