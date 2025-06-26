@@ -72,6 +72,7 @@ nav:
       - "Trajectory inspector": "usage/inspector.md"
       - "Batch mode": "usage/batch_mode.md"
       - "Competitive runs": "usage/competitive_runs.md"
+      - "Adding custom tools": "usage/adding_custom_tools.md"
       - "What's next?": "usage/whats_next.md"
     - "FAQ": "faq.md"
   - User Guides:
