@@ -1,7 +1,5 @@
 # Action parsers
 
-This page documents the action parsing functionality used by SWE-agent to parse and validate agent actions.
-
-The parsing module contains utilities for parsing agent commands and ensuring they conform to the expected format.
+Action parsers interpret the output of the LM and return actions (tool calls/commands to execute) and thoughts (any other output of the LM, e.g., justifying the tool calls).
 
 ::: sweagent.tools.parsing

@@ -17,7 +17,7 @@ Currently, there are three main agent classes:
 
 * `DefaultAgentConfig`: This is the default agent.
 * `RetryAgentConfig`: A "meta agent" that instantiates multiple agents for multiple attempts and then picks the best solution.
-* `ShellAgentConfig`: An agent that provides shell-based interaction capabilities.
+* `ShellAgentConfig`: Config for `ShellAgent` (invoked with `sweagent sh`), which is an experimental mode for quick & interactive (human-in-the-loop) workflows.
 
 ::: sweagent.agent.agents.RetryAgentConfig
 
