@@ -303,4 +303,8 @@ fi
 
 The registry is particularly useful for complex tools that need to maintain state across multiple invocations, like the `review_on_submit_m` tool that tracks submission stages.
 
+## State commands and more
+
+Take a look at our [tool documentation](../config/tools.md).
+
 {% include-markdown "../_footer.md" %}
