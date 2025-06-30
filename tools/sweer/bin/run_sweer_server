@@ -170,7 +170,7 @@ def click():
 @catch_error
 @require_website_open
 def double_click():
-    x, y = request.json["x"], request.json["y"]
+    x, y = round(request.json["x"]), round(request.json["y"])
     return_screenshot = request.json["return_screenshot"]
     x_valid, y_valid = browser_manager.validate_coordinates(x, y)
     if not x_valid or not y_valid:

@@ -11,6 +11,7 @@ sys.path.insert(0, lib_path)
 from sweer_config import ClientConfig
 from sweer_utils import (
     ScreenshotMode,
+    _handle_screenshot,
     _print_response_with_metadata,
     send_request,
 )
