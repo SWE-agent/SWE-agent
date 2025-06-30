@@ -1,12 +1,11 @@
 #!/root/python3.11/bin/python3
 from __future__ import annotations
 
-import os
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lib")
+lib_path = str(Path(__file__).resolve().parent.parent / "lib")
 sys.path.insert(0, lib_path)
 
 from sweer_config import ClientConfig

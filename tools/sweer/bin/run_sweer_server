@@ -5,13 +5,13 @@ from __future__ import annotations
 
 import atexit
 import functools
-import os
 import signal
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
-lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lib")
+lib_path = str(Path(__file__).resolve().parent.parent / "lib")
 sys.path.insert(0, lib_path)
 
 from browser_manager import BrowserManager

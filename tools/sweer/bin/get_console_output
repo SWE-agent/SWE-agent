@@ -1,11 +1,11 @@
 #!/root/python3.11/bin/python3
 from __future__ import annotations
 
-import os
 import sys
 from argparse import ArgumentParser
+from pathlib import Path
 
-lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lib")
+lib_path = str(Path(__file__).resolve().parent.parent / "lib")
 sys.path.insert(0, lib_path)
 
 from sweer_config import ClientConfig
@@ -28,7 +28,7 @@ def get_console_output():
         if console_messages:
             print("\n--- Console Messages ---")
             for ix, msg in enumerate(console_messages):
-                timestamp = msg.get("timestamp", 0)
+                # timestamp = msg.get("timestamp", 0)
                 msg_type = msg.get("type", "log")
                 text = msg.get("text", "")
                 location = msg.get("location", {})

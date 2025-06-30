@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import base64
 import contextlib
-import os
+from pathlib import Path
 import threading
 import time
 from typing import Any
@@ -177,7 +177,7 @@ class BrowserManager:
         elif self.browser_type == "firefox" and config.firefox_executable_path:
             executable_path = config.firefox_executable_path
         launch_options = {"headless": self.headless}
-        if executable_path and os.path.exists(executable_path):
+        if executable_path and Path(executable_path).exists():
             launch_options["executable_path"] = executable_path
         elif executable_path:
             print(
