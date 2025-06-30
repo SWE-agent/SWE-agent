@@ -10,7 +10,6 @@ from sweagent.tools.tools import ToolHandler
 from sweagent.types import AgentRunResult, StepOutput
 
 
-# todo: use different config class
 class ShellAgent(DefaultAgent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

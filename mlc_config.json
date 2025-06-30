@@ -17,6 +17,9 @@
     },
     {
       "pattern": "https?://(.*\\.)?x\\.com/.*"
+    },
+    {
+      "pattern": "https://linuxize.com/post/bash-heredoc/"
     }
   ]
 }

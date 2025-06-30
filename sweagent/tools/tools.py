@@ -91,7 +91,14 @@ class ToolConfig(BaseModel):
     so be careful with your API keys!
     """
 
-    env_variables: dict[str, Any] = {}
+    env_variables: dict[str, Any] = {
+        "PAGER": "cat",
+        "MANPAGER": "cat",
+        "LESS": "-R",
+        "PIP_PROGRESS_BAR": "off",
+        "TQDM_DISABLE": "1",
+        "GIT_PAGER": "cat",
+    }
     """Shorthand to set environment variables for the tools, effectively
     equivalent to adding `export VARNAME=value` to the `reset_commands`.
     """

@@ -44,7 +44,7 @@ Here are a few options for `--agent.model.name`:
 
 | Model | API key | Comment |
 | ----- | ------- | ------- |
-| `claude-sonnet-4-20250514)` | `ANTHROPIC_API_KEY` | Our recommended model |
+| `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` | Our recommended model |
 | `gpt-4o` | `OPENAI_API_KEY` | |
 | `o1-preview` | `OPENAI_API_KEY` | You might need to set temperature and sampling to the supported values. |
 
@@ -111,51 +111,10 @@ and set `agent.model.api_key` to the key you've configured for your proxy (or a 
     You have two options:
 
     1. **Disable cost tracking** (recommended for most users): Set `per_instance_cost_limit` to 0 and use the `per_instance_call_limit` instead to limit the runtime per issue.
-    2. **Use a custom model registry**: If you want to track costs for your local model, you can provide a custom `litellm_model_registry` file with cost information for your model (see below).
+    2. **Use a custom model registry**: If you want to track costs for your local model, you can provide a custom `litellm_model_registry` file with cost information for your model (see [here](../config/models.md#custom-cost-tracking)).
 
     Please also make sure to set `max_input_tokens` to a non-`None` value to avoid other warnings.
 
-### Custom model registry for cost tracking
-
-If you want to track costs for models not in the default litellm registry, you can provide a custom model registry file. This is particularly useful for:
-
-- New models not yet supported by litellm's default registry
-- Overriding default / old cost values in litellm
-- Local models that you want to track "costs" for, to compare to other results
-
-This file will override entries in the [litellm community model cost file](https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json).
-
-Create a JSON file with your model's cost information following the litellm model registry format:
-
-```json title="my_model_registry.json"
-{
-  "ollama/llama2": {
-    "max_tokens": 8192,
-    "input_cost_per_token": 0.00002,
-    "output_cost_per_token": 0.00006,
-    "litellm_provider": "ollama",
-    "mode": "chat"
-  },
-  "my-custom-provider/my-new-model": {
-    "max_tokens": 8192,
-    "max_input_tokens": 8192,
-    "max_output_tokens": 8192,
-    "input_cost_per_token": 0.000001,
-    "output_cost_per_token": 0.000002,
-    "litellm_provider": "openai",
-    "mode": "chat"
-  }
-}
-```
-
-Then specify this registry in your config:
-
-```yaml title="config/your_config.yaml"
-agent:
-  model:
-    litellm_model_registry: "my_model_registry.json"  # Path to your custom registry
-    ...
-```
 
 !!! warning "Parsing functions"
 

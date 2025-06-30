@@ -28,10 +28,10 @@ export FEATURE_BRANCH="main"
 Next we create a copy of this branch (so we don't further modify it):
 
 ```bash
-git branch "${FEATURE_BRANCH}" "${FEATURE_BRANCH}_REBASED"
+git branch "${FEATURE_BRANCH}_REBASED" "${FEATURE_BRANCH}"
 ```
 
-And now comes the tricky bit: We rebase your changes on top of `upstream/mean`, while applying
+And now comes the tricky bit: We rebase your changes on top of `upstream/main`, while applying
 the formatting fixes at every step:
 
 ```bash

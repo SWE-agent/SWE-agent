@@ -6,6 +6,7 @@
 * `demo`: Configs for demonstrations/talks
 * Configs for running with SWE-smith are at https://github.com/SWE-bench/SWE-smith/blob/main/agent/swesmith_infer.yaml
 
+🔗 Tutorial on [adding custom tools](https://swe-agent.com/latest/usage/adding_custom_tools/)
 🔗 For more information on config files, visit [our documentation website][docs].
 
 You can also find the corresponding markdown files in the [`docs/` folder][source].
