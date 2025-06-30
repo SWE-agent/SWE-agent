@@ -24,7 +24,9 @@ VALID_IMAGE_MIME_TYPES = {
 
 
 class ProblemStatement(Protocol):
-    """A problem statement for a task."""
+    """A problem statement for a task. Any class that implements this protocol
+    can be used as a problem statement.
+    """
 
     id: str
 
@@ -40,7 +42,19 @@ class ProblemStatement(Protocol):
     def get_extra_fields(self) -> dict[str, Any]: ...
 
 
-class EmptyProblemStatement(BaseModel):
+class _BuiltinProblemStatementBase(BaseModel):
+    """A base class for the builtin problem statements to avoid typing much"""
+
+    def get_problem_statement(self) -> str: ...
+
+    def get_problem_statement_for_env(self) -> str:
+        return self.get_problem_statement()
+
+    def get_extra_fields(self) -> dict[str, Any]:
+        return {}
+
+
+class EmptyProblemStatement(_BuiltinProblemStatementBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     type: Literal["empty"] = "empty"
     """Discriminator for (de)serialization/CLI. Do not change."""
@@ -50,11 +64,8 @@ class EmptyProblemStatement(BaseModel):
     def get_problem_statement(self) -> str:
         return ""
 
-    def get_extra_fields(self) -> dict[str, Any]:
-        return {}
 
-
-class TextProblemStatement(BaseModel):
+class TextProblemStatement(_BuiltinProblemStatementBase):
     text: str
 
     extra_fields: dict[str, Any] = Field(default_factory=dict)
@@ -87,7 +98,7 @@ class TextProblemStatement(BaseModel):
         return f"id={self.id}, text={self.text[:30]}..."
 
 
-class FileProblemStatement(BaseModel):
+class FileProblemStatement(_BuiltinProblemStatementBase):
     path: Path
 
     extra_fields: dict[str, Any] = Field(default_factory=dict)
@@ -114,7 +125,7 @@ class FileProblemStatement(BaseModel):
         return self.extra_fields
 
 
-class GithubIssue(BaseModel):
+class GithubIssue(_BuiltinProblemStatementBase):
     github_url: str
 
     extra_fields: dict[str, Any] = Field(default_factory=dict)
@@ -143,7 +154,7 @@ class GithubIssue(BaseModel):
         return self.extra_fields
 
 
-class SWEBenchMultimodalProblemStatement(BaseModel):
+class SWEBenchMultimodalProblemStatement(_BuiltinProblemStatementBase):
     text: str
 
     issue_images: list[str] = Field(default_factory=list)
