@@ -22,7 +22,7 @@ def _convert_path_relative_to_repo_root(path: Path | str, root: Path | None = No
 
 def _could_be_a_path(v: Any) -> bool:
     try:
-        return Path(v).exists()
+        return v and Path(v).exists() # empty string is not a path
     except Exception:
         return False
 

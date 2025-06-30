@@ -113,9 +113,7 @@ def test_run_ies_repo_ps_matrix(
         "--config",
         str(CONFIG_DIR / "default_backticks.yaml"),
     ]
-    print(args)
     rs_config = BasicCLI(RunSingleConfig).get_config(args)
-    print(rs_config)
     rs = RunSingle.from_config(rs_config)  # type: ignore
     with tmpdir.as_cwd():
         # Test that we can run run.py also independently from repo dir
@@ -140,12 +138,10 @@ def test_run_single_ctf(tmpdir, swe_agent_test_ctf_repo_and_ps):
         str(tmpdir),
         *ps_args,
         *repo_args,
-        "--config",
-        str(CONFIG_DIR / "default_no_fcalls.yaml"),
+       
     ]
     print(args)
     rs_config = BasicCLI(RunSingleConfig).get_config(args)
-    print(rs_config)
     rs = RunSingle.from_config(rs_config)  # type: ignore
     with tmpdir.as_cwd():
         # Test that we can run run.py also independently from repo dir
