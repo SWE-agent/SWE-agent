@@ -138,7 +138,6 @@ def test_run_single_ctf(tmpdir, swe_agent_test_ctf_repo_and_ps):
         str(tmpdir),
         *ps_args,
         *repo_args,
-       
     ]
     print(args)
     rs_config = BasicCLI(RunSingleConfig).get_config(args)

@@ -1,11 +1,9 @@
 import hashlib
 import os
 import uuid
-
+from functools import cache
 from pathlib import Path
 from typing import Any, Literal, Protocol
-from copy import copy
-from functools import cache
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_core import from_json
@@ -128,6 +126,7 @@ class GithubIssue(BaseModel):
     def get_extra_fields(self) -> dict[str, Any]:
         return self.extra_fields
 
+
 # this cache makes it so that the process will only do disk read once
 # for validation and getting problem statement, making the instance consistent and efficient
 # if we want per-instance cache, we should move to __init__
@@ -135,10 +134,11 @@ class GithubIssue(BaseModel):
 def _get_ctf_json(path: Path) -> dict[str, Any]:
     return from_json(path.read_text())
 
+
 class CTFProblemStatement(BaseModel):
     path: Path
-    
-    name: str = "" 
+
+    name: str = ""
     category: Literal["crypto", "rev", "web", "forensics", "pwn", "misc"] = "misc"
     files: list[str] = Field(default_factory=list)
     flag: str = ""
@@ -159,31 +159,31 @@ class CTFProblemStatement(BaseModel):
         logger.info(f"Loading ctf problem from path: {path}")
         ctf_json = _get_ctf_json(path)
         logger.info("Setting problem id based on category and name")
-        update_data = {
-            "path": path,
-            "id": f"{ctf_json['category']}_{ctf_json['name']}",
-            **ctf_json
-        }
+        update_data = {"path": path, "id": f"{ctf_json['category']}_{ctf_json['name']}", **ctf_json}
         updated_instance = self.model_copy(update=update_data)
         for k, v in updated_instance.model_dump().items():
             object.__setattr__(self, k, v)
 
     def __setattr__(self, name, value):
-        if name == 'path':
+        if name == "path":
             self._set_path(value)
         else:
             super().__setattr__(name, value)
 
     def model_post_init(self, __context: Any) -> None:
-        self._set_path(self.path) # trigger path setter manually for validation
-    
+        self._set_path(self.path)  # trigger path setter manually for validation
+
     def get_problem_statement(self) -> str:
         return _get_ctf_json(self.path)["description"]
-    
+
     def get_extra_fields(self) -> dict[str, Any]:
         return self.extra_fields
 
-ProblemStatementConfig = TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement | CTFProblemStatement
+
+ProblemStatementConfig = (
+    TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement | CTFProblemStatement
+)
+
 
 def problem_statement_from_simplified_input(
     *, input: str, type: Literal["text", "text_file", "github_issue", "ctf_json"]
