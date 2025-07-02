@@ -1,10 +1,12 @@
 import hashlib
 import os
 import uuid
+from functools import cache
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic_core import from_json
 
 from sweagent.utils.github import _get_problem_statement_from_github_issue, _parse_gh_issue_url
 from sweagent.utils.log import get_logger
@@ -125,11 +127,66 @@ class GithubIssue(BaseModel):
         return self.extra_fields
 
 
-ProblemStatementConfig = TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement
+# this cache makes it so that the process will only do disk read once
+# for validation and getting problem statement, making the instance consistent and efficient
+# if we want per-instance cache, we should move to __init__
+@cache
+def _get_ctf_json(path: Path) -> dict[str, Any]:
+    return from_json(path.read_text())
+
+
+class CTFProblemStatement(BaseModel):
+    path: Path
+
+    name: str = ""
+    category: Literal["crypto", "rev", "web", "forensics", "pwn", "misc"] = "misc"
+    files: list[str] = Field(default_factory=list)
+    flag: str = ""
+
+    extra_fields: dict[str, Any] = Field(default_factory=dict)
+    """Any additional data to be added to the instance.
+    This data will be available when formatting prompt templates.
+    """
+
+    type: Literal["ctf_json"] = "ctf_json"
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    id: str = ""
+
+    model_config = ConfigDict(extra="forbid")
+
+    def _set_path(self, path: Path):
+        logger.info(f"Loading ctf problem from path: {path}")
+        ctf_json = _get_ctf_json(path)
+        logger.info("Setting problem id based on category and name")
+        update_data = {"path": path, "id": f"{ctf_json['category']}_{ctf_json['name']}", **ctf_json}
+        updated_instance = self.model_copy(update=update_data)
+        for k, v in updated_instance.model_dump().items():
+            object.__setattr__(self, k, v)
+
+    def __setattr__(self, name, value):
+        if name == "path":
+            self._set_path(value)
+        else:
+            super().__setattr__(name, value)
+
+    def model_post_init(self, __context: Any) -> None:
+        self._set_path(self.path)  # trigger path setter manually for validation
+
+    def get_problem_statement(self) -> str:
+        return _get_ctf_json(self.path)["description"]
+
+    def get_extra_fields(self) -> dict[str, Any]:
+        return self.extra_fields
+
+
+ProblemStatementConfig = (
+    TextProblemStatement | GithubIssue | EmptyProblemStatement | FileProblemStatement | CTFProblemStatement
+)
 
 
 def problem_statement_from_simplified_input(
-    *, input: str, type: Literal["text", "text_file", "github_issue"]
+    *, input: str, type: Literal["text", "text_file", "github_issue", "ctf_json"]
 ) -> ProblemStatementConfig:
     """Get a problem statement from an `input` string and a `type`.
 
@@ -143,6 +200,8 @@ def problem_statement_from_simplified_input(
         return FileProblemStatement(path=Path(input))
     elif type == "github_issue":
         return GithubIssue(github_url=input)
+    elif type == "ctf_json":
+        return CTFProblemStatement(path=Path(input))
     else:
         msg = f"Unknown problem statement type: {type}"
         raise ValueError(msg)
