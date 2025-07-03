@@ -1,0 +1,100 @@
+tools:
+  web_browser:
+    signature: |
+      web_browser <command> [<url>] [<x>] [<y>] [<button>] [<text>] [<script>] [<keys>] [<path>] [<scroll_x>] [<scroll_y>] [<width>] [<height>] [<ms>]
+    docstring: >
+      Web browser automation tool for interacting with websites and web applications.
+      Supports navigation, clicking, typing, scrolling, JavaScript execution, and more.
+      State is persistent across command calls within the same browser session.
+      
+      Available commands:
+      - open_site: Open a website URL or local file
+      - close_site: Close the current browser window
+      - screenshot_site: Take a screenshot of the current page
+      - click_mouse: Click at specified coordinates on the page
+      - double_click_mouse: Double-click at specified coordinates
+      - move_mouse: Move mouse cursor to specified coordinates
+      - drag_mouse: Drag mouse along a path of coordinates
+      - type_text: Type text at the currently focused element
+      - scroll_on_page: Scroll the page by specified pixel amounts
+      - execute_script_on_page: Execute custom JavaScript on the page
+      - navigate_back: Go back in browser history
+      - navigate_forward: Go forward in browser history
+      - reload_page: Refresh the current page
+      - wait_time: Wait for specified milliseconds
+      - press_keys_on_page: Press key combinations
+      - set_browser_window_size: Resize the browser window
+      - get_console_output: Get browser console logs and errors
+    arguments:
+      - name: command
+        type: string
+        description: "The browser command to execute"
+        required: true
+        enum: ["open_site", "close_site", "screenshot_site", "click_mouse", "double_click_mouse", "move_mouse", "drag_mouse", "type_text", "scroll_on_page", "execute_script_on_page", "navigate_back", "navigate_forward", "reload_page", "wait_time", "press_keys_on_page", "set_browser_window_size", "get_console_output"]
+      - name: url
+        type: string
+        description: "URL to open (required for open_site command)"
+        required: false
+        argument_format: "--url {{value}}"
+      - name: x
+        type: integer
+        description: "X coordinate for mouse operations"
+        required: false
+        argument_format: "--x {{value}}"
+      - name: y
+        type: integer
+        description: "Y coordinate for mouse operations"
+        required: false
+        argument_format: "--y {{value}}"
+      - name: button
+        type: string
+        description: "Mouse button for click operations (left or right, default: left)"
+        required: false
+        enum: ["left", "right"]
+        argument_format: "--button {{value}}"
+      - name: text
+        type: string
+        description: "Text to type (required for type_text command)"
+        required: false
+        argument_format: "--text {{value}}"
+      - name: script
+        type: string
+        description: "JavaScript code to execute (required for execute_script_on_page command)"
+        required: false
+        argument_format: "--script {{value}}"
+      - name: keys
+        type: string
+        description: "JSON array of keys to press (required for press_keys_on_page command)"
+        required: false
+        argument_format: "--keys {{value}}"
+      - name: path
+        type: string
+        description: "JSON array of coordinate pairs for drag path (required for drag_mouse command)"
+        required: false
+        argument_format: "--path {{value}}"
+      - name: scroll_x
+        type: integer
+        description: "Horizontal scroll amount in pixels (required for scroll_on_page command)"
+        required: false
+        argument_format: "--scroll_x {{value}}"
+      - name: scroll_y
+        type: integer
+        description: "Vertical scroll amount in pixels (required for scroll_on_page command)"
+        required: false
+        argument_format: "--scroll_y {{value}}"
+      - name: width
+        type: integer
+        description: "Browser window width in pixels (required for set_browser_window_size command)"
+        required: false
+        argument_format: "--width {{value}}"
+      - name: height
+        type: integer
+        description: "Browser window height in pixels (required for set_browser_window_size command)"
+        required: false
+        argument_format: "--height {{value}}"
+      - name: ms
+        type: integer
+        description: "Time to wait in milliseconds (required for wait_time command)"
+        required: false
+        argument_format: "--ms {{value}}"
+state_command: "_state_web_browser" 
