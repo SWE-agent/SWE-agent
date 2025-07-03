@@ -32,4 +32,4 @@ if ! pgrep -f "run_browser_server" > /dev/null; then
         echo "Warning: run_browser_server not found. Web browser functionality may not work."
         echo "Make sure the browser tool bundle is also installed or available."
     fi
-fi 
+fi

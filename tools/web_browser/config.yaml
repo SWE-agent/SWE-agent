@@ -6,7 +6,7 @@ tools:
       Web browser automation tool for interacting with websites and web applications.
       Supports navigation, clicking, typing, scrolling, JavaScript execution, and more.
       State is persistent across command calls within the same browser session.
-      
+
       Available commands:
       - open_site: Open a website URL or local file
       - close_site: Close the current browser window
@@ -97,4 +97,4 @@ tools:
         description: "Time to wait in milliseconds (required for wait_time command)"
         required: false
         argument_format: "--ms {{value}}"
-state_command: "_state_web_browser" 
+state_command: "_state_web_browser"

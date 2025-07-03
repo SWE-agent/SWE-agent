@@ -17,7 +17,7 @@ web_browser <command> [options...]
 ## Available Commands
 
 - `open_site` - Open a website URL or local file
-- `close_site` - Close the current browser window  
+- `close_site` - Close the current browser window
 - `screenshot_site` - Take a screenshot of the current page
 - `click_mouse` - Click at specified coordinates on the page
 - `double_click_mouse` - Double-click at specified coordinates
@@ -79,4 +79,4 @@ The tool automatically installs required dependencies and starts the browser ser
 - **Frontend**: Single `web_browser` executable with argument parsing
 - **Backend**: Reuses browser's Flask server and browser management
 - **Libraries**: Copies of browser's library files for configuration and utilities
-- **State**: Maintains browser state across command calls 
+- **State**: Maintains browser state across command calls

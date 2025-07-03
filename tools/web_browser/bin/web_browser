@@ -11,7 +11,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 # Add the lib directory to the path
 lib_path = str(Path(__file__).resolve().parent.parent / "lib")
@@ -141,7 +140,7 @@ class WebBrowserTool:
         except json.JSONDecodeError:
             print(f"Invalid JSON path format: {path}")
             sys.exit(3)
-        
+
         response = send_request(
             self.config.port,
             "drag",
@@ -251,7 +250,7 @@ class WebBrowserTool:
         except json.JSONDecodeError:
             print(f"Invalid JSON keys format: {keys}")
             sys.exit(4)
-        
+
         response = send_request(
             self.config.port,
             "press_keys",
@@ -286,7 +285,7 @@ class WebBrowserTool:
     def execute_command(self, command: str, args: argparse.Namespace):
         """Execute the specified browser command with the provided arguments."""
         self.validate_command_args(command, args)
-        
+
         if command == "open_site":
             self.open_site(args.url)
         elif command == "close_site":
@@ -357,7 +356,7 @@ Examples:
   web_browser execute_script_on_page --script "console.log('Hello')"
         """,
     )
-    
+
     parser.add_argument("command", help="The browser command to execute")
     parser.add_argument("--url", help="URL to open")
     parser.add_argument("--x", type=int, help="X coordinate")
@@ -372,9 +371,9 @@ Examples:
     parser.add_argument("--width", type=int, help="Browser window width")
     parser.add_argument("--height", type=int, help="Browser window height")
     parser.add_argument("--ms", type=int, help="Time to wait in milliseconds")
-    
+
     args = parser.parse_args()
-    
+
     tool = WebBrowserTool()
     tool.execute_command(args.command, args)
 

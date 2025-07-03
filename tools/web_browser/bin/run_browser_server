@@ -14,10 +14,10 @@ from typing import Any
 lib_path = str(Path(__file__).resolve().parent.parent / "lib")
 sys.path.insert(0, lib_path)
 
-from browser_manager import BrowserManager
-from flask import Flask, Response, jsonify, request
 from browser_config import ServerConfig
+from browser_manager import BrowserManager
 from browser_utils import catch_error, normalize_url, validate_request
+from flask import Flask, Response, jsonify, request
 
 config = ServerConfig()
 

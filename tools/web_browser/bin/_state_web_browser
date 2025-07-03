@@ -2,7 +2,6 @@
 
 import json
 import os
-from pathlib import Path
 
 
 def main():
@@ -10,11 +9,11 @@ def main():
     state = {
         "working_dir": os.getcwd(),
         "tool_type": "web_browser",
-        "browser_active": True  # Assume browser is active when this tool is loaded
+        "browser_active": True,  # Assume browser is active when this tool is loaded
     }
-    
+
     print(json.dumps(state))
 
 
 if __name__ == "__main__":
-    main() 
+    main()
