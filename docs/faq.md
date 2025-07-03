@@ -13,15 +13,19 @@ This is probably because of union types.
 See [this section](usage/cl_tutorial.md#union-types) for more information, but the short version is that some options (e.g., the repository or problem statement) can be specified in multiple ways, so we try every option until we find the one that works based on your inputs.
 If none of them work, we throw an error which then tells you why we cannot initialize any of the types, so this will get somewhat long and confusing.
 
-> I have a question/bug report/feature request...
+> Why are my images not being processed?
 
-Please open a [github issue!](https://github.com/SWE-agent/SWE-agent/issues)!
+Check that you're using a multimodal configuration (see `default_mm_with_images.yaml` as an example), have internet connectivity, and images are under 10MB. See [Multimodal usage notes](usage/multimodal.md) for more details.
 
 ## Models
 
 > What models are supported? Do you support local models?
 
 Probably all of them, including local models! There's even a few for testing. See [models](installation/keys.md) and [more on models](config/models.md).
+
+> Does SWE-agent support multimodal models and images?
+
+Yes! SWE-agent supports vision-capable models that can process images from GitHub issues. Use `--config config/default_mm_with_images.yaml` and specify a multimodal model like Claude Sonnet 4 or GPT-4o. See the [multimodal guide](usage/multimodal.md) for details.
 
 > What can I do if my model doesn't support function calling?
 
@@ -47,5 +51,12 @@ Yes! Take a look at [this tutorial](usage/adding_custom_tools.md).
 > What's up with all the output files?
 
 You're probably most interested in the `*.traj` files, which contain complete records of SWE-agent's thought process and actions. See [output files](usage/trajectories.md) for more information.
+
+## Anything else?
+
+> I have a question/bug report/feature request...
+
+Please open a [github issue!](https://github.com/SWE-agent/SWE-agent/issues)!
+
 
 {% include-markdown "_footer.md" %}

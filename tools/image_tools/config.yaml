@@ -1,0 +1,9 @@
+tools:
+  view_image:
+    signature: "view_image <image_file>"
+    docstring: "view an image file"
+    arguments:
+      - name: image_file
+        type: string
+        description: "the path to the image file to view"
+        required: true

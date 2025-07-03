@@ -12,6 +12,30 @@ from typing import Any
 import yaml
 
 
+def add_problem_statement(content):
+    """The problem statement is the first 'user' message in the history.
+
+    We'll prepend the trajectory with the problem statement.
+    """
+    problem_statement = ""
+    for item in content["history"]:
+        if item["role"] == "user":
+            problem_statement = item["content"]
+            break
+    if problem_statement:
+        content["trajectory"].insert(
+            0,
+            {
+                "thought": "",
+                "action": "",
+                "response": "",
+                "observation": problem_statement,
+                "messages": [{"role": "system", "content": "Problem Statement placeholder"}],
+            },
+        )
+    return content
+
+
 def append_exit(content):
     exit_status = content.get("info", {}).get("exit_status", None)
     if exit_status is None:
@@ -147,6 +171,7 @@ def load_content(file_name, gold_patches, test_patches) -> dict[str, Any]:
     results_file = Path(file_name).parent / "results.json"
     results = load_results(results_file)
 
+    content = add_problem_statement(content)
     content = append_exit(content)
     content = append_patch(Path(file_name).stem, content, gold_patches, "Gold")
     content = append_patch(Path(file_name).stem, content, test_patches, "Test")
