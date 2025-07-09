@@ -33,7 +33,7 @@ agent:
       If you need to start a command that has long-running output (e.g. a web server), you should _always_ use the following pattern:
       server_command &> my_server_log.txt &
 
-      This way you can see the output of the command in the my_server_log.txt file and it will not block the rest of your work.
+      This way you can see the server's output in the my_server_log.txt file and it will not block the rest of your work.
     next_step_template: |-
       OBSERVATION:
       {{observation}}
@@ -46,7 +46,7 @@ agent:
       - path: tools/registry
       - path: tools/edit_anthropic
       # - path: tools/image_tools  # lets models view image files
-      # - path: tools/sweer  # browser tool for interacting with web servers
+      # - path: tools/web_browser  # browser tool for interacting with web servers
       - path: tools/review_on_submit_m
     registry_variables:
       USE_FILEMAP: 'true'

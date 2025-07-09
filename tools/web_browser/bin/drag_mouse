@@ -8,8 +8,8 @@ from pathlib import Path
 lib_path = str(Path(__file__).resolve().parent.parent / "lib")
 sys.path.insert(0, lib_path)
 
-from sweer_config import ClientConfig
-from sweer_utils import (
+from web_browser_config import ClientConfig
+from web_browser_utils import (
     _autosave_screenshot_from_response,
     _print_error,
     _print_response_with_metadata,

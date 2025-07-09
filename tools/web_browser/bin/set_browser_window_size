@@ -8,8 +8,8 @@ from pathlib import Path
 lib_path = str(Path(__file__).resolve().parent.parent / "lib")
 sys.path.insert(0, lib_path)
 
-from sweer_config import ClientConfig
-from sweer_utils import (
+from web_browser_config import ClientConfig
+from web_browser_utils import (
     _autosave_screenshot_from_response,
     _print_response_with_metadata,
     send_request,
@@ -18,10 +18,13 @@ from sweer_utils import (
 config = ClientConfig()
 
 
-def double_click(x, y):
-    """Double-click at the specified coordinates (x, y)."""
+def set_window_size(width, height):
+    """Set the browser window size to the specified width and height."""
     response = send_request(
-        config.port, "double_click", "POST", {"x": x, "y": y, "return_screenshot": config.autoscreenshot}
+        config.port,
+        "set_window_size",
+        "POST",
+        {"width": width, "height": height, "return_screenshot": config.autoscreenshot},
     )
     if response is None:
         return
@@ -31,7 +34,7 @@ def double_click(x, y):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("x", type=int)
-    parser.add_argument("y", type=int)
+    parser.add_argument("width", type=int, help="The new width of the browser window")
+    parser.add_argument("height", type=int, help="The new height of the browser window")
     args = parser.parse_args()
-    double_click(args.x, args.y)
+    set_window_size(args.width, args.height)

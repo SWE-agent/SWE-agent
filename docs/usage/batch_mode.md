@@ -73,7 +73,7 @@ Key differences for multimodal runs:
 - **Configuration**: Use `config/default_mm_with_images.yaml` which includes image processing capabilities
 - **Subset**: Use `--instances.subset multimodal` to access the multimodal dataset
 - **Token limits**: Consider higher cost limits as images consume more tokens
-- **Multimodal Tools**: `tools/image_tools` and `tools/sweer` include useful tools for viewing images and web browsers
+- **Multimodal Tools**: `tools/image_tools` and `tools/web_browser` include useful tools for viewing images and web browsers
 
 The system automatically:
 - Downloads images from GitHub issue URLs

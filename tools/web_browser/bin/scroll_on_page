@@ -8,8 +8,8 @@ from pathlib import Path
 lib_path = str(Path(__file__).resolve().parent.parent / "lib")
 sys.path.insert(0, lib_path)
 
-from sweer_config import ClientConfig
-from sweer_utils import (
+from web_browser_config import ClientConfig
+from web_browser_utils import (
     _autosave_screenshot_from_response,
     _print_response_with_metadata,
     send_request,
@@ -18,13 +18,13 @@ from sweer_utils import (
 config = ClientConfig()
 
 
-def wait(ms):
-    """Wait for the specified number of milliseconds."""
+def scroll(scroll_x, scroll_y):
+    """Scroll by (scroll_x, scroll_y) pixels at current mouse position."""
     response = send_request(
         config.port,
-        "wait",
+        "scroll",
         "POST",
-        {"ms": ms, "return_screenshot": config.autoscreenshot},
+        {"scroll_x": scroll_x, "scroll_y": scroll_y, "return_screenshot": config.autoscreenshot},
     )
     if response is None:
         return
@@ -34,6 +34,7 @@ def wait(ms):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("ms", type=int, help="The number of milliseconds to wait")
+    parser.add_argument("scroll_x", type=int, help="The number of pixels to scroll horizontally")
+    parser.add_argument("scroll_y", type=int, help="The number of pixels to scroll vertically")
     args = parser.parse_args()
-    wait(args.ms)
+    scroll(args.scroll_x, args.scroll_y)

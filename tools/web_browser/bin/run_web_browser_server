@@ -1,5 +1,5 @@
 #!/root/python3.11/bin/python3
-"""Sweer server ‒ Flask + Playwright backend."""
+"""Web Browser server ‒ Flask + Playwright backend."""
 
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ sys.path.insert(0, lib_path)
 
 from browser_manager import BrowserManager
 from flask import Flask, Response, jsonify, request
-from sweer_config import ServerConfig
-from sweer_utils import catch_error, normalize_url, validate_request
+from web_browser_config import ServerConfig
+from web_browser_utils import catch_error, normalize_url, validate_request
 
 config = ServerConfig()
 

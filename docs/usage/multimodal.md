@@ -133,15 +133,22 @@ agent:
 
 ### Tool Bundles
 
-Include image tools for viewing images:
+Include image and browser tools for visual tasks:
 
 ```yaml
 agent:
   tools:
     bundles:
       - path: tools/image_tools  # includes open_image tool to let models open image files
-      - path: tools/sweer  # includes web browser tools for using / viewing web browsers
+      - path: tools/web_browser  # includes 17 browser automation tools (click_mouse, open_site, etc.)
 ```
+
+The `web_browser` bundle provides tools for:
+- Opening websites (`open_site`)
+- Taking screenshots (`screenshot_site`)
+- Interacting with web pages (`click_mouse`, `type_text`, `scroll_on_page`)
+- Executing JavaScript (`execute_script_on_page`)
+- And more - see the [configuration guide](../config/config.md#web-browser-tools) for the full list
 
 ### Templates Configuration
 

@@ -51,7 +51,7 @@ This configuration enables full image processing capabilities:
 - **SWE-bench Multimodal Image processing**: Downloads and converts GitHub issue images to base64 format for SWE-bench Multimodal instances.
 - **Extended observation length**: Increases observation token limits to accommodate images
 - **Image tools**: Includes `image_tools` bundle for viewing images
-- **Web browsing tools**: Includes `sweer` bundle for using web browsers
+- **Web browsing tools**: Includes `web_browser` bundle for using web browsers
 - **History processing**: Enables `image_parsing` history processor for parsing
 
 ### Key Multimodal Settings
@@ -64,7 +64,7 @@ agent:
   tools:
     bundles:
       - path: tools/image_tools  # image viewing capabilities
-      - path: tools/sweer  # web browsing tools
+      - path: tools/web_browser  # browser automation tools
   history_processors:
     - type: image_parsing  # process image tools outputs (required for tools to work)
 ```

@@ -9,7 +9,7 @@ from typing import Any
 
 from playwright.sync_api import Browser, Page, Playwright, sync_playwright
 
-from browser_config import ServerConfig
+from web_browser_config import ServerConfig
 
 config = ServerConfig()
 
