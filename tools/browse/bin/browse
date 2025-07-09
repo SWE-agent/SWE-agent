@@ -3,13 +3,12 @@
 import asyncio
 import sys
 from pprint import pprint
-from typing import List
 
 from browser_use import Agent, AgentHistoryList, Browser, BrowserConfig
 from browser_use.llm import ChatAzureOpenAI
 
 
-async def main(args: List[str]) -> int:
+async def main(args: list[str]) -> int:
     if len(args) > 1:
         print("browse allows only one arg at a time.")
         return 1
@@ -27,22 +26,14 @@ async def main(args: List[str]) -> int:
     # And it is propagated to tool environment by using `propagate_env_variables`. Refer to
     # config/browse_test.yaml for more details.
 
-    llm = ChatAzureOpenAI(
-        model = "gpt-4o"
-    )
+    llm = ChatAzureOpenAI(model="gpt-4o")
 
-    browser_config = BrowserConfig(
-        headless = True
-    )
-    browser = Browser(config = browser_config)
+    browser_config = BrowserConfig(headless=True)
+    browser = Browser(config=browser_config)
 
-    agent = Agent(
-        browser = browser,
-        task = what_to_browse,
-        llm = llm
-    )
+    agent = Agent(browser=browser, task=what_to_browse, llm=llm)
 
-    history : AgentHistoryList = await agent.run()
+    history: AgentHistoryList = await agent.run()
     print("Final Result:")
     pprint(history.final_result(), indent=4)
 
