@@ -1,0 +1,9 @@
+tools:
+  browse:
+    signature: "browse <what_to_browse>"
+    docstring: "It gets the information from Internet"
+    arguments:
+      - name: what_to_browse
+        type: string
+        description: "the item to get information about"
+        required: true
