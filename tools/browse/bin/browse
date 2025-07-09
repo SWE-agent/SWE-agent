@@ -1,56 +1,31 @@
 #!/usr/bin/env python3
 
 import asyncio
-import os
 import sys
-import subprocess
 from pprint import pprint
 from typing import List
 
 from browser_use import Agent, AgentHistoryList, Browser, BrowserConfig
 from browser_use.llm import ChatAzureOpenAI
 
-TOOLS_METADATA_DIR = "/usr/local/share/tools-metadata"
-TOOLS_METADATA_FILE = f"{TOOLS_METADATA_DIR}/browse.json"
-
-def store_input_tokens(tokens: int) -> None:
-    if not os.path.exists(TOOLS_METADATA_DIR):
-        os.makedirs(TOOLS_METADATA_DIR)
-
-    with open(TOOLS_METADATA_FILE, "w") as f:
-        f.write(f'{{"input_tokens": {tokens}}}')
-
 
 async def main(args: List[str]) -> int:
     if len(args) > 1:
-        print("browse allows only one URL at a time.")
+        print("browse allows only one arg at a time.")
         return 1
 
     if not args:
-        print("Usage: browse <URL>")
+        print("Usage: browse <arg>")
         return 1
 
     what_to_browse = args[0]
 
-    ret = subprocess.run(["env"], capture_output=True, text=True, shell=True)
-    if ret.returncode != 0:
-        print("Error: Failed to retrieve environment variables.")
-        return 1
-    print("Environment Variables:")
-    print(ret.stdout)
+    # TODO: Based on env variable choose differnt LLM service.
+    # For now, we are using Azure OpenAI service.
 
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    if not api_key:
-        print("Error: Missing Azure OpenAI API key.")
-        return 1
-    
-    azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-    if not azure_endpoint:
-        print("Error: Missing Azure OpenAI endpoint.")
-        return 1
-
-    print(f"Azure Endpoint: {azure_endpoint}")
-    print(f"Azure API key: {'*' * len(api_key)}")
+    # Make sure that AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT are set in your .env file
+    # And it is propagated to tool environment by using `propagate_env_variables`. Refer to
+    # config/browse_test.yaml for more details.
 
     llm = ChatAzureOpenAI(
         model = "gpt-4o"
