@@ -544,7 +544,7 @@ class BashCodeBlockParser(AbstractParseFunction, BaseModel):
     error_message: str = dedent("""\
     No bash code blocks were detected in your output.
     You need to include at least one bash code block in your output.
-    
+
     It must follow this format exactly to be valid:
     ```bash
     cmd arg1 arg2 ...
@@ -552,7 +552,7 @@ class BashCodeBlockParser(AbstractParseFunction, BaseModel):
 
     Other types of code blocks (e.g. python, rust, none, etc.) won't be executed. Only bash.
     """)
-    
+
     type: Literal["all_bash_code_blocks"] = "all_bash_code_blocks"
 
     def __call__(self, model_response: dict, commands: list[Command], strict=False):
@@ -575,13 +575,13 @@ class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
     error_message: str = dedent("""\
     We did not detect the right number of bash code blocks in your output.
     You need to include EXACTLY ONE bash code block in your output.
-    
+
     It must follow this format exactly to be valid:
     ```bash
     cmd arg1 arg2 ...
     ```
     """)
-    
+
     type: Literal["single_bash_code_block"] = "single_bash_code_block"
 
     def __call__(self, model_response: dict, commands: list[Command], strict=False):
