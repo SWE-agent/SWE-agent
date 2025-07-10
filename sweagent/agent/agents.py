@@ -722,7 +722,7 @@ class DefaultAgent(AbstractAgent):
                 "agent": self.name,
                 "tool_calls": step.tool_calls,
                 "message_type": "action",
-                "thinking_blocks":step.thinking_blocks,
+                "thinking_blocks": step.thinking_blocks,
             },
         )
 

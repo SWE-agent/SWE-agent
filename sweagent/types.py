@@ -69,7 +69,7 @@ class HistoryItem(_HistoryItem, total=False):
     tool_call_ids: list[str] | None
     tags: list[str]
     cache_control: dict[str, Any] | None
-    thinking_blocks: list[dict[str, Any]] | None 
+    thinking_blocks: list[dict[str, Any]] | None
 
     """HistoryProcessors can add these tags to enable special processing"""
 

@@ -734,7 +734,7 @@ class LiteLLMModel(AbstractModel):
             raise
         self.logger.debug(f"Response: {response}")
         try:
-            cost = litellm.cost_calculator.completion_cost(response,model=self.config.name)
+            cost = litellm.cost_calculator.completion_cost(response, model=self.config.name)
         except Exception as e:
             self.logger.debug(f"Error calculating cost: {e}, setting cost to 0.")
             if self.config.per_instance_cost_limit > 0 or self.config.total_cost_limit > 0:
@@ -761,7 +761,10 @@ class LiteLLMModel(AbstractModel):
             if self.tools.use_function_calling:
                 if response.choices[i].message.tool_calls:  # type: ignore
                     tool_calls = [call.to_dict() for call in response.choices[i].message.tool_calls]  # type: ignore
-                    if hasattr(response.choices[i].message,"thinking_blocks") and response.choices[i].message.thinking_blocks: #type: ignore
+                    if (
+                        hasattr(response.choices[i].message, "thinking_blocks")
+                        and response.choices[i].message.thinking_blocks
+                    ):  # type: ignore
                         output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
                 else:
                     tool_calls = []
