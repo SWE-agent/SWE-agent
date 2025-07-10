@@ -258,6 +258,7 @@ ACI = "ACI"
 [tool.typos.default.extend-words]
 # Don't correct the surname "Teh"
 aci = "aci"
+ba = "ba"
 
 [tool.ruff.lint.isort]
 # required-imports = ["from __future__ import annotations"]
