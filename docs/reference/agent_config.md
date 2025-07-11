@@ -13,11 +13,14 @@ It might be easiest to simply look at some of our example configurations in the 
 ```
 </details>
 
-Currently, there are two main agent classes:
+Currently, there are three main agent classes:
 
 * `DefaultAgentConfig`: This is the default agent.
 * `RetryAgentConfig`: A "meta agent" that instantiates multiple agents for multiple attempts and then picks the best solution.
+* `ShellAgentConfig`: Config for `ShellAgent` (invoked with `sweagent sh`), which is an experimental mode for quick & interactive (human-in-the-loop) workflows.
 
 ::: sweagent.agent.agents.RetryAgentConfig
 
 ::: sweagent.agent.agents.DefaultAgentConfig
+
+::: sweagent.agent.agents.ShellAgentConfig
