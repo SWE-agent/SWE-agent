@@ -685,6 +685,8 @@ class LiteLLMModel(AbstractModel):
         for message in messages_no_cache_control:
             if "cache_control" in message:
                 del message["cache_control"]
+            if "thinking_blocks" in message:
+                del message["thinking_blocks"]
         input_tokens: int = litellm.utils.token_counter(
             messages=messages_no_cache_control,
             model=self.custom_tokenizer["identifier"] if self.custom_tokenizer is not None else self.config.name,
@@ -732,7 +734,7 @@ class LiteLLMModel(AbstractModel):
             raise
         self.logger.debug(f"Response: {response}")
         try:
-            cost = litellm.cost_calculator.completion_cost(response)
+            cost = litellm.cost_calculator.completion_cost(response, model=self.config.name)
         except Exception as e:
             self.logger.debug(f"Error calculating cost: {e}, setting cost to 0.")
             if self.config.per_instance_cost_limit > 0 or self.config.total_cost_limit > 0:
@@ -759,6 +761,11 @@ class LiteLLMModel(AbstractModel):
             if self.tools.use_function_calling:
                 if response.choices[i].message.tool_calls:  # type: ignore
                     tool_calls = [call.to_dict() for call in response.choices[i].message.tool_calls]  # type: ignore
+                    if (
+                        hasattr(response.choices[i].message, "thinking_blocks")
+                        and response.choices[i].message.thinking_blocks
+                    ):  # type: ignore
+                        output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
                 else:
                     tool_calls = []
                 output_dict["tool_calls"] = tool_calls
@@ -846,6 +853,8 @@ class LiteLLMModel(AbstractModel):
                 }
             elif (tool_calls := history_item.get("tool_calls")) is not None:
                 message = {"role": role, "content": history_item["content"], "tool_calls": tool_calls}
+                if thinking_blocks := history_item.get("thinking_blocks"):
+                    message["thinking_blocks"] = thinking_blocks
             else:
                 message = {"role": role, "content": history_item["content"]}
             if "cache_control" in history_item:
