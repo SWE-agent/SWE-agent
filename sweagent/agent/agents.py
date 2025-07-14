@@ -902,6 +902,35 @@ class DefaultAgent(AbstractAgent):
                 step.exit_status = f"submitted ({step.exit_status})"
             step.done = True
             self.logger.info(f"Found submission: {submission}")
+
+        is_file_submission = self.tools.check_for_file_submission_cmd(observation or step.observation)
+        if is_file_submission:
+            assert self._env is not None
+            try:
+                file_name = self._env.read_file("/root/submission_file_name.txt", encoding="utf-8").strip()
+                file_content = self._env.read_file("/root/submission_file.txt", encoding="utf-8")
+            except FileNotFoundError:
+                self.logger.warning("File submission file not found, no file submission was made")
+                return step
+            except Exception as e:
+                self.logger.exception("Failed to read file submission files, got %s", e)
+                return step
+            if file_content.strip() != "":
+                step.submission = {
+                    "file_name": file_name,
+                    "file_content": file_content,
+                }
+            else:
+                step.submission = None
+            step.observation = f"File submission: {file_name}"
+            if not step.exit_status:
+                step.exit_status = "submitted"
+            elif step.submission:
+                step.exit_status = f"submitted ({step.exit_status})"
+            step.done = True
+            self.logger.info(f"Found file submission: {file_name}")
+            self.logger.info(f"File content: {file_content[:100]}... (truncated)")
+
         return step
 
     def _get_edited_files_with_context(self, patch: str) -> dict[str, str]:

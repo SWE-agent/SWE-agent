@@ -1,4 +1,18 @@
 main() {
+    # If first argument is provided, just print it between the submission markers
+    if [ $# -gt 0 ]; then
+        echo "<<SWE_AGENT_FILE_SUBMISSION>>"
+        echo "<<TITLE>>"
+        echo "$1"
+        echo "<<TITLE>>"
+        cat "$1"
+        echo "<<SWE_AGENT_FILE_SUBMISSION>>"
+
+        echo $1 > /root/submission_file_name.txt
+        mv "$1" /root/submission_file.txt
+        return 0
+    fi
+
     cd $ROOT
 
     # Check if the patch file exists and is non-empty

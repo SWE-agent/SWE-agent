@@ -30,6 +30,10 @@ class SaveApplyPatchHook(RunHook):
         self._problem_statement = problem_statement
 
     def on_instance_completed(self, *, result: AgentRunResult):
+        if self._is_file_submission(result.info):
+            self.logger.info("Received file submission.")
+            self._save_file_submission(result.info)
+            return
         instance_id = self._problem_statement.id
         patch_path = self._save_patch(instance_id, result.info)
         if patch_path:
@@ -68,6 +72,36 @@ class SaveApplyPatchHook(RunHook):
             "```",
         ]
         console.print(rich.markdown.Markdown("\n".join(content)))
+
+    def _is_file_submission(self, info) -> bool:
+        """Check if the submission is a file."""
+        if info.get("submission") is None:
+            return False
+        if isinstance(info["submission"], dict) and "file_name" in info["submission"]:
+            return True
+        return False
+
+    def _save_file_submission(self, info):
+        """Save the file submission to the output directory."""
+        file_info = info["submission"]
+        file_name = file_info.get("file_name")
+        if not file_name:
+            self.logger.warning("No file name found in submission info.")
+            return
+
+        output_file_path = self._output_dir / Path(file_name).name
+        output_file_path.parent.mkdir(parents=True, exist_ok=True)
+        if output_file_path.exists():
+            self.logger.warning(f"File {output_file_path} already exists. Overwriting.")
+
+        # Get the content of the file from the submission info
+        file_content = file_info.get("file_content", "")
+        if not file_content:
+            self.logger.warning("No content found in submission info.")
+            return
+
+        output_file_path.write_text(file_content)
+        self.logger.info(f"Saved file submission to {output_file_path}")
 
     def _save_patch(self, instance_id: str, info) -> Path | None:
         """Create patch files that can be applied with `git am`.
