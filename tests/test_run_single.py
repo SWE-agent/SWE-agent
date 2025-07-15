@@ -81,11 +81,13 @@ def test_run_ies(tmpdir, agent_config_with_commands):
 @pytest.mark.slow
 @pytest.mark.parametrize("repo", ["local", "github"])
 @pytest.mark.parametrize("problem_statement_source", ["github", "local", "text"])
+@pytest.mark.parametrize("submit_method", ["normal_submission", "file_submission"])
 def test_run_ies_repo_ps_matrix(
     tmpdir,
     swe_agent_test_repo_clone,
     repo,
     problem_statement_source,
+    submit_method,
 ):
     output_formats = ["traj", "pred", "patch"]
     for fmt in output_formats:
@@ -95,7 +97,10 @@ def test_run_ies_repo_ps_matrix(
     elif problem_statement_source == "local":
         ps_args = ["--problem_statement.path", str(swe_agent_test_repo_clone / "problem_statements" / "1.md")]
     elif problem_statement_source == "text":
-        ps_args = ["--problem_statement.text='this is a test'"]
+        if submit_method == "file_submission":
+            ps_args = ["--problem_statement.text='submit the Readme file with `submit README.md`'"]
+        else:
+            ps_args = ["--problem_statement.text='this is a test'"]
     else:
         raise ValueError(problem_statement_source)
     if repo == "local":
