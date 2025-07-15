@@ -570,11 +570,12 @@ class InstantEmptySubmitTestModel(AbstractModel):
             )
         elif self._action_idx == 1:
             self._action_idx = 0
-            # Check whether it is a file submission test or not
-            if "file_submission" in str(history):
-                action = "DISCUSSION\nThe task should be resolved, so let's submit the patch.\n\n```\nsubmit reproduce.py\n```\n"
-            else:
-                action = "DISCUSSION\nThe task should be resolved, so let's submit the patch.\n\n```\nsubmit\n```\n"
+            # # Check whether it is a file submission test or not
+            # if "file_submission" in str(history):
+            #     action = "DISCUSSION\nThe task should be resolved, so let's submit the patch.\n\n```\nsubmit reproduce.py\n```\n"
+            # else:
+            #     action = "DISCUSSION\nThe task should be resolved, so let's submit the patch.\n\n```\nsubmit\n```\n"
+            action = "DISCUSSION\nThe task should be resolved, so let's submit the patch.\n\n```\nsubmit\n```\n"
         self.stats.api_calls += 1
         return {"message": action}
 
