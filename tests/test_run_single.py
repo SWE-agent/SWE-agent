@@ -98,7 +98,7 @@ def test_run_ies_repo_ps_matrix(
         ps_args = ["--problem_statement.path", str(swe_agent_test_repo_clone / "problem_statements" / "1.md")]
     elif problem_statement_source == "text":
         if submit_method == "file_submission":
-            ps_args = ["--problem_statement.text='submit the Readme file with `submit README.md`'"]
+            ps_args = ["--problem_statement.text='file_submission test'"]
         else:
             ps_args = ["--problem_statement.text='this is a test'"]
     else:
