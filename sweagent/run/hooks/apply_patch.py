@@ -30,11 +30,13 @@ class SaveApplyPatchHook(RunHook):
         self._problem_statement = problem_statement
 
     def on_instance_completed(self, *, result: AgentRunResult):
+        instance_id = self._problem_statement.id
+
         if self._is_file_submission(result.info):
             self.logger.info("Received file submission.")
-            self._save_file_submission(result.info)
+            self._save_file_submission(instance_id, result.info)
             return
-        instance_id = self._problem_statement.id
+
         patch_path = self._save_patch(instance_id, result.info)
         if patch_path:
             if not self._apply_patch_locally:
@@ -81,7 +83,7 @@ class SaveApplyPatchHook(RunHook):
             return True
         return False
 
-    def _save_file_submission(self, info):
+    def _save_file_submission(self, instance_id: str, info):
         """Save the file submission to the output directory."""
         file_info = info["submission"]
         file_name = file_info.get("file_name")
@@ -89,7 +91,7 @@ class SaveApplyPatchHook(RunHook):
             self.logger.warning("No file name found in submission info.")
             return
 
-        output_file_path = self._output_dir / Path(file_name).name
+        output_file_path = self._output_dir / instance_id / Path(file_name).name
         output_file_path.parent.mkdir(parents=True, exist_ok=True)
         if output_file_path.exists():
             self.logger.warning(f"File {output_file_path} already exists. Overwriting.")

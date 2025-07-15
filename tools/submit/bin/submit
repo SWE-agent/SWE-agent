@@ -1,5 +1,5 @@
 main() {
-    # If first argument is provided, just print it between the submission markers
+    # If first argument is provided, just print it between the file submission markers
     if [ $# -gt 0 ]; then
         echo "<<SWE_AGENT_FILE_SUBMISSION>>"
         echo "<<TITLE>>"

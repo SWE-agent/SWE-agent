@@ -909,8 +909,8 @@ class DefaultAgent(AbstractAgent):
             try:
                 file_name = self._env.read_file("/root/submission_file_name.txt", encoding="utf-8").strip()
                 file_content = self._env.read_file("/root/submission_file.txt", encoding="utf-8")
-            except FileNotFoundError:
-                self.logger.warning("File submission file not found, no file submission was made")
+            except FileNotFoundError as e:
+                self.logger.warning(f"File submission file not found, no file submission was made. Error: {e}")
                 return step
             except Exception as e:
                 self.logger.exception("Failed to read file submission files, got %s", e)
