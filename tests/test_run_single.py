@@ -81,13 +81,11 @@ def test_run_ies(tmpdir, agent_config_with_commands):
 @pytest.mark.slow
 @pytest.mark.parametrize("repo", ["local", "github"])
 @pytest.mark.parametrize("problem_statement_source", ["github", "local", "text"])
-@pytest.mark.parametrize("submit_method", ["normal_submission", "file_submission"])
 def test_run_ies_repo_ps_matrix(
     tmpdir,
     swe_agent_test_repo_clone,
     repo,
     problem_statement_source,
-    submit_method,
 ):
     output_formats = ["traj", "pred", "patch"]
     for fmt in output_formats:
@@ -97,10 +95,7 @@ def test_run_ies_repo_ps_matrix(
     elif problem_statement_source == "local":
         ps_args = ["--problem_statement.path", str(swe_agent_test_repo_clone / "problem_statements" / "1.md")]
     elif problem_statement_source == "text":
-        if submit_method == "file_submission":
-            ps_args = ["--problem_statement.text='file_submission test'"]
-        else:
-            ps_args = ["--problem_statement.text='this is a test'"]
+        ps_args = ["--problem_statement.text='this is a test'"]
     else:
         raise ValueError(problem_statement_source)
     if repo == "local":
@@ -128,3 +123,63 @@ def test_run_ies_repo_ps_matrix(
     for fmt in output_formats:
         print(fmt, list(Path(tmpdir).iterdir()))
         assert len(list(Path(tmpdir).rglob(f"*.{fmt}"))) == 1
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("submit_method", ["normal_submission", "file_submission"])
+def test_run_submit_matrix(
+    tmpdir,
+    submit_method,
+):
+    # Define expected output files based on submit method
+    if submit_method == "file_submission":
+        output_formats = ["traj", "pred"]
+        expected_files = ["README.md"]
+    else:  # normal_submission
+        output_formats = ["traj", "pred", "patch"]
+        expected_files = []
+
+    # Check that output files don't exist initially
+    for fmt in output_formats:
+        assert not list(Path(tmpdir).glob(f"*.{fmt}"))
+    for file in expected_files:
+        assert not list(Path(tmpdir).glob(file))
+
+    if submit_method == "file_submission":
+        ps_args = ["--problem_statement.text='file_submission test'"]
+    elif submit_method == "normal_submission":
+        ps_args = ["--problem_statement.text='this is a test'"]
+    else:
+        raise ValueError(submit_method)
+    repo_args = ["--env.repo.github_url", "https://github.com/swe-agent/test-repo"]
+
+    # NOTE: config/bash_only.yaml is used here to verify the submit command
+    # If you find this test case failing, it may be related to the changes in bash_only.yaml
+
+    args = [
+        "--agent.model.name=instant_empty_submit",
+        "--output_dir",
+        str(tmpdir),
+        *ps_args,
+        *repo_args,
+        "--config",
+        str(CONFIG_DIR / "bash_only.yaml"),
+        "--agent.tools.parse_function.type=thought_action"
+    ]
+    print(args)
+    rs_config = BasicCLI(RunSingleConfig).get_config(args)
+    print(rs_config)
+    rs = RunSingle.from_config(rs_config)  # type: ignore
+    with tmpdir.as_cwd():
+        # Test that we can run run.py also independently from repo dir
+        rs.run()
+
+    # Check that expected output files were created
+    for fmt in output_formats:
+        print(fmt, list(Path(tmpdir).iterdir()))
+        assert len(list(Path(tmpdir).rglob(f"*.{fmt}"))) == 1
+
+    # Check for additional expected files (like reproduce.py for file_submission)
+    for file in expected_files:
+        print(file, list(Path(tmpdir).iterdir()))
+        assert len(list(Path(tmpdir).rglob(file))) == 1
