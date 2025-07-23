@@ -1,0 +1,121 @@
+agent:
+  model:
+#    name: vertex_ai/deepseek-ai/deepseek-r1-0528-maas
+    name: openai/gpt-4.1
+#    per_instance_cost_limit: 0
+    total_cost_limit: 1.0
+#    per_instance_call_limit: 50
+#    max_input_tokens: 65536
+  templates:
+    system_template: |-
+      You are a security testing specialist specializing in analyzing Java web applications for XSS vulnerabilities.
+
+    instance_template: |-
+      <uploaded_files>
+      {{working_dir}}
+      </uploaded_files>
+
+      <task_description>
+      {{problem_statement}}
+      </task_description>
+
+      <objective>
+      Analyze the Java code for XSS vulnerabilities. Either create a working exploit configuration or explain why the vulnerability cannot be exploited.
+      </objective>
+
+
+      <steps>
+      1. Analyze the code for user input handling and output points
+      2. Find the correct endpoint URL for specified file
+      3. Create a Python test script to verify XSS vulnerability
+      4. Create required configuration files based on test results
+      </steps>
+
+      <testing_details>
+      Create a Python script to test XSS:
+      - Use `requests` library for HTTP communication
+      - Test with the payload `<script>alert(1)</script>`
+      - Execute your script using the bash tool
+      - Try different injection points: URL params, POST data, headers, JSON body, etc
+      - Check if the payload appears unescaped in HTTP response
+      </testing_details>
+
+      <if_xss_not_found>
+      If you cannot reproduce XSS vulnerability or are confident it doesn't exist:
+      1. Analyze the Java code to identify why XSS is prevented (look for security mechanisms: input validation, output encoding, sanitization)
+      2. Set `reproduced: false` in your configuration file
+      3. In explanation.md, document:
+         - What security measures you found in the code
+         - Why the application is protected against XSS
+         - What you tested and why it didn't work
+      </if_xss_not_found>
+
+      <required_files>
+      - `{{working_dir}}/answer/request_config.json` - HTTP request configuration
+      - `{{working_dir}}/answer/explanation.md` - Brief analysis summary
+      </required_files>
+
+      <json_schema>
+      ```json
+      {
+        "type": "object",
+        "required": ["requests_config", "reproduced"],
+        "properties": {
+          "requests_config": {
+            "type": "object",
+            "required": ["method", "url"],
+            "properties": {
+              "method": {"type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]},
+              "url": {"type": "string"},
+              "params": {"type": "object"},
+              "data": {"type": "object"},
+              "json": {"type": "object"},
+              "headers": {"type": "object"},
+              "cookies": {"type": "object"}
+            }
+          },
+          "reproduced": {"type": "boolean"},
+          "expected_payload": {"type": "string", "default": "<script>alert(1)</script>"}
+        }
+      }
+      ```
+      </json_schema>
+
+      <important_notes>
+      - Set `reproduced: true` only if you were able to reproduce XSS vulnerability
+      - Set `reproduced: false` if you were unable to reproduce XSS vulnerability
+      - Test thoroughly before concluding XSS is impossible
+      - In both cases, write a brief explanation about your results
+      </important_notes>
+
+      <submission>
+      Run `submit` when ready. The system will validate your configuration by making the actual HTTP request. If there is an error, check your request_config.json and try again
+      </submission>
+
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+
+    next_step_no_output_template: |-
+      Your command executed successfully with no output.
+
+  tools:
+    env_variables:
+      PAGER: cat
+      MANPAGER: cat
+      LESS: -R
+      PIP_PROGRESS_BAR: 'off'
+      TQDM_DISABLE: '1'
+      GIT_PAGER: cat
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/xss_submit
+    registry_variables:
+      USE_FILEMAP: 'true'
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling
+  history_processors:
+    - type: cache_control
+      last_n_messages: 2

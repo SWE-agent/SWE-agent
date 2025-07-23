@@ -61,6 +61,7 @@ dependencies = [
     "tabulate",
     "textual>=1.0.0",
     "requests",
+    "registry>=0.4.2",
 ]
 
 [project.scripts]

@@ -1,0 +1,48 @@
+agent:
+  model:
+    name: human_thought  # Manual input for testing
+    per_instance_cost_limit: 0
+    total_cost_limit: 0
+    per_instance_call_limit: 10
+  templates:
+    system_template: |-
+      You are testing the XSS submit tool. You will be prompted to enter commands manually.
+
+    instance_template: |-
+      <uploaded_files>
+      {{working_dir}}
+      </uploaded_files>
+
+      <task_description>
+      {{problem_statement}}
+      </task_description>
+
+      Test the XSS submit functionality by:
+      1. Creating test files in answer/ directory
+      2. Running submit command
+      3. Verifying validation works correctly
+
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+
+    next_step_no_output_template: |-
+      Your command executed successfully with no output.
+
+  tools:
+    env_variables:
+      PAGER: cat
+      MANPAGER: cat
+      LESS: -R
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/xss_submit
+    registry_variables:
+      USE_FILEMAP: 'true'
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling
+  history_processors:
+    - type: cache_control
+      last_n_messages: 2
