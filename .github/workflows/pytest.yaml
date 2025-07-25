@@ -1,75 +1,75 @@
-# name: Pytest
+name: Pytest
 
-# env:
-#   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-# on:
-#   push:
-#     branches:
-#       - main
-#       - prepare-public2
-#     paths-ignore:
-#       - 'docs/**'
-#       - '.cursor/**'
-#       - 'README.md'
-#       - 'mkdocs.yml'
-#   pull_request:
-#     branches:
-#       - main
-#       - prepare-public2
-#     paths-ignore:
-#       - 'docs/**'
-#       - 'README.md'
-#       - 'mkdocs.yml'
+on:
+  push:
+    branches:
+      - main
+      - prepare-public2
+    paths-ignore:
+      - 'docs/**'
+      - '.cursor/**'
+      - 'README.md'
+      - 'mkdocs.yml'
+  pull_request:
+    branches:
+      - main
+      - prepare-public2
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'mkdocs.yml'
 
-# # Not possible to test windows capability:
-# # https://github.com/orgs/community/discussions/25491
-# jobs:
-#   test:
-#     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         python-version: ["3.11", "3.12"]
-#     defaults:
-#       run:
-#         shell: bash -l {0}
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
-#       - uses: actions/setup-python@v5
-#         with:
-#           python-version: "${{ matrix.python-version }}"
-#       - name: Install uv
-#         run: |
-#           curl -LsSf https://astral.sh/uv/install.sh | sh
-#       - name: Install dependencies
-#         run: |
-#             uv pip install --python ${Python_ROOT_DIR} -e '.[dev]'
-#       - name: Check available files
-#         run: |
-#           find .
-#       - name: Run pytest
-#         uses: sjvrijn/pytest-last-failed@v2
-#         with:
-#           pytest-args: '--junitxml=test-results.xml --cov -n auto -s'
-#       - name: Upload logs & trajectories
-#         uses: actions/upload-artifact@v4
-#         if: always()
-#         with:
-#           name: trajectories-py${{ matrix.python-version }}
-#           path: |
-#             trajectories/runner/
-#       - name: Explicitly convert coverage to xml
-#         if: matrix.python-version == '3.11'
-#         run: coverage xml
-#       - name: Upload coverage reports to Codecov
-#         if: matrix.python-version == '3.11'
-#         uses: codecov/codecov-action@v5.4.3
-#         with:
-#           token: ${{ secrets.CODECOV_TOKEN }}
-#           slug: SWE-agent/SWE-agent
-#       - name: Upload test results to Codecov
-#         if: matrix.python-version == '3.11'
-#         uses: codecov/test-results-action@v1
-#         with:
-#           files: test-results.xml
+# Not possible to test windows capability:
+# https://github.com/orgs/community/discussions/25491
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Install dependencies
+        run: |
+            uv pip install --python ${Python_ROOT_DIR} -e '.[dev]'
+      - name: Check available files
+        run: |
+          find .
+      - name: Run pytest
+        uses: sjvrijn/pytest-last-failed@v2
+        with:
+          pytest-args: '--junitxml=test-results.xml --cov -n auto -s'
+      - name: Upload logs & trajectories
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trajectories-py${{ matrix.python-version }}
+          path: |
+            trajectories/runner/
+      - name: Explicitly convert coverage to xml
+        if: matrix.python-version == '3.11'
+        run: coverage xml
+      - name: Upload coverage reports to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v5.4.3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: SWE-agent/SWE-agent
+      - name: Upload test results to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/test-results-action@v1
+        with:
+          files: test-results.xml
