@@ -1,4 +1,4 @@
-on: [pull_request, push]
+on: [pull_request]
 name: Check Markdown links in modified files
 jobs:
   markdown-link-check:
@@ -10,3 +10,4 @@ jobs:
         use-quiet-mode: 'yes'
         use-verbose-mode: 'yes'
         check-modified-files-only: 'yes'
+        base-branch: 'main'
