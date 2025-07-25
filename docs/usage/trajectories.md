@@ -43,7 +43,7 @@ Note: This trajectory is from SWE-agent v0.7.0. It might look different in newer
 
 !!! tip "Viewing trajectories"
     We provide a [trajectory viewer](inspector.md) for an easy viewing of trajectories.
-    If you want to view the json, we recommend [jsoneditoronline](https://jsoneditoronline.org/),
+    If you want to view the json, we recommend [jsoneditoronline](https://jsoneditoronlinellli.org/),
     because of the way it handles long lines.
 
 Trajectories can also be turned into custom demonstrations for SWE-agent ([more information](../config/demonstrations.md)).
