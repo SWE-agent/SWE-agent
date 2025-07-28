@@ -21,5 +21,11 @@
     {
       "pattern": "https://linuxize.com/post/bash-heredoc/"
     }
+  ],
+  "replacements": [
+    {
+      "pattern": "/#.*",
+      "replacement": ""
+    }
   ]
 }
