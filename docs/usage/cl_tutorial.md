@@ -8,6 +8,11 @@
       Benchmarking SWE-agent is covered [separately](batch_mode.md).
       Finally, we have a different tutorial for using SWE-agent for [coding challenges](coding_challenges.md).
 
+!!! tip "Mini-SWE-Agent"
+
+    Looking for a simple, no-fuzz version of SWE-agent that can also help you in your daily work?
+    Check out [Mini-SWE-Agent](https://mini-swe-agent.com/)!
+
 ## A few examples
 
 Before we start with a more structured explanation of the command line options, here are a few examples that you might find immediately useful:

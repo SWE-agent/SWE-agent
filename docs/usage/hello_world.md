@@ -7,6 +7,11 @@
     * We will be executing code in a Docker sandbox, so make sure you have docker installed ([docker troubleshooting](../installation/tips.md)).
       If you cannot run docker, skim this tutorial and see how you can run SWE-agent with cloud-based execution in the [command line basics tutorial](cl_tutorial.md).
 
+!!! tip "Mini-SWE-Agent"
+
+    Looking for a simple, no-fuzz version of SWE-agent that can also help you in your daily work?
+    Check out [Mini-SWE-Agent](https://mini-swe-agent.com/)!
+
 After installing SWE-agent, you have the `sweagent` command available. Run `sweagent --help` to see the list of subcommands.
 The most important ones are
 
