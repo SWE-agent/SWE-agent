@@ -45,8 +45,8 @@ Kind of slow, isn't it?
 
 
 !!! tip "All command line options"
-    * See [`RunBatchConfig`](../reference/run_batch_config.md/#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
-    * SWE-bench config: [`SWEBenchInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.SWEBenchInstances).
+    * See [`RunBatchConfig`](../reference/run_batch_config.md#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
+    * SWE-bench config: [`SWEBenchInstances`](../reference/batch_instances.md#sweagent.run.batch_instances.SWEBenchInstances).
 
 !!! tip "Evaluating on SWE-bench"
     If you are using [`sb-cli`](https://www.swebench.com/sb-cli/), you can automatically evaluate on SWE-bench by adding the `--evaluate=True` flag.
@@ -148,8 +148,8 @@ Here'the simplest example of what such a file can look like
     However, we temporarily support both names.
 
 !!! tip "More options"
-    * There's a few more fields that you can populate. See [`SimpleBatchInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.SimpleBatchInstance) for more information.
-    * For all command line options with this instance type, see [`InstancesFromFile`](../reference/batch_instances.md/#sweagent.run.batch_instances.InstancesFromFile).
+    * There's a few more fields that you can populate. See [`SimpleBatchInstances`](../reference/batch_instances.md#sweagent.run.batch_instances.SimpleBatchInstance) for more information.
+    * For all command line options with this instance type, see [`InstancesFromFile`](../reference/batch_instances.md#sweagent.run.batch_instances.InstancesFromFile).
 
 ## Huggingface instances
 
@@ -166,7 +166,7 @@ sweagent run-batch \
 ```
 
 !!! tip "All instance options"
-    See [`InstancesFromHuggingFace`](../reference/batch_instances.md/#sweagent.run.batch_instances.InstancesFromHuggingFace).
+    See [`InstancesFromHuggingFace`](../reference/batch_instances.md#sweagent.run.batch_instances.InstancesFromHuggingFace).
 
 ## Expert instances
 
@@ -204,7 +204,7 @@ where `instances.yaml` could look like this:
 ```
 
 !!! tip "All instance options"
-    See [`ExpertInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.ExpertInstancesFromFile).
+    See [`ExpertInstances`](../reference/batch_instances.md#sweagent.run.batch_instances.ExpertInstancesFromFile).
 
 ## Output files and next steps
 
