@@ -157,7 +157,7 @@ class SWEEnv:
                 "export ROOT=$(pwd -P)",
                 "git status",
                 "git fetch",
-                f"git checkout {self.repo.base_commit}",
+                f"git reset --hard {self.repo.base_commit}",
                 "git clean -fdq",
             ]
             self.communicate(
