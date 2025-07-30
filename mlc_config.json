@@ -20,18 +20,6 @@
     },
     {
       "pattern": "https://linuxize.com/post/bash-heredoc/"
-    },
-    {
-      "pattern": "https://leetcode.com/problems/.*"
-    },
-    {
-      "pattern": ".*\\.md/#sweagent\\..*"
-    }
-  ],
-  "replacements": [
-    {
-      "pattern": "/#.*",
-      "replacement": ""
     }
   ]
 }
