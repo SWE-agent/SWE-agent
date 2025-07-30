@@ -13,7 +13,7 @@ Let's start with a new problem statement. For this, put the problem you want to 
 <details>
 <summary>Example leetcode challenge</summary>
 
-This is the <a href="https://leetcode.com/problems/first-missing-positive/description/">first missing positive</a> challenge.
+This is the <a href="https://leetcode.com/problems/first-missing-positive/">first missing positive</a> challenge.
 
 ```markdown
 --8<-- "docs/usage/leetcode_example.md"
