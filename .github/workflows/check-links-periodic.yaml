@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - bala/fix_broken_links
+      - 0xba1a:bala/fix_broken_links
   schedule:
     - cron: "0 0 1 * *"
 
