@@ -108,7 +108,7 @@ You'll see output that looks like this (only with 3 workers instead of 30):
 </figure>
 
 !!! tip "All command line options"
-    See [`RunBatchConfig`](../reference/run_batch_config.md/#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
+    See [`RunBatchConfig`](../reference/run_batch_config.md#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
 
 When starting a lot of parallel instances with the docker backend, it might happen that you see some bottleneck effects
 (e.g., when running on a platform with few CPUs, you might see some timeouts because there's not enough CPUs to handle the startup of all containers in time).
