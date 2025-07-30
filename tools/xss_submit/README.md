@@ -1,4 +1,5 @@
-# XSS Submit with Security Validation
+# XSS Submission Tool
 
-Provides an alternative for `submit` that includes XSS security validation before submission.
-The tool validates XSS vulnerabilities by testing actual HTTP requests and checking for payload reflection.
+Submits XSS vulnerability reproduction results after validating the request configuration and checking for successful payload execution.
+
+Creates the final submission with task completion status and terminates the XSS analysis workflow. Also sends the final submission to the XSS analysis service.

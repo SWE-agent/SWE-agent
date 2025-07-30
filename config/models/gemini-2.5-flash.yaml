@@ -1,0 +1,8 @@
+agent:
+  model:
+    name: vertex_ai/gemini-2.5-flash
+    per_instance_call_limit: 50
+    max_input_tokens: 1048576
+  tools:
+    env_variables:
+      MODEL_NAME: gemini-2.5-flash

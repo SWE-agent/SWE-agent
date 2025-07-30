@@ -1,0 +1,33 @@
+FROM python:3.11
+
+RUN git clone https://github.com/sullo/nikto.git /opt/nikto && \
+    ln -s /opt/nikto/program/nikto.pl /usr/local/bin/nikto && \
+    chmod +x /opt/nikto/program/nikto.pl
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    tshark \
+    httpie \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir \
+    requests \
+    urllib3 \
+    beautifulsoup4 \
+    lxml
+
+
+COPY BenchmarkJava /BenchmarkJava
+
+WORKDIR /
+
+ENV PAGER=cat \
+    MANPAGER=cat \
+    LESS=-R \
+    PIP_PROGRESS_BAR=off \
+    TQDM_DISABLE=1 \
+    GIT_PAGER=cat
+
+CMD ["/bin/bash"]

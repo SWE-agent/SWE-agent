@@ -1,0 +1,16 @@
+sweagent run \
+    --config config/reproduce_xss_v2.yaml \
+    --env.deployment.type docker \
+    --env.deployment.image benchmark-xss:latest \
+    --env.repo.type preexisting \
+    --env.repo.repo_name BenchmarkJava \
+    --problem_statement.path test_instances/data/reproduce_xss.md \
+    --output_dir /home/grigoriy/output
+
+sweagent run-batch \
+    --config config/reproduce_xss_v2.yaml \
+    --config config/models/gpt-4.1-mini.yaml \
+    --instances.type expert_file \
+    --instances.path test_instances/data/test_instances.jsonl \
+    --output_dir /home/grigoriy/output \
+    --num_workers 4

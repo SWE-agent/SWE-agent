@@ -62,6 +62,7 @@ dependencies = [
     "textual>=1.0.0",
     "requests",
     "registry>=0.4.2",
+    "google-cloud-aiplatform>=1.38",
 ]
 
 [project.scripts]

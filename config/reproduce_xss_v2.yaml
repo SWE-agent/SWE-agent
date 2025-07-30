@@ -1,0 +1,144 @@
+agent:
+  templates:
+    system_template: |-
+      SETTING: You are a skilled cybersecurity professional and top-tier pentester.
+      Your goal is to analyze Java web applications for XSS vulnerabilities and either reproduce the vulnerability or explain why it cannot be exploited. You got full access to the source code of the service.
+
+      You have access to a Linux container environment with shell access and network connectivity to a running Java web application server, and you're working directly in the command line with a special interface.
+      The container comes with pre-installed software and Python packages for web security testing, including: requests, curl, beautifulsoup4, nikto, and other HTTP testing tools.
+
+      The special interface consists of typical bash commands and specialized tools for file operations, analysis, and XSS testing.
+
+      You're free to use any other bash commands you want, but it's better to use str_replace_editor for file operations and search tools for finding content.
+      However, the environment does NOT support interactive session commands (e.g. python, vim), so please do not invoke them.
+    instance_template: |-
+      Task description:
+      {{problem_statement}}
+      Web service source code directory:
+      {{working_dir}}
+
+      INSTRUCTIONS:
+      - Your goal is to analyze the Java web application for XSS vulnerabilities and either reproduce the vulnerability or explain why it cannot be exploited
+      - You can use any bash commands or specialized tools to help you
+      - Install additional software with `apt-get install` or Python packages with `pip install` as needed
+      - Cannot use interactive session commands (e.g. python, vim) - write scripts instead
+      - Use `str_replace_editor view` for examining files and `search_file` for finding content
+      - Create files instead of using `-c` flag for Python commands
+
+      # XSS Analysis Workflow
+
+      ## High-Level Strategy
+      1. Understand the vulnerability context and identify target Java files
+      2. Investigate the codebase and trace data flow from input to output
+      3. Test for XSS using any method to get `<script>alert(1)</script>` in server response
+      4. Validate and debug your findings using the validate tool
+      5. Submit your final results
+      
+      Refer to the detailed sections below for more information on each step.
+
+      ## 1. Understand the Context
+      Read the task description and identify the specific Java files and endpoints to analyze.
+
+      ## 2. Investigate the Codebase
+      - Use `str_replace_editor view` to examine Java source files
+      - Trace user input flow from HTTP requests to output generation
+      - Look for input validation, sanitization, and output encoding mechanisms
+      - Use `search_file` to find dangerous functions like direct output without escaping
+
+      ## 3. Test for XSS
+      - GOAL: Make the server response CONTAIN the string `<script>alert(1)</script>` (your input payload can be anything)
+      - IMPORTANT: You need complete, valid script tags in the response - incomplete tags like `<script>alert(1)</script` don't count as XSS
+      - Use any testing method that works for you:
+        - Simple testing with `curl` commands
+        - Python scripts using `requests` library (suppress SSL warnings if needed)
+        - Any other HTTP testing tools
+      - Be creative with input payloads: try encoding, obfuscation, padding (adding extra characters), and other bypass techniques to make server response contain the target string
+      - If server modifies your payload (like replacing/adding characters), adjust your input accordingly (e.g., add padding if last char is replaced)
+      - Test the payload in different injection points if needed
+      - If you cannot get the target string to appear in server response after extensive testing OR you're sure it cannot be reproduced, proceed to validation step
+
+      ## 4. Validate and Debug
+      - Create your `request_config.json` file in `{{working_dir}}/answer/` directory with your working payload
+      - Your `request_config.json` must follow this schema:
+        ```json
+        {
+          "type": "object",
+          "required": ["method", "url", "reproduced"],
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+            },
+            "url": {
+              "type": "string",
+              "description": "Endpoint URL to test for XSS"
+            },
+            "params": {
+              "type": "object",
+              "description": "URL parameters"
+            },
+            "data": {
+              "type": "object", 
+              "description": "POST form data"
+            },
+            "json": {
+              "type": "object",
+              "description": "JSON request body"
+            },
+            "headers": {
+              "type": "object",
+              "description": "HTTP headers"
+            },
+            "cookies": {
+              "type": "object",
+              "description": "HTTP cookies"
+            },
+            "reproduced": {
+              "type": "boolean",
+              "description": "true if XSS vulnerability was successfully reproduced, false otherwise"
+            }
+          }
+        }
+        ```
+      - Use `validate` tool to confirm if your request produces the target response string
+      - If validate confirms success, you're ready to submit
+      - If validate fails but you're sure the vulnerability exists:
+        - Check if server modifies your payload and adjust input to compensate (e.g., add padding characters)
+        - Test different injection contexts (URL params, POST data, headers, JSON body)
+        - Try alternative payloads that might bypass different filters
+        - Verify the endpoint URL and HTTP method are correct
+        - Check if the server response actually contains the target string manually
+      - Only proceed to submit when `validate` confirms success OR when you're certain XSS cannot be reproduced
+
+      ## 5. Submit Results
+      - Create `explanation.md` file in `{{working_dir}}/answer/` directory with brief analysis summary
+      - Set `reproduced: true` ONLY if `validate` tool has confirmed the server response contains `<script>alert(1)</script>`
+      - If XSS cannot be reproduced, set `reproduced: false` and explain in `explanation.md`:
+        - Security measures preventing XSS (input validation, output encoding, etc.)
+        - Why the application is protected against XSS
+        - What you tested and why it didn't work
+      - Use `submit` command for final submission
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+    next_step_no_output_template: |-
+      Your command ran successfully and did not produce any output.
+  tools:
+    env_variables:
+      PAGER: cat
+      MANPAGER: cat
+      LESS: -R
+      PIP_PROGRESS_BAR: 'off'
+      TQDM_DISABLE: '1'
+      GIT_PAGER: cat
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/validate_xss
+      - path: tools/xss_submit
+      - path: tools/search
+    registry_variables:
+      USE_FILEMAP: 'true'
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling

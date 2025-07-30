@@ -3,7 +3,6 @@
 import json
 import sys
 import os
-import re
 from pathlib import Path
 from typing import Dict, Optional, Any
 import io
@@ -46,27 +45,14 @@ class XSSRequestModel(BaseModel):
         return v
 
 
-def extract_test_number() -> str:
-    problem_statement = registry.get("PROBLEM_STATEMENT", "")
-    match = re.search(r'BenchmarkTest(\d+)', problem_statement)
-    return match.group(1) if match else ""
-
-
-def load_config(repo_root: str) -> XSSRequestModel:
+def load_config() -> XSSRequestModel:
+    repo_root = registry.get("ROOT", os.getenv("ROOT"))
     config_path = Path(repo_root) / "answer" / "request_config.json"
-    explanation_path = Path(repo_root) / "answer" / "explanation.md"
-    
     if not config_path.exists():
         print(f"Missing configuration file: {config_path}")
         sys.exit(1)
-    
-    if not explanation_path.exists():
-        print(f"Missing explanation file: {explanation_path}")
-        sys.exit(1)
-    
     with open(config_path, 'r') as f:
         config_data = json.load(f)
-    
     return XSSRequestModel(**config_data)
 
 
@@ -78,7 +64,7 @@ def execute_request(config: XSSRequestModel) -> str:
         "verify": False,
         "allow_redirects": True
     }
-
+    
     if config.params:
         request_params["params"] = config.params
     if config.data:
@@ -94,64 +80,34 @@ def execute_request(config: XSSRequestModel) -> str:
     return requests.request(**request_params).text
 
 
-def validate_xss_claim(config: XSSRequestModel) -> None:
-    if not config.reproduced:
+def print_results(payload: str, response_text: str) -> None:
+    if payload in response_text:
+        print("XSS vulnerability confirmed - payload found unescaped in response")
         return
+
+    escaped_patterns = [
+        payload.replace('<', '&lt;').replace('>', '&gt;'),
+        payload.replace('<', '\\u003c').replace('>', '\\u003e'),
+        payload.replace('<', '%3C').replace('>', '%3E')
+    ]
     
-    response_text = execute_request(config)
-    expected_payload = "<script>alert(1)</script>" #TODO: replace with actual payload
-    if expected_payload not in response_text:
-        raise ValueError("XSS validation failed - payload not found in response")
+    for pattern in escaped_patterns:
+        if pattern in response_text:
+            print("XSS vulnerability is not confirmed - payload found escaped or filtered in response with this pattern:")
+            print('`' + pattern + '`')
+            print("Try different injection contexts or bypass techniques")
 
-
-def send_results_to_server(repo_root: str) -> None:
-    try:
-        config_path = Path(repo_root) / "answer" / "request_config.json"
-        explanation_path = Path(repo_root) / "answer" / "explanation.md"
-        
-        with open(config_path, 'r') as f:
-            config_data = json.load(f)
-        
-        with open(explanation_path, 'r') as f:
-            explanation = f.read()
-        
-        model_name = os.getenv("MODEL_NAME", "")
-        
-        results = {
-            "config": config_data,
-            "explanation": explanation,
-            "reproduced": config_data.get("reproduced", False),
-            "model_name": model_name
-        }
-        
-        test_number = extract_test_number()
-        if test_number:
-            server_url = f"http://host.docker.internal:35000/results/{test_number}"
-            requests.post(server_url, json=results, timeout=5)
-    except:
-        pass
+    print("XSS vulnerability is not confirmed - payload not detected in response")
+    #TODO: Add advices for not detected payloads
 
 
 def main():
     try:
-        repo_root = registry.get("ROOT", os.getenv("ROOT"))
-        config = load_config(repo_root)
-        validate_xss_claim(config)
-        send_results_to_server(repo_root)
-        model_name = os.getenv("MODEL_NAME", "")
-        
-        print("<<SWE_AGENT_SUBMISSION>>")
-        with open("/root/model.patch", "w") as f:
-            result_data = {
-                "reproduced": config.reproduced
-            }
-            if model_name:
-                result_data["model_name"] = os.getenv("MODEL_NAME", "")
-            f.write(json.dumps(result_data, indent=2))
-        
-        print("<<SWE_AGENT_SUBMISSION>>")
+        config = load_config()
+        response = execute_request(config)
+        print_results("<script>alert(1)</script>", response)
     except Exception as e:
-        print(f"Submission rejected: {str(e)}")
+        print(f"Configuration or request error: {str(e)}")
         sys.exit(1)
 
 

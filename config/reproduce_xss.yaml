@@ -1,11 +1,4 @@
 agent:
-  model:
-#    name: vertex_ai/deepseek-ai/deepseek-r1-0528-maas
-    name: openai/gpt-4.1
-#    per_instance_cost_limit: 0
-    total_cost_limit: 1.0
-#    per_instance_call_limit: 50
-#    max_input_tokens: 65536
   templates:
     system_template: |-
       You are a security testing specialist specializing in analyzing Java web applications for XSS vulnerabilities.
@@ -116,6 +109,3 @@ agent:
     enable_bash_tool: true
     parse_function:
       type: function_calling
-  history_processors:
-    - type: cache_control
-      last_n_messages: 2

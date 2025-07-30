@@ -1,0 +1,10 @@
+agent:
+  model:
+    name: vertex_ai/deepseek-ai/deepseek-r1-0528-maas
+    per_instance_cost_limit: 0
+    total_cost_limit: 0
+    per_instance_call_limit: 50
+    max_input_tokens: 163840
+  tools:
+    env_variables:
+      MODEL_NAME: deepseek-r1
