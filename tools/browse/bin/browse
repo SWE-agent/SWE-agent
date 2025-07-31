@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+import asyncio
+import sys
+from pprint import pprint
+
+from browser_use import Agent, AgentHistoryList, Browser, BrowserConfig
+from browser_use.llm import ChatAzureOpenAI
+
+
+async def main(args: list[str]) -> int:
+    if len(args) > 1:
+        print("browse allows only one arg at a time.")
+        return 1
+
+    if not args:
+        print("Usage: browse <arg>")
+        return 1
+
+    what_to_browse = args[0]
+
+    # TODO: Based on env variable choose differnt LLM service.
+    # For now, we are using Azure OpenAI service.
+
+    # Make sure that AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT are set in your .env file
+    # And it is propagated to tool environment by using `propagate_env_variables`. Refer to
+    # config/browse_test.yaml for more details.
+
+    llm = ChatAzureOpenAI(model="gpt-4o")
+
+    browser_config = BrowserConfig(headless=True)
+    browser = Browser(config=browser_config)
+
+    agent = Agent(browser=browser, task=what_to_browse, llm=llm)
+
+    history: AgentHistoryList = await agent.run()
+    print("Final Result:")
+    pprint(history.final_result(), indent=4)
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(asyncio.run(main(sys.argv[1:])))
