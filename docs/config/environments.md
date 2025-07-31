@@ -30,4 +30,4 @@ SHELL ["/bin/bash", "-c"]
 
 Build it with `docker build -f tiny.Dockerfile -t swe-agent-tiny .`.
 
-Now you can run it in the agent with `sweagent run --env.image swe-agent-tiny ...`
+Now you can run it in the agent with `sweagent run --env.deployment.image swe-agent-tiny ...`
