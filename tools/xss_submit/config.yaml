@@ -1,4 +1,0 @@
-tools:
-  submit:
-    signature: "submit"
-    docstring: "submits your final XSS reproduction results for validation and evaluation"

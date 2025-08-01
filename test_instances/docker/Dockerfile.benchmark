@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir \
     lxml
 
 
-COPY BenchmarkJava /BenchmarkJava
+COPY BenchmarkJava-mutated /BenchmarkJava-mutated
 
 WORKDIR /
 

@@ -8,9 +8,19 @@ sweagent run \
     --output_dir /home/grigoriy/output
 
 sweagent run-batch \
-    --config config/reproduce_xss_v2.yaml \
-    --config config/models/gpt-4.1-mini.yaml \
+    --config config/reproduce_xss_v3.yaml \
+    --config config/models/gemini-2.5-flash.yaml \
     --instances.type expert_file \
     --instances.path test_instances/data/test_instances.jsonl \
+    --instances.slice :1 \
     --output_dir /home/grigoriy/output \
-    --num_workers 4
+    --num_workers 5
+
+sweagent run-batch \
+    --config config/reproduce_xss_v3.yaml \
+    --config config/models/gemini-2.5-flash.yaml \
+    --instances.type expert_file \
+    --instances.path test_instances/data/mutated/dev_instances.jsonl \
+    --instances.slice :1 \
+    --output_dir /home/grigoriy/output \
+    --num_workers 5

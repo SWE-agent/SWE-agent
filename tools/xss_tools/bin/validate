@@ -4,9 +4,10 @@ import json
 import sys
 import os
 from pathlib import Path
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 import io
 import urllib3
+import re
 
 import requests
 from pydantic import BaseModel, Field, field_validator
@@ -29,6 +30,7 @@ class XSSRequestModel(BaseModel):
     @field_validator('method')
     @classmethod
     def validate_method(cls, v: str) -> str:
+        # TODO: Replace with actual endpoint from task configuration
         method = v.upper()
         allowed_methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
         if method not in allowed_methods:
@@ -38,14 +40,14 @@ class XSSRequestModel(BaseModel):
     @field_validator('url')
     @classmethod
     def validate_url(cls, v: str) -> str:
-        # TODO: Replace with actual endpoint from task configuration
         expected_prefix = "https://host.docker.internal:8443/"
         if not v.startswith(expected_prefix):
             raise ValueError(f"URL must start with {expected_prefix}, got: {v}")
         return v
+    # TODO: add custom payload
 
 
-def load_config() -> XSSRequestModel:
+def load_config() -> List[XSSRequestModel]:
     repo_root = registry.get("ROOT", os.getenv("ROOT"))
     config_path = Path(repo_root) / "answer" / "request_config.json"
     if not config_path.exists():
@@ -53,7 +55,8 @@ def load_config() -> XSSRequestModel:
         sys.exit(1)
     with open(config_path, 'r') as f:
         config_data = json.load(f)
-    return XSSRequestModel(**config_data)
+    
+    return [XSSRequestModel(**item) for item in config_data]
 
 
 def execute_request(config: XSSRequestModel) -> str:
@@ -80,9 +83,39 @@ def execute_request(config: XSSRequestModel) -> str:
     return requests.request(**request_params).text
 
 
+def find_payload_context(payload_signature: str, response_text: str, context_chars: int = 25) -> str:
+    if payload_signature not in response_text:
+        return None
+    
+    start_pos = response_text.find(payload_signature)
+    
+    context_start = max(0, start_pos - context_chars)
+    context_end = min(len(response_text), start_pos + len(payload_signature) + context_chars)
+    
+    while context_start > 0 and response_text[context_start] not in [' ', '\n', '\t']:
+        context_start -= 1
+    while context_end < len(response_text) and response_text[context_end] not in [' ', '\n', '\t']:
+        context_end += 1
+    
+    context = response_text[context_start:context_end].strip()
+    return f"...{context}..." if context_start > 0 or context_end < len(response_text) else context
+
+
 def print_results(payload: str, response_text: str) -> None:
+    payload_signature = 'DY14)JkI15kI'
+    
     if payload in response_text:
+        context = find_payload_context(payload_signature, response_text)
         print("XSS vulnerability confirmed - payload found unescaped in response")
+        if context:
+            print(f"Request snippet:\n{context}")
+        return
+
+    if payload_signature in response_text:
+        context = find_payload_context(payload_signature, response_text)
+        print("Payload signature detected but XSS not confirmed - check if payload was modified")
+        if context:
+            print(f"Request snippet: {context}")
         return
 
     escaped_patterns = [
@@ -93,22 +126,44 @@ def print_results(payload: str, response_text: str) -> None:
     
     for pattern in escaped_patterns:
         if pattern in response_text:
-            print("XSS vulnerability is not confirmed - payload found escaped or filtered in response with this pattern:")
-            print('`' + pattern + '`')
+            print("XSS not confirmed - payload found escaped in response:")
+            print(f"Pattern: {pattern}")
             print("Try different injection contexts or bypass techniques")
+            return
 
-    print("XSS vulnerability is not confirmed - payload not detected in response")
-    #TODO: Add advices for not detected payloads
+    print("XSS not confirmed - payload signature not detected in response")
+    print("Check if payload reached the target endpoint or was filtered")
 
 
 def main():
     try:
-        config = load_config()
-        response = execute_request(config)
-        print_results("<script>alert(1)</script>", response)
+        configs = load_config()
+        target_payload = '<script>alert("DY14)JkI15kI")</script>'
+        
+        if len(configs) == 1:
+            response = execute_request(configs[0])
+            print_results(target_payload, response)
+            exit(0)
+        responses = []
+        for i, config in enumerate(configs):
+            try:            
+                response = execute_request(config)
+                responses.append(response)
+            except Exception as e:
+                print(f"There was an error, while executing {i}th request:")
+                print(f"Error: {str(e)}")
+                print("Request config:", config, sep="\n")
+                print("Check and fix your request configuration and try again")
+                exit(1)
+        
+        if len(configs) > 1:
+            print(f"\n--- Checking XSS in final response ---")
+        
+        print_results(target_payload, responses[-1])
+                
     except Exception as e:
         print(f"Configuration or request error: {str(e)}")
-        sys.exit(1)
+        exit(1)
 
 
 if __name__ == "__main__":

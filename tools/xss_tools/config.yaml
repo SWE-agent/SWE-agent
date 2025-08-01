@@ -1,0 +1,11 @@
+tools:
+  validate:
+    signature: "validate"
+    docstring: >
+      Tests and analyzes your XSS request configuration without submitting it.
+      Returns success confirmation with response context if XSS reproduced, or detailed failure explanation with payload signature detection and bypass suggestions.
+  submit:
+    signature: "submit"
+    docstring: >
+      Submits your final XSS reproduction results for validation and evaluation.
+      Returns acceptance confirmation or short error messages if rejecting.

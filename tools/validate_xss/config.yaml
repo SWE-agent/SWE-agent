@@ -1,4 +1,0 @@
-tools:
-  validate:
-    signature: "validate"
-    docstring: "tests and analyzes your XSS request configuration without submitting it"

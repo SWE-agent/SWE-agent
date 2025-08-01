@@ -1,7 +1,9 @@
 tools:
   find_file:
     signature: "find_file <file_name> [<dir>]"
-    docstring: "finds all files with the given name or pattern in dir. If dir is not provided, searches in the current directory"
+    docstring: |
+      finds all files with the given name or pattern in the specified directory using shell-style wildcards. Performs recursive search through all subdirectories and returns the absolute paths of matching files
+      Returns: Total count and list of absolute file paths, or "No matches found" message if no files match the pattern
     arguments:
       - name: file_name
         type: string
@@ -13,7 +15,7 @@ tools:
         required: false
   search_dir:
     signature: "search_dir <search_term> [<dir>]"
-    docstring: "searches for search_term in all files in dir. If dir is not provided, searches in the current directory"
+    docstring: "searches for search_term in all files in dir. If dir is not provided, searches in the current directory. Returns: filename:line_number:matching_line for each match, or 'No matches found' message."
     arguments:
       - name: search_term
         type: string
@@ -25,7 +27,7 @@ tools:
         required: false
   search_file:
     signature: "search_file <search_term> [<file>]"
-    docstring: "searches for search_term in file. If file is not provided, searches in the current open file"
+    docstring: "searches for search_term in file. If file is not provided, searches in the current open file. Returns: line_number:matching_line for each occurrence, or 'No matches found' message."
     arguments:
       - name: search_term
         type: string
