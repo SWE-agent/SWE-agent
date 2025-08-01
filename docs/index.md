@@ -81,3 +81,7 @@ SWE-agent is built and maintained by researchers from Princeton University and S
 * June 26: [Adding custom tools](usage/adding_custom_tools.md)
 * Apr 8: [Running SWE-agent competitively](usage/competitive_runs.md)
 * Mar 7: [Updated SWE-agent architecture diagram of 1.0](background/architecture.md)
+
+## Interesting forks and ideas
+
+* [This fork from Exponential](https://github.com/SWE-agent/mini-swe-agent/pull/328) introduces the notion of "guardrail" to steer the agent when it makes code changes or implementaion plan. For example, whenever the agent makes a code change, it asks a TDD subagent to check whether it is following TDD development style - working on one test at a time. This is basically the same as an implementator and a critic.
