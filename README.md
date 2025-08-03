@@ -57,7 +57,7 @@ Please use [SWE-agent 0.7](https://github.com/SWE-agent/SWE-agent/tree/v0.7) whi
 [SWE-bench]: https://github.com/SWE-bench/SWE-bench
 [nyu-ctf]: https://arxiv.org/abs/2406.05590
 
-In addition, you might be interested in the following projects:
+In addition, you might be interested in our other projects:
 
 
 <div align="center">
