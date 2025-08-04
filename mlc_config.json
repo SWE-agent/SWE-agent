@@ -23,6 +23,18 @@
     },
     {
       "pattern": "https://leetcode.com/problems/.*"
+    },
+    {
+      "pattern": "https://jsoneditoronline.org/.*"
+    },
+    {
+      "pattern": ".*\\.md/#sweagent\\..*"
+    }
+  ],
+  "replacements": [
+    {
+      "pattern": "/#.*",
+      "replacement": ""
     }
   ]
 }
