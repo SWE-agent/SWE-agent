@@ -58,6 +58,17 @@ for omore information.
 Since [#1036](https://github.com/SWE-agent/SWE-agent/pull/1036) you can also manually set the maximum output tokens and override the information
 from `litellm`.
 
+To use extended thinking, you can set the following in your config:
+
+```yaml
+agent:
+  name: 'claude-sonnet-4-20250514'
+  model:
+    temperature: 1.
+    completion_kwargs:
+      reasoning_effort: 'high'
+```
+
 ### o1
 
 Make sure to set

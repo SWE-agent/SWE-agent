@@ -761,14 +761,14 @@ class LiteLLMModel(AbstractModel):
             if self.tools.use_function_calling:
                 if response.choices[i].message.tool_calls:  # type: ignore
                     tool_calls = [call.to_dict() for call in response.choices[i].message.tool_calls]  # type: ignore
-                    if (
-                        hasattr(response.choices[i].message, "thinking_blocks")
-                        and response.choices[i].message.thinking_blocks
-                    ):  # type: ignore
-                        output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
                 else:
                     tool_calls = []
                 output_dict["tool_calls"] = tool_calls
+            if (
+                hasattr(response.choices[i].message, "thinking_blocks")  # type: ignore
+                and response.choices[i].message.thinking_blocks  # type: ignore
+            ):
+                output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
             outputs.append(output_dict)
         self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
         return outputs
