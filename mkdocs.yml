@@ -155,6 +155,8 @@ edit_uri: edit/main/docs/
 extra_javascript:
   - assets/js/sh-annotation.js
 extra_css:
+  - https://fonts.googleapis.com/icon?family=Material+Icons
+  - assets/navigation_cards.css
   - assets/custom.css
   - assets/mkdocstrings.css
   - assets/image_theme.css

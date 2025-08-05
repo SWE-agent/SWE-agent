@@ -3,38 +3,44 @@
 This part of the documentation covers more details about configuring and developing SWE-agent.
 Just want to run it? See [getting started](../index.md) instead!
 
-<div class="grid cards" markdown>
+<div class="grid cards">
+  <a href="../background/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">book</span>
+        <span class="nav-card-title">Background & goals</span>
+      </div>
+      <p class="nav-card-description">Learn more about the project goals and academic research.</p>
+    </div>
+  </a>
 
--   :material-book:{ .lg .middle } __Background & goals__
+  <a href="../usage/cli/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">book</span>
+        <span class="nav-card-title">Command line interface</span>
+      </div>
+      <p class="nav-card-description">Learn about all the different subcommands of sweagent.</p>
+    </div>
+  </a>
 
-    ---
+  <a href="../config/config/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">settings</span>
+        <span class="nav-card-title">Configuration</span>
+      </div>
+      <p class="nav-card-description">How to configure SWE-agent.</p>
+    </div>
+  </a>
 
-    Learn more about the project goals and academic research.
-
-    [:octicons-arrow-right-24: Learn more](../background/index.md)
-
--   :material-book:{ .lg .middle } __Command line interface__
-
-    ---
-
-    Learn about all the different subcommands of `sweagent`.
-
-    [:octicons-arrow-right-24: Learn more](../usage/cli.md)
-
--   :material-cog:{ .lg .middle } __Configuration__
-
-    ---
-
-    How to configure SWE-agent.
-
-    [:octicons-arrow-right-24: Configuration](../config/config.md)
-
--   :material-image:{ .lg .middle } __Multimodal Support__
-
-    ---
-
-    Use SWE-agent with vision-capable AI models for image processing.
-
-    [:octicons-arrow-right-24: Multimodal Guide](multimodal.md)
-
+  <a href="multimodal/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">image</span>
+        <span class="nav-card-title">Multimodal Support</span>
+      </div>
+      <p class="nav-card-description">Use SWE-agent with vision-capable AI models for image processing.</p>
+    </div>
+  </a>
 </div>

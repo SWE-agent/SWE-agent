@@ -1,41 +1,33 @@
 # Setting up SWE-agent
 
-<div class="grid cards" markdown>
+<div class="grid cards">
+  <a href="source/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">settings</span>
+        <span class="nav-card-title">Install from source</span>
+      </div>
+      <p class="nav-card-description">Install SWE-agent locally from source using pip. This is the default option.</p>
+    </div>
+  </a>
 
+  <a href="codespaces/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">code</span>
+        <span class="nav-card-title">All in browser</span>
+      </div>
+      <p class="nav-card-description">Run in a browser-based VSCode environment. Best for a quick first peek.</p>
+    </div>
+  </a>
 
--   :material-cog:{ .lg .middle } __Install from source__
-
-    ---
-
-    Install SWE-agent locally from source using `pip`.
-    This is the default option.
-
-    [:octicons-arrow-right-24: Get started](source.md)
-
-
--   :material-github:{ .lg .middle } __All in browser__
-
-    ---
-
-    Run SWE-agent using GitHub codespaces in an in-browser VSCode environment.
-    Best for a quick first peek.
-
-    [:octicons-arrow-right-24: Get started](codespaces.md)
-
-
--   :material-docker:{ .lg .middle } __Coming soon: Run in docker__
-
-    ---
-
-    Pull a docker container and directly run SWE-agent. This is our fallback solution if the local installation does not work for you.
-
-    :octicons-arrow-right-24: Coming soon
-
--   :material-newspaper:{ .lg .middle } __Changelog__
-
-    ---
-
-    See what's new in SWE-agent!
-
-    [:octicons-arrow-right-24: Read the changelog](changelog.md)
+  <a href="changelog/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">newspaper</span>
+        <span class="nav-card-title">Changelog</span>
+      </div>
+      <p class="nav-card-description">See what's new in SWE-agent!</p>
+    </div>
+  </a>
 </div>

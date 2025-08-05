@@ -25,47 +25,47 @@ SWE-agent enables your language model of choice (e.g. GPT-4o or Claude Sonnet 4)
 
 SWE-agent is built and maintained by researchers from Princeton University and Stanford University.
 
-<div class="grid cards" markdown>
+<div class="grid cards">
+  <a href="installation/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">download</span>
+        <span class="nav-card-title">Installation</span>
+      </div>
+      <p class="nav-card-description">Installing SWE-agent.</p>
+    </div>
+  </a>
 
+  <a href="usage/hello_world/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">settings</span>
+        <span class="nav-card-title">Hello world</span>
+      </div>
+      <p class="nav-card-description">Solve a GitHub issue with SWE-agent.</p>
+    </div>
+  </a>
 
+  <a href="usage/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">lightbulb</span>
+        <span class="nav-card-title">User guides</span>
+      </div>
+      <p class="nav-card-description">Dive deeper into SWE-agent's features and goals.</p>
+    </div>
+  </a>
 
--   :material-download:{ .lg .middle } __Installation__
-
-    ---
-
-    Installing SWE-agent.
-
-    [:octicons-arrow-right-24: Get started](installation/index.md)
-
-
--   :material-cog:{ .lg .middle } __Hello world__
-
-    ---
-
-    Solve a GitHub issue with SWE-agent.
-
-    [:octicons-arrow-right-24: Hello world](usage/hello_world.md)
-
-
--   :material-lightbulb:{ .lg .middle } __User guides__
-
-    ---
-
-    Dive deeper into SWE-agent's features and goals.
-
-    [:octicons-arrow-right-24: User guides](usage/index.md)
-
-
--   :material-book:{ .lg .middle } __Background & goals__
-
-    ---
-
-    Learn more about the project goals and academic research.
-
-    [:octicons-arrow-right-24: Learn more](background/index.md)
-
+  <a href="background/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">book</span>
+        <span class="nav-card-title">Background & goals</span>
+      </div>
+      <p class="nav-card-description">Learn more about the project goals and academic research.</p>
+    </div>
+  </a>
 </div>
-
 ## 📣 News
 
 * July 24: [Mini-SWE-Agent](https://github.com/SWE-agent/mini-SWE-agent) achieves 65% on SWE-bench verified in 100 lines of python!
