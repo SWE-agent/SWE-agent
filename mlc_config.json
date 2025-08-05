@@ -29,7 +29,11 @@
     },
     {
       "pattern": ".*\\.md/#sweagent\\..*"
+    },
+    {
+      "pattern": "^(?!https).*(?<!\\.md)$"
     }
+
   ],
   "replacements": [
     {
