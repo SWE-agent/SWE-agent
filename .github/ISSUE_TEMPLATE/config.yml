@@ -3,6 +3,6 @@ contact_links:
   - name: Blank issue
     url: https://github.com/SWE-agent/SWE-agent/issues/new
     about: None of the above? Open a blank issue
-  - name: Discord server
-    url: https://discord.gg/AVEFbBn2rH
-    about: Open ended discussion that is not suitable for a single issue.
+  - name: Slack server
+    url: https://join.slack.com/t/swe-bench/shared_invite/zt-36pj9bu5s-o3_yXPZbaH2wVnxnss1EkQ
+    about: Open ended discussions
