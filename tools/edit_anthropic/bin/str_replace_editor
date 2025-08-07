@@ -365,7 +365,7 @@ class EditTool:
         command: Command,
         path: str,
         file_text: Optional[str] = None,
-        view_range: Optional[List[int]] = None,
+        range: Optional[List[int]] = None,
         old_str: Optional[str] = None,
         new_str: Optional[str] = None,
         insert_line: Optional[int] = None,
@@ -374,7 +374,7 @@ class EditTool:
         _path = Path(path)
         self.validate_path(command, _path)
         if command == "view":
-            return self.view(_path, view_range)
+            return self.view(_path, range)
         elif command == "create":
             if file_text is None:
                 print("Parameter `file_text` is required for command: create")
@@ -385,7 +385,7 @@ class EditTool:
             if old_str is None:
                 print("Parameter `old_str` is required for command: str_replace")
                 sys.exit(2)
-            return self.str_replace(_path, old_str, new_str)
+            return self.str_replace(_path, old_str, new_str, range)
         elif command == "insert":
             if insert_line is None:
                 print("Parameter `insert_line` is required for command: insert")
@@ -400,6 +400,39 @@ class EditTool:
             f'Unrecognized command {command}. The allowed commands for the {self.name} tool are: "view", "create", "str_replace", "insert", "undo_edit"'
         )
         sys.exit(5)
+
+    def _get_content_in_range(self, file_content: str, file_suffix: str, range: List[int]) -> str:
+        if len(range) != 2 or not all(isinstance(i, int) for i in range):
+            print("Invalid `range`. It should be a list of two integers.")
+            sys.exit(11)
+        file_lines = file_content.split("\n")
+        n_lines_file = len(file_lines)
+        init_line, final_line = range
+        if init_line < 1 or init_line > n_lines_file:
+            print(
+                f"Invalid `range`: {range}. Its first element `{init_line}` should be within the range of lines of the file: {[1, n_lines_file]}"
+            )
+            sys.exit(12)
+        if final_line > n_lines_file:
+            print(
+                f"Invalid `range`: {range}. Its second element `{final_line}` should be smaller than the number of lines in the file: `{n_lines_file}`"
+            )
+            sys.exit(13)
+        if final_line != -1 and final_line < init_line:
+            print(
+                f"Invalid `range`: {range}. Its second element `{final_line}` should be larger or equal than its first `{init_line}`"
+            )
+            sys.exit(14)
+
+        if final_line == -1:
+            final_line = n_lines_file
+
+        # Expand the viewport to include the whole function or class
+        init_line, final_line = WindowExpander(suffix=file_suffix).expand_window(
+            file_lines, init_line, final_line, max_added_lines=MAX_WINDOW_EXPANSION_VIEW
+        )
+
+        return "\n".join(file_lines[init_line - 1 : final_line]), init_line, final_line
 
     def validate_path(self, command: str, path: Path):
         """
@@ -456,37 +489,7 @@ class EditTool:
 
         file_content = self.read_file(path)
         if view_range:
-            if len(view_range) != 2 or not all(isinstance(i, int) for i in view_range):
-                print("Invalid `view_range`. It should be a list of two integers.")
-                sys.exit(11)
-            file_lines = file_content.split("\n")
-            n_lines_file = len(file_lines)
-            init_line, final_line = view_range
-            if init_line < 1 or init_line > n_lines_file:
-                print(
-                    f"Invalid `view_range`: {view_range}. Its first element `{init_line}` should be within the range of lines of the file: {[1, n_lines_file]}"
-                )
-                sys.exit(12)
-            if final_line > n_lines_file:
-                print(
-                    f"Invalid `view_range`: {view_range}. Its second element `{final_line}` should be smaller than the number of lines in the file: `{n_lines_file}`"
-                )
-                sys.exit(13)
-            if final_line != -1 and final_line < init_line:
-                print(
-                    f"Invalid `view_range`: {view_range}. Its second element `{final_line}` should be larger or equal than its first `{init_line}`"
-                )
-                sys.exit(14)
-
-            if final_line == -1:
-                final_line = n_lines_file
-
-            # Expand the viewport to include the whole function or class
-            init_line, final_line = WindowExpander(suffix=path.suffix).expand_window(
-                file_lines, init_line, final_line, max_added_lines=MAX_WINDOW_EXPANSION_VIEW
-            )
-
-            file_content = "\n".join(file_lines[init_line - 1 : final_line])
+            file_content, init_line, _ = self._get_content_in_range(file_content, path.suffix, view_range)
         else:
             if path.suffix == ".py" and len(file_content) > MAX_RESPONSE_LEN and USE_FILEMAP:
                 try:
@@ -511,12 +514,17 @@ class EditTool:
         # init_line is 1-based
         print(self._make_output(file_content, str(path), init_line=init_line))
 
-    def str_replace(self, path: Path, old_str: str, new_str: Optional[str]):
+    def str_replace(self, path: Path, old_str: str, new_str: Optional[str], range: Optional[List[int]] = None):
         """Implement the str_replace command, which replaces old_str with new_str in the file content"""
         # Read the file content
-        file_content = self.read_file(path).expandtabs()
+        full_file_content = self.read_file(path).expandtabs()
         old_str = old_str.expandtabs()
         new_str = new_str.expandtabs() if new_str is not None else ""
+
+        if range:
+            file_content, init_lines, final_lines = self._get_content_in_range(full_file_content, path.suffix, range)
+        else:
+            file_content = full_file_content
 
         # Check if old_str is unique in the file
         occurrences = file_content.count(old_str)
@@ -527,7 +535,7 @@ class EditTool:
             file_content_lines = file_content.split("\n")
             lines = [idx + 1 for idx, line in enumerate(file_content_lines) if old_str in line]
             print(
-                f"No replacement was performed. Multiple occurrences of old_str `{old_str}` in lines {lines}. Please ensure it is unique"
+                f"No replacement was performed. Multiple occurrences of old_str `{old_str}` in lines {lines}. Please ensure it is unique or use `--range` option to restrict the replacement to a specific range."
             )
             sys.exit(16)
 
@@ -543,7 +551,23 @@ class EditTool:
                 print(f"Warning: Failed to run pre-edit linter on {path}: {e}")
 
         # Replace old_str with new_str
-        new_file_content = file_content.replace(old_str, new_str)
+        if not range:
+            # If no range is provided, we replace in the whole file
+            new_file_content = file_content.replace(old_str, new_str)
+        else:
+            # If range is provided, we only replace in the specified range
+            updated_content = file_content.replace(old_str, new_str)
+
+            full_file_lines = full_file_content.split("\n")
+            # We want to update the portion between init_lines inclusive and final_lines exclusive.
+            # init_lines and final_lines are 1-based, so we need to adjust them for slicing
+            # So, init_lines - 1 is the last line before the range starts and right index in python slicing is exclusive.
+            # final_lines is the first line after the range ends and left index is inclusive.
+            new_file_content = (                                        # --- Below range is 0-based and inclusive ---
+                "\n".join(full_file_lines[: init_lines - 1]) + "\n" +   #     0 to init_lines - 2
+                updated_content + "\n" +                                #     init_lines - 1 to final_lines
+                "\n".join(full_file_lines[final_lines:])                #     final_lines to end
+            )
 
         # Write the new content to the file
         self.write_file(path, new_file_content)
@@ -578,6 +602,13 @@ class EditTool:
         replacement_line = file_content.split(old_str)[0].count("\n")
         start_line = max(1, replacement_line - SNIPPET_LINES)
         end_line = min(replacement_line + SNIPPET_LINES + new_str.count("\n"), len(new_file_content.splitlines()))
+
+        # Offset the start and end lines if range is provided
+        if range:
+            # expand_window expects 1-based line numbers and range is 1-based
+            start_line += init_lines - 1 # start_line inclusive
+            end_line += init_lines
+
         start_line, end_line = WindowExpander(suffix=path.suffix).expand_window(
             new_file_content.split("\n"), start_line, end_line, max_added_lines=MAX_WINDOW_EXPANSION_EDIT_CONFIRM
         )
@@ -689,7 +720,7 @@ def main():
     parser.add_argument("command", type=str)
     parser.add_argument("path", type=str)
     parser.add_argument("--file_text", type=str)
-    parser.add_argument("--view_range", type=int, nargs=2)
+    parser.add_argument("--range", type=int, nargs=2)
     parser.add_argument("--old_str", type=str)
     parser.add_argument("--new_str", type=str)
     parser.add_argument("--insert_line", type=int)
@@ -699,7 +730,7 @@ def main():
         command=args.command,
         path=args.path,
         file_text=args.file_text,
-        view_range=args.view_range,
+        range=args.range,
         old_str=args.old_str,
         new_str=args.new_str,
         insert_line=args.insert_line,
