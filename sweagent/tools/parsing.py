@@ -420,13 +420,16 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             msg = f"Unexpected argument(s): {', '.join(extra_args)}"
             raise FunctionCallingFormatError(msg, "unexpected_arg")
 
-        def get_quoted_arg(value: Any) -> str:
+        def get_quoted_arg(value: Any) -> Any:
             if isinstance(value, str):
                 return quote(value) if _should_quote(value, command) else value
             # See https://github.com/SWE-agent/SWE-agent/issues/1159
             if value is None:
                 return ""
-            return value
+            # For lists and other non-string types, return as-is so Jinja2 filters work correctly
+            if isinstance(value, list):
+                return value
+            return str(value)
 
         formatted_args = {
             arg.name: Template(arg.argument_format).render(value=get_quoted_arg(values[arg.name]))
