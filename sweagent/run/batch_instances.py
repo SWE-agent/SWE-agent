@@ -175,7 +175,7 @@ class SimpleBatchInstance(BaseModel):
         if image_name is None:
             # Docker doesn't allow double underscore, so we replace them with a magic token
             id_docker_compatible = iid.replace("__", "_1776_")
-            image_name = f"swebench/sweb.eval.x86_64.{id_docker_compatible}:latest".lower()
+            image_name = f"docker.io/swebench/sweb.eval.x86_64.{id_docker_compatible}:latest".lower()
         extra_fields = {}
         if "image_assets" in instance:
             issue_images = json.loads(instance["image_assets"])["problem_statement"]
