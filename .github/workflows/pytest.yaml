@@ -64,7 +64,7 @@ jobs:
         run: coverage xml
       - name: Upload coverage reports to Codecov
         if: matrix.python-version == '3.11'
-        uses: codecov/codecov-action@v5.4.3
+        uses: codecov/codecov-action@v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: SWE-agent/SWE-agent
