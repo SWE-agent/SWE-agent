@@ -164,7 +164,7 @@ def test_run_submit_matrix(
         *repo_args,
         "--config",
         str(CONFIG_DIR / "bash_only.yaml"),
-        "--agent.tools.parse_function.type=thought_action"
+        "--agent.tools.parse_function.type=thought_action",
     ]
     print(args)
     rs_config = BasicCLI(RunSingleConfig).get_config(args)
