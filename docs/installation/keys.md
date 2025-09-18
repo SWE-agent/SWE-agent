@@ -10,7 +10,7 @@
 
 In order to access the LM of your choice (and to access private GitHub repositories), you need to supply the corresponding keys.
 
-There are two options to do this:
+There are three options to do this:
 
 1. Set the corresponding [environment variables](https://www.cherryservers.com/blog/how-to-set-list-and-manage-linux-environment-variables).
 2. Create a `.env` file at the root of this repository. All of the variables defined there will take the place of environment variables.
