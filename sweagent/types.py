@@ -83,7 +83,7 @@ class AgentInfo(TypedDict, total=False):
     # same as `APIStats` from models.py
     model_stats: dict[str, float]
     exit_status: str | None
-    submission: str | None
+    submission: str | dict[str, Any] | None
     # same as `ReviewerResult`
     review: dict[str, Any]
     edited_files30: str

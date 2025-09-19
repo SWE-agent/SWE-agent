@@ -375,6 +375,12 @@ class ToolHandler:
             return True
         return False
 
+    def check_for_file_submission_cmd(self, output: str) -> bool:
+        """Function for checking file submission request."""
+        if r"<<SWE_AGENT_FILE_SUBMISSION>>" in output:
+            return True
+        return False
+
     def parse_actions(self, output: dict) -> tuple[str, str]:
         """Parse the model output into a thought and action."""
         return self.config.parse_function(output, self.config.commands)
