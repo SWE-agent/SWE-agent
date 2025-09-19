@@ -1,7 +1,7 @@
 tools:
   str_replace_editor:
     signature: |
-      str_replace_editor <command> <path> [<file_text>] [<view_range>] [<old_str>] [<new_str>] [<insert_line>]
+      str_replace_editor <command> <path> [<file_text>] [<range>] [<old_str>] [<new_str>] [<insert_line>]
     # This docstrings was taken from openhands:
     # https://github.com/All-Hands-AI/OpenHands/blob/main/openhands/agenthub/codeact_agent/function_calling.py
     docstring: >
@@ -13,8 +13,9 @@ tools:
       * The `undo_edit` command will revert the last edit made to the file at `path`
 
       Notes for using the `str_replace` command:
-      * The `old_str` parameter should match EXACTLY one or more consecutive lines from the original file. Be mindful of whitespaces!
-      * If the `old_str` parameter is not unique in the file, the replacement will not be performed. Make sure to include enough context in `old_str` to make it unique
+      * The `old_str` parameter should match EXACTLY one or more consecutive lines from the original file or in the lines specified by `range`. Be mindful of whitespaces!
+      * The `range` parameter should be used to limit the search for the `old_str` to a specific range of lines in the file. If not provided, the entire file will be searched.
+      * If the `old_str` parameter is not unique, the replacement will not be performed. Make sure to include enough context in `old_str` to make it unique or use the `range` parameter to limit the search to a specific range of lines.
       * The `new_str` parameter should contain the edited lines that should replace the `old_str`
     arguments:
       - name: command
@@ -46,11 +47,11 @@ tools:
         description: "Required parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`."
         required: false
         argument_format: "--insert_line {{value}}"
-      - name: view_range
+      - name: range
         type: array
         items:
           type: integer
-        description: "Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file."
+        description: "Optional parameter of `view` and `str_replace` commands when `path` points to a file. If none is given, the full file is used for consideration. If provided, the file will be shown or searched in the indicated line number range, e.g. [11, 12] will show lines 11 and 12 for `view` command whereas it will search for `old_str` among lines 11 and 12 for `str_replace` command. Indexing at 1 to start. Setting `[start_line, -1]` is wildcard to consider `start_line` to the end of the file."
         required: false
-        argument_format: "--view_range {{value|join(' ')}}"
+        argument_format: "--range {{value|join(' ')}}"
 state_command: "_state_anthropic"
