@@ -1,0 +1,11 @@
+agent:
+  model:
+    name: openai/gpt-5
+    per_instance_call_limit: 50
+    max_input_tokens: 1047576
+    temperature: 1
+    completion_kwargs:
+      parallel_tool_calls: false
+  tools:
+    env_variables:
+      MODEL_NAME: gpt-5
