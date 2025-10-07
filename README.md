@@ -1,3 +1,21 @@
+# SWE-agent Fork for Exploit Reproduction
+
+This is a specialized fork of SWE-agent designed for autonomous XSS exploit reproduction and vulnerability analysis. 
+
+**Key Features:**
+- Automated reproduction of security exploits using LLM-powered agents
+- Customized tooling for vulnerability testing and validation
+- Pre-configured environments for exploit scenarios
+
+**Quick Start:**
+- Launch examples and configuration files can be found in `test_instances/`
+- Results and reproduction outputs are available in `test_instances/results_latest.csv`
+- Custom tool configurations are located in the `tools/` directory
+
+For the original SWE-agent capabilities (GitHub issue fixing, SWE-bench, etc.), please refer to the documentation below.
+
+---
+
 <p align="center">
   <a href="https://swe-agent.com/latest/">
     <img src="assets/swe-agent-banner.png" alt="swe-agent.com" style="height: 12em" />

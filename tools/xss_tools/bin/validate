@@ -30,7 +30,6 @@ class XSSRequestModel(BaseModel):
     @field_validator('method')
     @classmethod
     def validate_method(cls, v: str) -> str:
-        # TODO: Replace with actual endpoint from task configuration
         method = v.upper()
         allowed_methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
         if method not in allowed_methods:
@@ -44,7 +43,6 @@ class XSSRequestModel(BaseModel):
         if not v.startswith(expected_prefix):
             raise ValueError(f"URL must start with {expected_prefix}, got: {v}")
         return v
-    # TODO: add custom payload
 
 
 def load_config() -> List[XSSRequestModel]:
@@ -101,7 +99,7 @@ def find_payload_context(payload_signature: str, response_text: str, context_cha
     return f"...{context}..." if context_start > 0 or context_end < len(response_text) else context
 
 
-def print_results(payload: str, response_text: str) -> None:
+def print_results(payload: str, response_text: str) -> NoneType:
     payload_signature = 'DY14)JkI15kI'
     
     if payload in response_text:

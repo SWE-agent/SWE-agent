@@ -30,7 +30,6 @@ class XSSRequestModel(BaseModel):
     @field_validator('method')
     @classmethod
     def validate_method(cls, v: str) -> str:
-        # TODO: Replace with actual endpoint from task configuration
         method = v.upper()
         allowed_methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
         if method not in allowed_methods:
@@ -44,7 +43,6 @@ class XSSRequestModel(BaseModel):
         if not v.startswith(expected_prefix):
             raise ValueError(f"URL must start with {expected_prefix}, got: {v}")
         return v
-    # TODO: add custom payload
 
 
 def extract_test_number() -> str:
@@ -95,7 +93,7 @@ def execute_request(config: XSSRequestModel) -> str:
     return requests.request(**request_params).text
 
 
-def validate_xss_claim(configs: List[XSSRequestModel]) -> None:
+def validate_xss_claim(configs: List[XSSRequestModel]) -> NoneType:
     if not any(config.reproduced for config in configs):
         return
     
@@ -109,7 +107,7 @@ def validate_xss_claim(configs: List[XSSRequestModel]) -> None:
         raise ValueError("XSS validation failed")
 
 
-def send_results_to_server(repo_root: str) -> None:
+def send_results_to_server(repo_root: str) -> NoneType:
     try:
         config_path = Path(repo_root) / "answer" / "request_config.json"
         explanation_path = Path(repo_root) / "answer" / "explanation.md"
