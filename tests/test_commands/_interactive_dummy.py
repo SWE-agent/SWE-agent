@@ -20,8 +20,8 @@ class InteractiveDummyCommand:
     def __call__(self):
         self.start()
         while True:
-            inpt = input(self.PROMPT)
-            cmd, _, args = inpt.partition(" ")
+            input = input(self.PROMPT)
+            cmd, _, args = input.partition(" ")
             if cmd == "stop":
                 self.stop()
                 break
