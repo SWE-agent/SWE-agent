@@ -564,9 +564,9 @@ class BashCodeBlockParser(AbstractParseFunction, BaseModel):
         if not matches:
             msg = "No bash code blocks were detected in your output."
             raise FormatError(msg)
-        thouht = pattern.sub("<extracted_code_block>", model_response["message"])
+        thought = pattern.sub("<extracted_code_block>", model_response["message"])
         action = "\n".join(matches)
-        return thouht, action
+        return thought, action
 
 
 class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
@@ -599,9 +599,9 @@ class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
                 "You need to include EXACTLY ONE bash code block in your output."
             )
             raise FormatError(msg)
-        thouht = pattern.sub("<extracted_code_block>", model_response["message"])
+        thought = pattern.sub("<extracted_code_block>", model_response["message"])
         action = "\n".join(matches)
-        return thouht, action
+        return thought, action
 
 
 ParseFunction = (
