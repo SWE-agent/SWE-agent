@@ -21,7 +21,7 @@ agent:
 
       Note that:
       - The dependency environment has already been set up for you; the solution you submit must be compatible with the exact pre-existing dependency versions.
-      - You are NOT responsible for invoking git commands to commit your changes, NEITHER can you inspect additional git history not created by you. 
+      - You are NOT responsible for invoking git commands to commit your changes, NEITHER can you inspect additional git history not created by you.
 
       Follow these steps to resolve the issue:
       1. As a first step, it might be a good idea to find and read code relevant to the <pr_description>
