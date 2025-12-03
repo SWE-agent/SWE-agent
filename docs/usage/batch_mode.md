@@ -45,12 +45,43 @@ Kind of slow, isn't it?
 
 
 !!! tip "All command line options"
-    * See [`RunBatchConfig`](../reference/run_batch_config.md/#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
-    * SWE-bench config: [`SWEBenchInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.SWEBenchInstances).
+    * See [`RunBatchConfig`](../reference/run_batch_config.md#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
+    * SWE-bench config: [`SWEBenchInstances`](../reference/batch_instances.md#sweagent.run.batch_instances.SWEBenchInstances).
 
 !!! tip "Evaluating on SWE-bench"
     If you are using [`sb-cli`](https://www.swebench.com/sb-cli/), you can automatically evaluate on SWE-bench by adding the `--evaluate=True` flag.
     This will already submit submissions to `sb-cli` while you are running, so that you should receive results within a minute of finishing your run.
+
+## Multimodal SWE-bench
+
+SWE-agent supports the **SWE-bench Multimodal** dataset, which includes GitHub issues with associated images (screenshots, diagrams, UI mockups). To run on multimodal instances:
+
+```bash
+sweagent run-batch \
+    --config config/default_mm_with_images.yaml \
+    --agent.model.name claude-sonnet-4-20250514 \
+    --agent.model.per_instance_cost_limit 2.00 \
+    --instances.type swe_bench \
+    --instances.subset multimodal \
+    --instances.split dev  \
+    --instances.slice :3 \
+    --instances.shuffle=True
+```
+
+Key differences for multimodal runs:
+
+- **Configuration**: Use `config/default_mm_with_images.yaml` which includes image processing capabilities
+- **Subset**: Use `--instances.subset multimodal` to access the multimodal dataset
+- **Token limits**: Consider higher cost limits as images consume more tokens
+- **Multimodal Tools**: `tools/image_tools` and `tools/web_browser` include useful tools for viewing images and web browsers
+
+The system automatically:
+- Downloads images from GitHub issue URLs
+- Converts them to base64 markdown format
+- Provides visual context to the AI model
+
+!!! tip "Multimodal Configuration"
+    See the [multimodal guide](multimodal.md) for detailed configuration options and troubleshooting.
 
 ## Running in parallel
 
@@ -77,7 +108,7 @@ You'll see output that looks like this (only with 3 workers instead of 30):
 </figure>
 
 !!! tip "All command line options"
-    See [`RunBatchConfig`](../reference/run_batch_config.md/#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
+    See [`RunBatchConfig`](../reference/run_batch_config.md#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
 
 When starting a lot of parallel instances with the docker backend, it might happen that you see some bottleneck effects
 (e.g., when running on a platform with few CPUs, you might see some timeouts because there's not enough CPUs to handle the startup of all containers in time).
@@ -117,8 +148,8 @@ Here'the simplest example of what such a file can look like
     However, we temporarily support both names.
 
 !!! tip "More options"
-    * There's a few more fields that you can populate. See [`SimpleBatchInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.SimpleBatchInstance) for more information.
-    * For all command line options with this instance type, see [`InstancesFromFile`](../reference/batch_instances.md/#sweagent.run.batch_instances.InstancesFromFile).
+    * There's a few more fields that you can populate. See [`SimpleBatchInstances`](../reference/batch_instances.md#sweagent.run.batch_instances.SimpleBatchInstance) for more information.
+    * For all command line options with this instance type, see [`InstancesFromFile`](../reference/batch_instances.md#sweagent.run.batch_instances.InstancesFromFile).
 
 ## Huggingface instances
 
@@ -135,7 +166,7 @@ sweagent run-batch \
 ```
 
 !!! tip "All instance options"
-    See [`InstancesFromHuggingFace`](../reference/batch_instances.md/#sweagent.run.batch_instances.InstancesFromHuggingFace).
+    See [`InstancesFromHuggingFace`](../reference/batch_instances.md#sweagent.run.batch_instances.InstancesFromHuggingFace).
 
 ## Expert instances
 
@@ -173,7 +204,7 @@ where `instances.yaml` could look like this:
 ```
 
 !!! tip "All instance options"
-    See [`ExpertInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.ExpertInstancesFromFile).
+    See [`ExpertInstances`](../reference/batch_instances.md#sweagent.run.batch_instances.ExpertInstancesFromFile).
 
 ## Output files and next steps
 
@@ -191,7 +222,7 @@ import json
 preds = json.loads(Path("preds.json").read_text())
 data = [{"instance_id": key, **value} for key, value in preds.items()]
 jsonl = [json.dumps(d) for d in data]
-Path("all_preds.jsonl").write_text("\n".join(jsonl))
+Path("all_preds.jsonl").write_text("\\n".join(jsonl))
 ```
 
 !!! tip "Next up"

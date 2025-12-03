@@ -1,0 +1,83 @@
+# Configuration for SWE-agent with image viewing capabilities
+# This extends the default config with image parsing history processor
+# and the image_tools bundle for viewing images as base64-encoded markdown.
+agent:
+  templates:
+    disable_image_processing: false
+    system_template: |-
+      You are a helpful assistant that can interact with a computer to solve tasks.
+    instance_template: |-
+      <uploaded_files>
+      {{working_dir}}
+      </uploaded_files>
+      I've uploaded a python code repository in the directory {{working_dir}}. Consider the following PR description:
+
+      <pr_description>
+      {{problem_statement}}
+      </pr_description>
+
+      Can you help me implement the necessary changes to the repository so that the requirements specified in the <pr_description> are met?
+      I've already taken care of all changes to any of the test files described in the <pr_description>. This means you DON'T have to modify the testing logic or any of the tests in any way!
+      Your task is to make the minimal changes to non-tests files in the {{working_dir}} directory to ensure the <pr_description> is satisfied.
+      Follow these steps to resolve the issue:
+      1. As a first step, it might be a good idea to find and read code relevant to the <pr_description>
+      2. Create a script to reproduce the error and execute it with `python <filename.py>` using the bash tool, to confirm the error
+      3. Edit the sourcecode of the repo to resolve the issue
+      4. Rerun your reproduce script and confirm that the error is fixed!
+      5. Think about edgecases and make sure your fix handles them as well
+      Your thinking should be thorough and so it's fine if it's very long.
+
+      Note: You can use the view_image command to display images as embedded base64 data when relevant.
+      You'll also be given access browser tools to interact with the web or a local server.
+      In the browser, your mouse is shown as a red crosshair.
+
+      If you need to start a command that has long-running output (e.g. a web server), you should _always_ use the following pattern:
+      server_command &> my_server_log.txt &
+
+      This way you can see the server's output in the my_server_log.txt file and it will not block the rest of your work.
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+    next_step_no_output_template: |-
+      Your command ran successfully and did not produce any output.
+    max_observation_length: 10_000_000  # need longer for images
+  tools:
+    execution_timeout: 300  # need longer for builds
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/image_tools  # lets models view image files
+      - path: tools/web_browser  # browser tool for interacting with web servers
+      - path: tools/review_on_submit_m
+    registry_variables:
+      USE_FILEMAP: 'true'
+      SUBMIT_REVIEW_MESSAGES:
+        - |
+          Thank you for your work on this issue. Please carefully follow the steps below to help review your changes.
+
+          1. If you made any changes to your code after running the reproduction script, please run the reproduction script again.
+            If the reproduction script is failing, please revisit your changes and make sure they are correct.
+            If you have already removed your reproduction script, please ignore this step.
+          2. Remove your reproduction script (if you haven't done so already).
+          3. If you have modified any TEST files, please revert them to the state they had before you started fixing the issue.
+            You can do this with `git checkout -- /path/to/test/file.py`. Use below <diff> to find the files you need to revert.
+          4. Run the submit command again to confirm.
+
+          Here is a list of all of your changes:
+
+          <diff>
+          {{diff}}
+          </diff>
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling
+  history_processors:
+    - type: image_parsing  # parses base64 encoded images in the observation
+    # - type: cache_control  # enable for claude
+    #   last_n_messages: 2  # enable for claude
+instances:
+  type: swe_bench
+  subset: multimodal
+  split: dev
+  shuffle: true
+  # filter: processing__p5.js-6069

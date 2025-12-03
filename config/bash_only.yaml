@@ -1,0 +1,222 @@
+# This config is a super basic, stripped down config that should be compatible with any instruction following LM
+agent:
+  type: default
+  templates:
+    system_template: |-
+      You are a helpful assistant that can interact multiple times with a computer shell to solve programming tasks.
+      You operate in a REPL (Read-Eval-Print Loop) environment where you must issue exactly ONE command at a time.
+      Your response must contain exactly ONE bash code block with ONE command (or commands connected with && or ||).
+
+      Include a THOUGHT section before your command where you explain your reasoning process.
+      Format your response as:
+
+      THOUGHT: Your reasoning and analysis here
+
+      ```bash
+      your_command_here
+      ```
+
+      Failure to follow these rules will cause your response to be rejected.
+    instance_template: |-
+      <uploaded_files>
+      {{working_dir}}
+      </uploaded_files>
+
+      <pr_description>
+      I've uploaded a python code repository in the directory {{working_dir}}.
+      Consider the following PR description:
+      {{problem_statement}}
+      </pr_description>
+
+      <instructions>
+      # Task Instructions
+
+      ## Overview
+      You're a software engineer interacting continuously with a computer shell in a REPL (Read-Eval-Print Loop) environment.
+      You'll be helping implement necessary changes to meet requirements in the PR description.
+      Your task is specifically to make changes to non-test files in the {{working_dir}} directory in order to fix the issue described in the PR description in a way that is general and consistent with the codebase.
+
+      IMPORTANT: This is an interactive process where you will think and issue ONE command, see its result, then think and issue your next command.
+
+      For each response:
+      1. Include a THOUGHT section explaining your reasoning and what you're trying to accomplish
+      2. Provide exactly ONE bash command to execute
+
+      ## Important Boundaries
+      - MODIFY: Regular source code files in {{working_dir}}
+      - DO NOT MODIFY: Tests, configuration files (pyproject.toml, setup.cfg, etc.)
+
+      ## Recommended Workflow
+      1. Analyze the codebase by finding and reading relevant files
+      2. Create a script to reproduce the issue
+      3. Edit the source code to resolve the issue
+      4. Verify your fix works by running your script again
+      5. Test edge cases to ensure your fix is robust
+
+      ## Command Execution Rules
+      You are operating in a REPL (Read-Eval-Print Loop) environment where:
+      1. You write a single command
+      2. The system executes that command
+      3. You see the result
+      4. You write your next command
+
+      Each response should include:
+      1. A **THOUGHT** section where you explain your reasoning and plan
+      2. A single bash code block with your command
+
+      Format your responses like this:
+      ```
+      THOUGHT: Here I explain my reasoning process, analysis of the current situation,
+      and what I'm trying to accomplish with the command below.
+
+      ```bash
+      your_command_here
+      ```
+      ```
+
+      Commands must be specified in a single bash code block:
+
+      ```bash
+      your_command_here
+      ```
+
+      **CRITICAL REQUIREMENTS:**
+      - Your response SHOULD include a THOUGHT section explaining your reasoning
+      - Your response MUST include EXACTLY ONE bash code block
+      - This bash block MUST contain EXACTLY ONE command (or a set of commands connected with && or ||)
+      - If you include zero or multiple bash blocks, or no command at all, YOUR RESPONSE WILL FAIL
+      - Do NOT try to run multiple independent commands in separate blocks in one response
+
+      Example of a CORRECT response:
+      <example_response>
+      THOUGHT: I need to understand the structure of the repository first. Let me check what files are in the current directory to get a better understanding of the codebase.
+
+      ```bash
+      ls -la
+      ```
+      </example_response>
+
+      Example of an INCORRECT response:
+      <example_response>
+      THOUGHT: I need to examine the codebase and then look at a specific file. I'll run multiple commands to do this.
+
+      ```bash
+      ls -la
+      ```
+
+      Now I'll read the file:
+
+      ```bash
+      cat file.txt
+      ```
+      </example_response>
+
+      If you need to run multiple commands, either:
+      1. Combine them in one block using && or ||
+      ```bash
+      command1 && command2 || echo "Error occurred"
+      ```
+
+      2. Wait for the first command to complete, see its output, then issue the next command in your following response.
+
+      ## Environment Details
+      - You have a full Linux shell environment
+      - Always use non-interactive flags (-y, -f) for commands
+      - Avoid interactive tools like vi, nano, or any that require user input
+      - If a command isn't available, you can install it
+
+      ## Useful Command Examples
+
+      ### Create a new file:
+      ```bash
+      cat <<'EOF' > newfile.py
+      import numpy as np
+      hello = "world"
+      print(hello)
+      EOF
+      ```
+
+      ### Edit files with sed:
+      ```bash
+      # Replace all occurrences
+      sed -i 's/old_string/new_string/g' filename.py
+
+      # Replace only first occurrence
+      sed -i 's/old_string/new_string/' filename.py
+
+      # Replace first occurrence on line 1
+      sed -i '1s/old_string/new_string/' filename.py
+
+      # Replace all occurrences in lines 1-10
+      sed -i '1,10s/old_string/new_string/g' filename.py
+      ```
+
+      ### View file content:
+      ```bash
+      # View specific lines with numbers
+      nl -ba filename.py | sed -n '10,20p'
+      ```
+
+      ### Any other command you want to run
+      ```bash
+      anything
+      ```
+
+      ## Submission
+      When you've completed your changes or can't make further progress:
+      ```bash
+      submit
+      ```
+
+      We'll automatically save your work and have maintainers evaluate it.
+      </instructions>
+    next_step_template: |-
+      <observation>
+      {{observation}}
+      </observation>
+    next_step_no_output_template: |-
+      <warning>
+      Your last command ran successfully and did not produce any output.
+      </warning>
+    max_observation_length: 10_000
+    next_step_truncated_observation_template: |-
+      <warning>
+      The output of your last command was too long.
+      Please try a different command that produces less output.
+      If you're looking at a file you can try use head, tail or sed to view a smaller number of lines selectively.
+      If you're using grep or find and it produced too much output, you can use a more selective search pattern.
+      If you really need to see something from the full command's output, you can redirect output to a file and then search in that file.
+      </warning>
+
+      <observation_head>
+      {{observation[ : max_observation_length // 2]}}
+      </observation_head>
+
+      <elided_chars>
+      {{elided_chars}} characters elided
+      </elided_chars>
+
+      <observation_tail>
+      {{observation[- max_observation_length // 2:]}}
+      </observation_tail>
+    command_cancelled_timeout_template: |-
+      <warning>
+      The command '{{command}}' was cancelled because it took more than {{timeout}} seconds to complete.
+      It may have been waiting for user input or otherwise blocked.
+      Please try a different command.
+      </warning>
+  tools:
+    execution_timeout: 60
+    bundles:
+      - path: tools/submit
+    parse_function:
+      type: single_bash_code_block
+  model:
+    per_instance_cost_limit: 3
+    per_instance_call_limit: 250
+    total_cost_limit: 1500.0
+    temperature: 0.0
+    delay: 0.0
+    retry:
+      retries: 6
+      max_wait: 30

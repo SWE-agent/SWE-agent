@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block announce %}
-🏆 <a href="https://swesmith.com">SWE-agent-LM-32b</a> achieves open-weights SOTA on SWE-bench!
+📣 Check out <a href="https://mini-swe-agent.com">Mini-SWE-Agent</a>, an AI agent implemented in 100 lines that achieves 65% on SWE-bench verified!
 {% endblock %}
 
 {% block content %}
@@ -9,6 +9,10 @@
 <!-- Floating Bubbles -->
 <div class="floating-bubbles">
 <div class="floating-bubbles-title">Our projects</div>
+  <a href="https://mini-swe-agent.com/" class="bubble" title="Mini-SWE-Agent">
+    <img src="{{ 'assets/mini_logo.svg' | url }}" alt="Mini-SWE-Agent">
+    <span class="bubble-tooltip">Mini-SWE-Agent</span>
+  </a>
   <a href="https://swe-rex.com/" class="bubble" title="SWE-rex">
     <img src="{{ 'assets/swerex_logo.svg' | url }}" alt="SWE-rex">
     <span class="bubble-tooltip">SWE-ReX</span>

@@ -1,17 +1,17 @@
 <p align="center">
   <a href="https://swe-agent.com/latest/">
-    <img src="assets/swe-agent-banner.png" alt="swe-agent.com" style="height: 12em" />
+    <img src="assets/swe-agent-banner.png" alt="swe-agent.com" style="height: 7em" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://swe-agent.com/latest/"><strong>Documentation</strong></a>&nbsp; | &nbsp;
-  <a href="https://discord.gg/AVEFbBn2rH"><strong>Discord</strong></a>&nbsp; | &nbsp;
-  <a href="https://arxiv.org/abs/2405.15793"><strong>Paper</strong></a>
+<a href="https://swe-agent.com/latest/"><img src="https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white" alt="Docs"></a>
+<a href="https://join.slack.com/t/swe-bench/shared_invite/zt-36pj9bu5s-o3_yXPZbaH2wVnxnss1EkQ"><img src="https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white" alt="Slack"></a>
+<a href="https://arxiv.org/abs/2405.15793"><img src="https://img.shields.io/badge/arxiv-2405.15793-red?style=for-the-badge&logo=arxiv&logoColor=white&labelColor=black" alt="arxiv 2405.15793"></a>
 </p>
 
 
-SWE-agent enables your language model of choice (e.g. GPT-4o or Claude Sonnet 3.7) to autonomously use tools to
+SWE-agent enables your language model of choice (e.g. GPT-4o or Claude Sonnet 4) to autonomously use tools to
 [fix issues in real GitHub repositories](https://swe-agent.com/latest/usage/hello_world),
 [find cybersecurity vulnerabilities](https://enigma-agent.com/), or
 [perform any custom task](https://swe-agent.com/latest/usage/coding_challenges).
@@ -25,7 +25,8 @@ SWE-agent is built and maintained by researchers from Princeton University and S
 
 ## 📣 News
 
-* May 2: [SWE-agent-LM-32b](https://swesmith.com) achieves open-weights SOTA on SWE-bench
+* July 24: [Mini-SWE-Agent](https://github.com/SWE-agent/mini-SWE-agent) achieves 65% on SWE-bench verified in 100 lines of python!
+* May 2: [SWE-agent-LM-32b](https://github.com/SWE-bench/SWE-smith) achieves open-weights SOTA on SWE-bench
 * Feb 28: [SWE-agent 1.0 + Claude 3.7 is SoTA on SWE-Bench full](https://x.com/KLieret/status/1895487966409298067)
 * Feb 25: [SWE-agent 1.0 + Claude 3.7 is SoTA on SWE-bench verified](https://x.com/KLieret/status/1894408819670733158)
 * Feb 13: [Releasing SWE-agent 1.0: SoTA on SWE-bench light & tons of new features](https://x.com/KLieret/status/1890048205448220849)
@@ -56,10 +57,12 @@ Please use [SWE-agent 0.7](https://github.com/SWE-agent/SWE-agent/tree/v0.7) whi
 [SWE-bench]: https://github.com/SWE-bench/SWE-bench
 [nyu-ctf]: https://arxiv.org/abs/2406.05590
 
-In addition, you might be interested in the following projects:
+In addition, you might be interested in our other projects:
 
 
 <div align="center">
+  <a href="https://github.com/SWE-agent/mini-SWE-agent"><img src="docs/assets/mini_logo_text_below.svg" alt="Mini-SWE-Agent" height="120px"></a>
+   &nbsp;&nbsp;
   <a href="https://github.com/SWE-agent/SWE-ReX"><img src="docs/assets/swerex_logo_text_below.svg" alt="SWE-ReX" height="120px"></a>
    &nbsp;&nbsp;
   <a href="https://github.com/SWE-bench/SWE-bench"><img src="docs/assets/swebench_logo_text_below.svg" alt="SWE-bench" height="120px"></a>
@@ -124,6 +127,6 @@ MIT. Check `LICENSE`.
 [![build-docs](https://github.com/SWE-agent/SWE-agent/actions/workflows/build-docs.yaml/badge.svg)](https://github.com/SWE-agent/SWE-agent/actions/workflows/build-docs.yaml)
 [![codecov](https://codecov.io/gh/SWE-agent/SWE-agent/graph/badge.svg?token=18XAVDK365)](https://codecov.io/gh/SWE-agent/SWE-agent)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/SWE-agent/SWE-agent/main.svg)](https://results.pre-commit.ci/latest/github/SWE-agent/SWE-agent/main)
-[![Markdown links](https://github.com/SWE-agent/SWE-agent/actions/workflows/check-links.yaml/badge.svg)](https://github.com/SWE-agent/SWE-agent/actions/workflows/check-links.yaml)
+[![Markdown links](https://github.com/SWE-agent/SWE-agent/actions/workflows/check-links-periodic.yaml/badge.svg)](https://github.com/SWE-agent/SWE-agent/actions/workflows/check-links-periodic.yaml)
 
 </div>

@@ -58,6 +58,40 @@ function createTrajectoryItem(item, index) {
       .replace(/'/g, "&#039;");
   };
 
+  const processImagesInObservation = (observation) => {
+    if (!observation) {
+      return { processedText: "", images: [] };
+    }
+
+    // regex to match markdown-style base64 images: ![alt text](data:image/<format>;base64,<base64-data>)
+    const imageRegex = /!\[([^\]]*)\]\(data:image\/([^;]+);base64,([^)]+)\)/g;
+    const images = [];
+    let processedText = observation;
+    let match;
+
+    while ((match = imageRegex.exec(observation)) !== null) {
+      const [fullMatch, altText, format, base64Data] = match;
+
+      // create image object
+      const imageObj = {
+        altText: altText || "Image",
+        format: format,
+        dataUrl: `data:image/${format};base64,${base64Data}`,
+        id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      };
+
+      images.push(imageObj);
+
+      // replace the full base64 string with a placeholder
+      processedText = processedText.replace(
+        fullMatch,
+        `[IMAGE: ${imageObj.altText}]`,
+      );
+    }
+
+    return { processedText, images };
+  };
+
   const getMessageContent = (msg) => {
     if (!msg.content) {
       return "";
@@ -116,6 +150,30 @@ function createTrajectoryItem(item, index) {
         .join("\n")
     : "";
 
+  // Process images in observation
+  const { processedText: processedObservation, images: observationImages } =
+    processImagesInObservation(item.observation);
+
+  // Create separate image pane HTML if there are images
+  const observationImagesPane =
+    observationImages.length > 0
+      ? `<div class="observation-images-section" data-title="Observation Images">
+        <div class="content-wrapper">
+          <div class="observation-images">
+            ${observationImages
+              .map(
+                (img) =>
+                  `<div class="observation-image-container">
+                <img src="${img.dataUrl}" alt="${escapeHtml(img.altText)}" class="observation-image" id="${img.id}">
+                <div class="image-caption">${escapeHtml(img.altText)}</div>
+              </div>`,
+              )
+              .join("")}
+          </div>
+        </div>
+      </div>`
+      : "";
+
   return `
         <div class="trajectory-item fade-in" id="${elementId}">
             <div class="trajectory-main">
@@ -130,9 +188,10 @@ ${escapeHtml(item.action)}</code></pre>
                 </div>
                 <div class="observation-section" data-title="Environment Observation">
                     <div class="content-wrapper">
-                        <pre><code class="language-python">${escapeHtml(item.observation)}</code></pre>
+                        <pre><code class="language-python">${escapeHtml(processedObservation)}</code></pre>
                     </div>
                 </div>
+                ${observationImagesPane}
                 ${
                   item.execution_time
                     ? `<div class="execution-time">Execution time: ${item.execution_time}s</div>`
@@ -183,6 +242,9 @@ function viewFile(fileName) {
             hljs.highlightElement(block);
           });
         });
+
+        // Initialize image click handlers after all items are added
+        initializeImageHandlers();
       } else {
         container.textContent = "No trajectory content found.";
       }
@@ -198,6 +260,64 @@ function viewFile(fileName) {
     li.classList.remove("selected");
     if (li.textContent.split(" ")[0] === fileName) {
       li.classList.add("selected");
+    }
+  });
+}
+
+function initializeImageHandlers() {
+  // Remove existing overlay if present
+  const existingOverlay = document.querySelector(".image-overlay");
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
+  // Create overlay element
+  const overlay = document.createElement("div");
+  overlay.className = "image-overlay";
+  document.body.appendChild(overlay);
+
+  // Add click handlers to all observation images
+  document.querySelectorAll(".observation-image").forEach((img) => {
+    img.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Toggle expanded state
+      if (this.classList.contains("expanded")) {
+        this.classList.remove("expanded");
+        overlay.classList.remove("active");
+      } else {
+        // Remove expanded class from all other images
+        document
+          .querySelectorAll(".observation-image.expanded")
+          .forEach((otherImg) => {
+            otherImg.classList.remove("expanded");
+          });
+
+        // Add expanded class to clicked image
+        this.classList.add("expanded");
+        overlay.classList.add("active");
+      }
+    });
+  });
+
+  // Close expanded image when clicking overlay
+  overlay.addEventListener("click", function () {
+    document.querySelectorAll(".observation-image.expanded").forEach((img) => {
+      img.classList.remove("expanded");
+    });
+    overlay.classList.remove("active");
+  });
+
+  // Close expanded image when pressing Escape key
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      document
+        .querySelectorAll(".observation-image.expanded")
+        .forEach((img) => {
+          img.classList.remove("expanded");
+        });
+      overlay.classList.remove("active");
     }
   });
 }

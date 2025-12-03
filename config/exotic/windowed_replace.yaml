@@ -105,6 +105,12 @@ agent:
     env_variables:
       WINDOW: 100
       OVERLAP: 2
+      PAGER: cat
+      MANPAGER: cat
+      LESS: -R
+      PIP_PROGRESS_BAR: 'off'
+      TQDM_DISABLE: '1'
+      GIT_PAGER: cat
     bundles:
       - path: tools/registry
       - path: tools/windowed

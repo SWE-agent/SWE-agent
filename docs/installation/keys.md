@@ -36,11 +36,15 @@ See the following links for tutorials on obtaining [Anthropic](https://docs.anth
 
 We support all models supported by [litellm](https://github.com/BerriAI/litellm), see their list [here](https://docs.litellm.ai/docs/providers).
 
+!!! tip "Custom model registries"
+
+    If you're using a model that's not in the default litellm model registry (e.g., custom local models or new models), you can provide a custom model registry file using the `litellm_model_registry` configuration option. This allows proper cost tracking for any model. See the [custom model registry section](#custom-model-registry-for-cost-tracking) below for details.
+
 Here are a few options for `--agent.model.name`:
 
 | Model | API key | Comment |
 | ----- | ------- | ------- |
-| `claude-3-7-sonnet-latest` | `ANTHROPIC_API_KEY` | Our recommended model |
+| `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` | Our recommended model |
 | `gpt-4o` | `OPENAI_API_KEY` | |
 | `o1-preview` | `OPENAI_API_KEY` | You might need to set temperature and sampling to the supported values. |
 
@@ -103,8 +107,14 @@ and set `agent.model.api_key` to the key you've configured for your proxy (or a 
 !!! warning "Cost/token limits"
 
     If you do not disable the default cost limits, you will see an error because the cost calculator will not be able to find the model in the `litellm` model cost dictionary.
-    Please make sure to the set the `per_instance_cost_limit` to 0 and use the `per_instance_call_limit` instead to limit the runtime per issue.
-    Please also make sure to set `max_input_tokens` to a non-`None` value to avoid a lot of warnings.
+
+    You have two options:
+
+    1. **Disable cost tracking** (recommended for most users): Set `per_instance_cost_limit` to 0 and use the `per_instance_call_limit` instead to limit the runtime per issue.
+    2. **Use a custom model registry**: If you want to track costs for your local model, you can provide a custom `litellm_model_registry` file with cost information for your model (see [here](../config/models.md#custom-cost-tracking)).
+
+    Please also make sure to set `max_input_tokens` to a non-`None` value to avoid other warnings.
+
 
 !!! warning "Parsing functions"
 

@@ -84,6 +84,7 @@ agent:
       WINDOW: 100
       OVERLAP: 2
     bundles:
+      - path: tools/registry
       - path: tools/windowed
       - path: tools/search
       - path: tools/windowed_edit_linting

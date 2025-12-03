@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+# view_image – view an image file as a base64-encoded markdown image
+import base64
+import mimetypes
+import pathlib
+import sys
+
+VALID_MIME_TYPES = {
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+}
+
+if len(sys.argv) != 2:
+    sys.exit(f"usage: {pathlib.Path(sys.argv[0]).name} <image-file>")
+
+img_path = pathlib.Path(sys.argv[1])
+
+if not img_path.exists():
+    sys.exit(f"Error: File '{img_path}' does not exist")
+
+if not img_path.is_file():
+    sys.exit(f"Error: '{img_path}' is not a file")
+
+try:
+    mime = mimetypes.guess_type(img_path.name)[0]
+    if mime not in VALID_MIME_TYPES:
+        sys.exit(f"Error: Unsupported image type: {mime}. Valid types are: {', '.join(VALID_MIME_TYPES)}")
+
+    # read the file, base64-encode, and convert bytes → str
+    b64 = base64.b64encode(img_path.read_bytes()).decode("ascii")
+
+    # write the exact markdown snippet to stdout
+    print(f"![{img_path.as_posix()}](data:{mime};base64,{b64})")
+except Exception as e:
+    sys.exit(f"Error processing image: {e}")

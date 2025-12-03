@@ -35,8 +35,8 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+        uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "${{ matrix.python-version }}"
       - name: Install uv
@@ -64,7 +64,7 @@ jobs:
         run: coverage xml
       - name: Upload coverage reports to Codecov
         if: matrix.python-version == '3.11'
-        uses: codecov/codecov-action@v5.4.3
+        uses: codecov/codecov-action@v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: SWE-agent/SWE-agent

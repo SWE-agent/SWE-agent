@@ -185,7 +185,14 @@ def _parse_args_to_nested_dict(args):
 
 # todo: Parameterize type hints
 class BasicCLI:
-    def __init__(self, config_type: type[BaseSettings], *, default_settings: bool = True, help_text: str | None = None):
+    def __init__(
+        self,
+        config_type: type[BaseSettings],
+        *,
+        default_settings: bool = True,
+        help_text: str | None = None,
+        default_config_file: Path = CONFIG_DIR / "default.yaml",
+    ):
         """This class implements a basic CLI for SWE-agent. It is based on pydantic-settings, i.e., takes
         a `BaseSettings` object. In principle you could just initialize these via `pydantic-settings`'s `CliApp.run`,
         however, we also want to add a `--config` option to load additional config files and some other things.
@@ -201,6 +208,7 @@ class BasicCLI:
         self.default_settings = default_settings
         self.logger = get_logger("swea-cli", emoji="🔧")
         self.help_text = help_text
+        self.default_config_file = default_config_file
 
     def maybe_show_auto_correct(self, args: list[str]):
         auto_correct = []
@@ -289,7 +297,7 @@ class BasicCLI:
                 _loaded = yaml.safe_load(txt)
                 merge_nested_dicts(config_merged, _loaded)
         elif self.default_settings and not cli_args.no_config_file:
-            config_file = CONFIG_DIR / "default.yaml"
+            config_file = self.default_config_file
             config_files.append(config_file)
             msg = (
                 f"Loading default config from {config_file}, because no other "

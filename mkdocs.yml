@@ -72,6 +72,7 @@ nav:
       - "Trajectory inspector": "usage/inspector.md"
       - "Batch mode": "usage/batch_mode.md"
       - "Competitive runs": "usage/competitive_runs.md"
+      - "Adding custom tools": "usage/adding_custom_tools.md"
       - "What's next?": "usage/whats_next.md"
     - "FAQ": "faq.md"
   - User Guides:
@@ -140,6 +141,7 @@ plugins:
             separate_signature: true
             show_symbol_type_heading: true
             show_symbol_type_toc: true
+            members_order: source
             extensions:
               - griffe_pydantic:
                   schema: false
@@ -153,6 +155,8 @@ edit_uri: edit/main/docs/
 extra_javascript:
   - assets/js/sh-annotation.js
 extra_css:
+  - https://fonts.googleapis.com/icon?family=Material+Icons
+  - assets/navigation_cards.css
   - assets/custom.css
   - assets/mkdocstrings.css
   - assets/image_theme.css

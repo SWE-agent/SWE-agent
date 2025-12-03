@@ -17,6 +17,28 @@
     },
     {
       "pattern": "https?://(.*\\.)?x\\.com/.*"
+    },
+    {
+      "pattern": "https://linuxize.com/post/bash-heredoc/"
+    },
+    {
+      "pattern": "https://leetcode.com/problems/.*"
+    },
+    {
+      "pattern": "https://jsoneditoronline.org/.*"
+    },
+    {
+      "pattern": ".*\\.md/#sweagent\\..*"
+    },
+    {
+      "pattern": "^(?!https).*(?<!\\.md)$"
+    }
+
+  ],
+  "replacements": [
+    {
+      "pattern": "/#.*",
+      "replacement": ""
     }
   ]
 }

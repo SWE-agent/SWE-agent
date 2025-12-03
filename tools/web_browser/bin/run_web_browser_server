@@ -1,0 +1,394 @@
+#!/root/python3.11/bin/python3
+"""Web Browser server ‒ Flask + Playwright backend."""
+
+from __future__ import annotations
+
+import atexit
+import functools
+import signal
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
+lib_path = str(Path(__file__).resolve().parent.parent / "lib")
+sys.path.insert(0, lib_path)
+
+from browser_manager import BrowserManager
+from flask import Flask, Response, jsonify, request
+from web_browser_config import ServerConfig
+from web_browser_utils import catch_error, normalize_url, validate_request
+
+config = ServerConfig()
+
+
+browser_manager = BrowserManager()
+
+
+def cleanup_on_exit():
+    """Cleanup function for atexit and signal handlers."""
+    browser_manager.cleanup()
+
+
+def signal_handler(signum, frame):
+    """Handle shutdown signals."""
+    print(f"\nReceived signal {signum}, shutting down...")
+    cleanup_on_exit()
+    sys.exit(0)
+
+
+# register cleanup handlers
+atexit.register(cleanup_on_exit)
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
+
+app = Flask(__name__)
+
+
+def require_website_open(func):
+    """Decorator to ensure a website is open before executing the route."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not browser_manager.is_website_open():
+            return create_response({"status": "error", "message": "Please open a website first."}, False)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def _get_response_metadata() -> dict[str, Any]:
+    """Gather comprehensive metadata for API responses."""
+    metadata = {}
+    if browser_manager.is_website_open():
+        metadata["Browser Type"] = browser_manager.browser_name
+        metadata["Mouse Position"] = f"({browser_manager.mouse_x},{browser_manager.mouse_y})"
+        metadata["Viewport Size"] = f"{browser_manager.window_width}×{browser_manager.window_height}"
+        with browser_manager._browser_lock() as page:
+            metadata["Current URL"] = page.url
+            metadata["Page Title"] = page.title()
+
+            scroll_info = page.evaluate("""() => ({
+                scroll_position: { x: window.pageXOffset || document.documentElement.scrollLeft, y: window.pageYOffset || document.documentElement.scrollTop },
+                page_dimensions: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
+                visible_dimensions: { width: window.innerWidth, height: window.innerHeight }
+            })""")
+            scroll_pos = scroll_info["scroll_position"]
+            page_dims = scroll_info["page_dimensions"]
+            visible_dims = scroll_info["visible_dimensions"]
+            metadata["Scroll Position"] = f"({scroll_pos['x']},{scroll_pos['y']})"
+            metadata["Page Dimensions"] = f"{page_dims['width']}×{page_dims['height']}"
+            metadata["Visible Dimensions"] = f"{visible_dims['width']}×{visible_dims['height']}"
+    return metadata
+
+
+def create_response(data: dict[str, Any], return_screenshot: bool) -> Response:
+    """Create a JSON response with comprehensive metadata and optional screenshot."""
+    response_data = {**data}
+    if return_screenshot:
+        response_data.update(browser_manager.take_screenshot())
+    if "metadata" not in response_data:
+        response_data["metadata"] = {}
+    response_data["metadata"].update(_get_response_metadata())
+    return jsonify(response_data)
+
+
+@app.route("/info", methods=["GET"])
+@catch_error
+def info():
+    if not browser_manager.is_website_open():
+        return create_response({"status": "success", "message": "No page open"}, False)
+    data = {
+        "status": "success",
+        "message": "Loaded info for current page",
+    }
+    return create_response(data, False)
+
+
+@app.route("/close", methods=["POST"])
+@catch_error
+def close_browser():
+    browser_manager.cleanup()
+    browser_manager._init_browser()
+    return create_response({"status": "success", "message": "Closed browser"}, False)
+
+
+@app.route("/set_window_size", methods=["POST"])
+@validate_request("width", "height", "return_screenshot")
+@require_website_open
+@catch_error
+def set_window_size():
+    width, height = request.json["width"], request.json["height"]
+    return_screenshot = request.json["return_screenshot"]
+    if width <= 0 or height <= 0:
+        return create_response(
+            {"status": "error", "message": f"Invalid dimensions ({width},{height}). Must be positive"}, False
+        )
+    with browser_manager._browser_lock() as page:
+        page.set_viewport_size({"width": width, "height": height})
+        browser_manager.window_width = width
+        browser_manager.window_height = height
+        browser_manager.constrain_mouse_position(page)
+        data = {"status": "success", "message": f"Set viewport to {width}×{height}"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/screenshot", methods=["GET"])
+@require_website_open
+def screenshot():
+    data = {"status": "success", "message": "Screenshot"}
+    return create_response(data, True)
+
+
+@app.route("/click", methods=["POST"])
+@validate_request("x", "y", "button", "return_screenshot")
+@catch_error
+@require_website_open
+def click():
+    x, y = round(request.json["x"]), round(request.json["y"])
+    button = request.json["button"]
+    return_screenshot = request.json["return_screenshot"]
+    x_valid, y_valid = browser_manager.validate_coordinates(x, y)
+    if not x_valid or not y_valid:
+        return create_response(
+            {
+                "status": "error",
+                "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}",
+            },
+            False,
+        )
+    with browser_manager._browser_lock() as page:
+        page.mouse.click(x, y, button=button)
+        browser_manager.mouse_x, browser_manager.mouse_y = x, y
+        data = {"status": "success", "message": f"Clicked '{button}' at ({x},{y})"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/double_click", methods=["POST"])
+@validate_request("x", "y", "return_screenshot")
+@catch_error
+@require_website_open
+def double_click():
+    x, y = round(request.json["x"]), round(request.json["y"])
+    return_screenshot = request.json["return_screenshot"]
+    x_valid, y_valid = browser_manager.validate_coordinates(x, y)
+    if not x_valid or not y_valid:
+        return create_response(
+            {
+                "status": "error",
+                "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}",
+            },
+            False,
+        )
+    with browser_manager._browser_lock() as page:
+        page.mouse.dblclick(x, y)
+        browser_manager.mouse_x, browser_manager.mouse_y = x, y
+        data = {"status": "success", "message": f"Double‑clicked at ({x},{y})"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/move", methods=["POST"])
+@validate_request("x", "y", "return_screenshot")
+@catch_error
+@require_website_open
+def move():
+    x, y = request.json["x"], request.json["y"]
+    return_screenshot = request.json["return_screenshot"]
+    x_valid, y_valid = browser_manager.validate_coordinates(x, y)
+    if not x_valid or not y_valid:
+        return create_response(
+            {
+                "status": "error",
+                "message": f"Invalid coordinates ({x},{y}). Must be within {browser_manager.window_width}x{browser_manager.window_height}",
+            },
+            False,
+        )
+    with browser_manager._browser_lock() as page:
+        page.mouse.move(x, y)
+        browser_manager.mouse_x, browser_manager.mouse_y = x, y
+        data = {"status": "success", "message": f"Moved mouse to ({x},{y})"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/drag", methods=["POST"])
+@validate_request("path", "return_screenshot")
+@catch_error
+@require_website_open
+def drag():
+    path: list[list[int]] = request.json["path"]
+    return_screenshot = request.json["return_screenshot"]
+    if not path or len(path) < 2:
+        return create_response({"status": "error", "message": "Path needs at least two points"}, False)
+    for ix, point in enumerate(path):
+        if len(point) != 2:
+            return create_response(
+                {"status": "error", "message": f"Path point {ix} must have exactly 2 coordinates"}, False
+            )
+        x, y = point
+        x_valid, y_valid = browser_manager.validate_coordinates(x, y)
+        if not x_valid or not y_valid:
+            return create_response(
+                {
+                    "status": "error",
+                    "message": f"Invalid coordinates ({x},{y}) at path point {ix}. Must be within {browser_manager.window_width}x{browser_manager.window_height}",
+                },
+                False,
+            )
+
+    with browser_manager._browser_lock() as page:
+        page.mouse.move(*path[0])
+        page.mouse.down()
+        for x, y in path[1:]:
+            page.mouse.move(x, y)
+        page.mouse.up()
+        browser_manager.mouse_x, browser_manager.mouse_y = path[-1]
+        data = {"status": "success", "message": "Dragged the mouse along the path"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/type", methods=["POST"])
+@validate_request("text", "return_screenshot")
+@catch_error
+@require_website_open
+def type_():
+    text = request.json["text"]
+    return_screenshot = request.json["return_screenshot"]
+    with browser_manager._browser_lock() as page:
+        page.keyboard.type(text)
+        data = {"status": "success", "message": f"Typed '{text}'"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/scroll", methods=["POST"])
+@validate_request("scroll_x", "scroll_y", "return_screenshot")
+@catch_error
+@require_website_open
+def scroll():
+    delta_x, delta_y = request.json["scroll_x"], request.json["scroll_y"]
+    return_screenshot = request.json["return_screenshot"]
+    with browser_manager._browser_lock() as page:
+        page.mouse.wheel(delta_x, delta_y)
+        data = {"status": "success", "message": f"Scrolled by ({delta_x},{delta_y})"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/execute_script", methods=["POST"])
+@validate_request("script", "return_screenshot")
+@catch_error
+@require_website_open
+def exec_script():
+    script = request.json["script"]
+    return_screenshot = request.json["return_screenshot"]
+    with browser_manager._browser_lock() as page:
+        result = page.evaluate(script)
+        data = {"status": "success", "message": (f"Script executed.\n<script_result>\n{result}\n</script_result>")}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/back", methods=["POST"])
+@validate_request("return_screenshot")
+@catch_error
+@require_website_open
+def back():
+    return_screenshot = request.json["return_screenshot"]
+    with browser_manager._browser_lock() as page:
+        page.go_back()
+        data = {"status": "success", "message": "Navigated back"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/forward", methods=["POST"])
+@validate_request("return_screenshot")
+@catch_error
+@require_website_open
+def forward():
+    return_screenshot = request.json["return_screenshot"]
+    with browser_manager._browser_lock() as page:
+        page.go_forward()
+        data = {"status": "success", "message": "Navigated forward"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/reload", methods=["POST"])
+@validate_request("return_screenshot")
+@catch_error
+@require_website_open
+def reload():
+    return_screenshot = request.json["return_screenshot"]
+    with browser_manager._browser_lock() as page:
+        page.reload()
+        data = {"status": "success", "message": "Reloaded the page"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/wait", methods=["POST"])
+@validate_request("ms", "return_screenshot")
+@catch_error
+@require_website_open
+def wait():
+    milliseconds = request.json["ms"]
+    return_screenshot = request.json["return_screenshot"]
+    time.sleep(milliseconds / 1000.0)
+    data = {"status": "success", "message": f"Waited {milliseconds} ms"}
+    return create_response(data, return_screenshot)
+
+
+@app.route("/keypress", methods=["POST"])
+@validate_request("keys", "return_screenshot")
+@catch_error
+@require_website_open
+def keypress():
+    keys: list[str] = request.json["keys"]
+    return_screenshot = request.json["return_screenshot"]
+    if not isinstance(keys, list):
+        return create_response({"status": "error", "message": "Keys must be a list"}, False)
+    if not keys:
+        return create_response({"status": "error", "message": "Keys list empty"}, False)
+    with browser_manager._browser_lock() as _:
+        for key in keys[:-1]:
+            browser_manager.key_down(key)
+        browser_manager.key_press(keys[-1])
+        for key in reversed(keys[:-1]):
+            browser_manager.key_up(key)
+        data = {"status": "success", "message": f"Pressed keys {keys}"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/goto", methods=["POST"])
+@validate_request("url", "return_screenshot")
+@catch_error
+def goto():
+    url = normalize_url(request.json["url"])
+    return_screenshot = request.json["return_screenshot"]
+    with browser_manager._browser_lock() as page:
+        page.goto(url, wait_until="load")
+        data = {"status": "success", "message": f"Navigated to {url}"}
+        return create_response(data, return_screenshot)
+
+
+@app.route("/console", methods=["GET"])
+@catch_error
+@require_website_open
+def get_console():
+    console_messages = browser_manager.get_console_output()
+    data = {
+        "status": "success",
+        "message": f"Retrieved {len(console_messages)} console messages",
+        "console_messages": console_messages,
+    }
+    return create_response(data, False)
+
+
+def main():
+    """Run the Flask server with proper cleanup handling."""
+    try:
+        app.run(host="0.0.0.0", port=config.port, threaded=False, use_reloader=False)
+    except KeyboardInterrupt:
+        print("\nShutting down gracefully...")
+    finally:
+        cleanup_on_exit()
+
+
+if __name__ == "__main__":
+    main()

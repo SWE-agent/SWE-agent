@@ -34,7 +34,7 @@ pre-commit install
     Most problems (including formatting) will be automatically fixed.
     Therefore, if `pre-commit`/`git commit` fails on its first run, simply try running it a second time.
 
-    Some more autofixes can be enabled with the `--unsafe-fixes` option from [`ruff`](https://github.com/charliermarsh/ruff):
+    Some more autofixes can be enabled with the `--unsafe-fixes` option from [`ruff`](https://github.com/astral-sh/ruff):
 
     ```bash
     pipx run ruff check --fix --unsafe-fixes
@@ -115,7 +115,7 @@ to see all debug output from the agent.
   However, if you make the behavior optional without complicating SWE-agent (for example by providing new [commands](../config/tools.md)),
   we might be less strict.
 * Please add simple unit tests or integration tests wherever possible. Take a look in the [tests directory](https://github.com/SWE-agent/SWE-agent/tree/main/tests)
-  for inspiration. We emphasize simple easy-tow-rite tests that get a lot of coverage.
+  for inspiration. We emphasize simple easy-to-write tests that get a lot of coverage.
 
 [gfi]: https://github.com/SWE-agent/SWE-agent/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22%F0%9F%91%8B+good+first+issue%22+
 [help_wanted]: https://github.com/SWE-agent/SWE-agent/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22%F0%9F%99%8F+help+wanted%22
@@ -133,16 +133,15 @@ and point your browser to port 8000 or click one of the links in the output.
 
 ## Diving into the code
 
-<div class="grid cards" markdown>
-
--   :material-cog:{ .lg .middle } __Code structure and reference__
-
-    ---
-
-    Read the reference for more information on our code.
-
-    [:octicons-arrow-right-24: Read more](../reference/index.md)
-
+<div class="grid cards">
+  <a href="../reference/" class="nav-card-link">
+    <div class="nav-card">
+      <div class="nav-card-header">
+        <span class="material-icons nav-card-icon">settings</span>
+        <span class="nav-card-title">Code structure and reference</span>
+      </div>
+      <p class="nav-card-description">Read the reference for more information on our code.</p>
+    </div>
+  </a>
 </div>
-
 {% include-markdown "../_footer.md" %}

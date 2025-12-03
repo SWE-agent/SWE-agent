@@ -39,7 +39,7 @@ import textwrap
 from abc import ABC, abstractmethod
 from shlex import quote
 from textwrap import dedent
-from typing import Literal
+from typing import Any, Literal
 
 from jinja2 import Template
 from pydantic import BaseModel
@@ -276,7 +276,11 @@ class XMLFunctionCallingParser(AbstractParseFunction, BaseModel):
             msg = f"Command '{fn_name}' not found in list of available commands."
             raise FormatError(msg)
 
-        params_dict = {param[0]: param[1].strip() for param in re.findall(FN_PARAM_REGEX_PATTERN, fn_body, re.DOTALL)}
+        params_dict = {
+            param[0]: re.sub(r"^\n|\n$", "", param[1])
+            for param in re.findall(FN_PARAM_REGEX_PATTERN, fn_body, re.DOTALL)
+        }
+
         if "view_range" in params_dict:
             # Check that value is format as [x, y]
             v = params_dict["view_range"]
@@ -415,10 +419,17 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
         if extra_args:
             msg = f"Unexpected argument(s): {', '.join(extra_args)}"
             raise FunctionCallingFormatError(msg, "unexpected_arg")
+
+        def get_quoted_arg(value: Any) -> str:
+            if isinstance(value, str):
+                return quote(value) if _should_quote(value, command) else value
+            # See https://github.com/SWE-agent/SWE-agent/issues/1159
+            if value is None:
+                return ""
+            return value
+
         formatted_args = {
-            arg.name: Template(arg.argument_format).render(
-                value=quote(values[arg.name]) if _should_quote(values[arg.name], command) else values[arg.name]
-            )
+            arg.name: Template(arg.argument_format).render(value=get_quoted_arg(values[arg.name]))
             if arg.name in values
             else ""
             for arg in command.arguments
@@ -527,6 +538,72 @@ class JsonParser(AbstractParseFunction, BaseModel):
             raise FormatError(msg)
 
 
+class BashCodeBlockParser(AbstractParseFunction, BaseModel):
+    """Executes all commands in ```bash code blocks."""
+
+    error_message: str = dedent("""\
+    No bash code blocks were detected in your output.
+    You need to include at least one bash code block in your output.
+
+    It must follow this format exactly to be valid:
+    ```bash
+    cmd arg1 arg2 ...
+    ...
+
+    Other types of code blocks (e.g. python, rust, none, etc.) won't be executed. Only bash.
+    """)
+
+    type: Literal["all_bash_code_blocks"] = "all_bash_code_blocks"
+
+    def __call__(self, model_response: dict, commands: list[Command], strict=False):
+        """Parses the action from the output of the API call.
+        We assume that model output is a JSON object with the following fields:
+        """
+        pattern = re.compile(r"```bash\n(.*?)\n```", re.DOTALL)
+        matches = pattern.findall(model_response["message"])
+        if not matches:
+            msg = "No bash code blocks were detected in your output."
+            raise FormatError(msg)
+        thouht = pattern.sub("<extracted_code_block>", model_response["message"])
+        action = "\n".join(matches)
+        return thouht, action
+
+
+class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
+    """Executes all commands in ```bash code blocks."""
+
+    error_message: str = dedent("""\
+    We did not detect the right number of bash code blocks in your output.
+    You need to include EXACTLY ONE bash code block in your output.
+
+    It must follow this format exactly to be valid:
+    ```bash
+    cmd arg1 arg2 ...
+    ```
+    """)
+
+    type: Literal["single_bash_code_block"] = "single_bash_code_block"
+
+    def __call__(self, model_response: dict, commands: list[Command], strict=False):
+        """Parses the action from the output of the API call.
+        We assume that model output is a JSON object with the following fields:
+        """
+        pattern = re.compile(r"```bash\n(.*?)\n```", re.DOTALL)
+        matches = pattern.findall(model_response["message"])
+        if not matches:
+            msg = "No bash code blocks were detected in your output."
+            raise FormatError(msg)
+        if len(matches) > 1:
+            msg = (
+                "We detected multiple bash code blocks in your output. "
+                "You need to include EXACTLY ONE bash code block in your output."
+            )
+            raise FormatError(msg)
+        thouht = pattern.sub("<extracted_code_block>", model_response["message"])
+        action = "\n".join(matches)
+        return thouht, action
+
+
 ParseFunction = (
     ActionParser
     | ThoughtActionParser
@@ -537,4 +614,6 @@ ParseFunction = (
     | EditFormat
     | Identity
     | JsonParser
+    | BashCodeBlockParser
+    | SingleBashCodeBlockParser
 )

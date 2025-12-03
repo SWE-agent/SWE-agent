@@ -1,0 +1,43 @@
+/* Navigation cards styling */
+.nav-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.nav-card {
+  padding: 1rem;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 0.5rem;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.nav-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.nav-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.nav-card-icon {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+  color: var(--md-default-fg-color);
+}
+
+.nav-card-description {
+  margin: 0;
+  color: var(--md-default-fg-color--light);
+}
+
+.nav-card-title {
+  margin: 0;
+  font-weight: bold;
+  color: var(--md-default-fg-color);
+}

@@ -58,6 +58,8 @@ def get_cli():
             "ru",
             "quick-stats",
             "qs",
+            "shell",
+            "sh",
         ],
         nargs="?",
     )
@@ -132,6 +134,10 @@ def main(args: list[str] | None = None):
         from sweagent.run.quick_stats import run_from_cli as quick_stats_main
 
         quick_stats_main(remaining_args)
+    elif command in ["shell", "sh"]:
+        from sweagent.run.run_shell import run_from_cli as run_shell_main
+
+        run_shell_main(remaining_args)
     else:
         msg = f"Unknown command: {command}"
         raise ValueError(msg)

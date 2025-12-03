@@ -29,9 +29,11 @@ class Repo(Protocol):
 
 def _get_git_reset_commands(base_commit: str) -> list[str]:
     return [
+        "git fetch",
         "git status",
         "git restore .",
-        f"git reset --hard {base_commit}",
+        "git reset --hard",
+        f"git checkout {base_commit}",
         "git clean -fdq",
     ]
 
@@ -55,6 +57,9 @@ class PreExistingRepoConfig(BaseModel):
     type: Literal["preexisting"] = "preexisting"
     """Discriminator for (de)serialization/CLI. Do not change."""
 
+    reset: bool = True
+    """If True, reset the repository to the base commit after the copy operation."""
+
     model_config = ConfigDict(extra="forbid")
 
     def copy(self, deployment: AbstractDeployment):
@@ -63,7 +68,9 @@ class PreExistingRepoConfig(BaseModel):
 
     def get_reset_commands(self) -> list[str]:
         """Issued after the copy operation or when the environment is reset."""
-        return _get_git_reset_commands(self.base_commit)
+        if self.reset:
+            return _get_git_reset_commands(self.base_commit)
+        return []
 
 
 class LocalRepoConfig(BaseModel):
@@ -103,7 +110,9 @@ class LocalRepoConfig(BaseModel):
         asyncio.run(
             deployment.runtime.upload(UploadRequest(source_path=str(self.path), target_path=f"/{self.repo_name}"))
         )
-        r = asyncio.run(deployment.runtime.execute(Command(command=f"chown -R root:root {self.repo_name}", shell=True)))
+        r = asyncio.run(
+            deployment.runtime.execute(Command(command=f"chown -R root:root /{self.repo_name}", shell=True))
+        )
         if r.exit_code != 0:
             msg = f"Failed to change permissions on copied repository (exit code: {r.exit_code}, stdout: {r.stdout}, stderr: {r.stderr})"
             raise RuntimeError(msg)

@@ -48,7 +48,7 @@ def remove_unfinished(base_dir: Path, dry_run: bool = True) -> None:
 
 def get_cli_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base-dir", type=Path, help="Base directory")
+    parser.add_argument("--base_dir", type=Path, help="Base directory", default=Path("."))
     parser.add_argument("--remove", action="store_true", help="Remove unfinished trajectories")
     return parser
 
@@ -56,7 +56,7 @@ def get_cli_parser() -> argparse.ArgumentParser:
 def run_from_cli(args: list[str] | None = None) -> None:
     cli_parser = get_cli_parser()
     cli_args = cli_parser.parse_args(args)
-    remove_unfinished(cli_args.base_dir, cli_args.remove)
+    remove_unfinished(cli_args.base_dir, dry_run=not cli_args.remove)
 
 
 if __name__ == "__main__":

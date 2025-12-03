@@ -67,7 +67,7 @@ class TemplateConfig(BaseModel):
     next_step_template: str = "Observation: {{observation}}"
 
     next_step_truncated_observation_template: str = (
-        "Observation: {{observation}}<response clipped>"
+        "Observation: {{observation[:max_observation_length]}}<response clipped>"
         "<NOTE>Observations should not exceeded {{max_observation_length}} characters. "
         "{{elided_chars}} characters were elided. Please try a different command that produces less output "
         "or use head/tail/grep/redirect the output to a file. Do not use interactive pagers.</NOTE>"
@@ -77,7 +77,9 @@ class TemplateConfig(BaseModel):
     """
 
     max_observation_length: int = 100_000
-    """Truncate observation to this length if it exceeds it."""
+    """Truncate observation to this length if it exceeds it.
+    This in measured in characters, i.e., as `len(observation)`.
+    """
 
     next_step_no_output_template: str = None  # type: ignore
     """Template for the next step when the last output was empty. Defaults to next_step_template."""
@@ -93,6 +95,10 @@ class TemplateConfig(BaseModel):
     put_demos_in_history: bool = False
     """If True, add demonstration to history instead of as a single message"""
 
+    disable_image_processing: bool = False
+    """If True, disable image processing for multimodal problem statements (i.e. SWEBenchMultimodalProblemStatement).
+    """
+
     shell_check_error_template: str = (
         "Your bash command contained syntax errors and was NOT executed. "
         "Please fix the syntax errors and try again. This can be the result "
@@ -105,7 +111,9 @@ class TemplateConfig(BaseModel):
 
     command_cancelled_timeout_template: str = (
         "The command '{{command}}' was cancelled because it took more than {{timeout}} seconds. "
-        "Please try a different command that completes more quickly."
+        "Please try a different command that completes more quickly. "
+        "Note: A common source of this error is if the command is interactive or requires user input "
+        "(it is impossible to receive user input in the current environment, so the command will never complete)."
     )
     """Message template for when the agent's command was cancelled because it took too long.
     Available variables: `timeout`, `command`
@@ -159,6 +167,24 @@ class DefaultAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ShellAgentConfig(BaseModel):
+    name: str = "main"
+    templates: TemplateConfig = Field(default_factory=TemplateConfig)
+    tools: ToolConfig = Field(default_factory=ToolConfig)
+    history_processors: list[HistoryProcessor] = Field(default_factory=lambda: [DefaultHistoryProcessor()])
+    model: ModelConfig = Field(description="Model options.")
+
+    max_requeries: int = 3
+    """Maximum number of times to requery the model after an error, such as a
+    formatting error, a blocked action, or a bash syntax error.
+    """
+
+    type: Literal["shell"] = "shell"
+
+    # pydantic config
+    model_config = ConfigDict(extra="forbid")
+
+
 class RetryAgentConfig(BaseModel):
     name: str = "retry_main"
     agent_configs: list[DefaultAgentConfig]
@@ -167,7 +193,7 @@ class RetryAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig, Field(union_mode="left_to_right")]
+AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig | ShellAgentConfig, Field(union_mode="left_to_right")]
 
 
 class _BlockedActionError(Exception):
@@ -218,6 +244,11 @@ def get_agent_from_config(config: AgentConfig) -> AbstractAgent:
         return DefaultAgent.from_config(config)
     elif config.type == "retry":
         return RetryAgent.from_config(config)
+    elif config.type == "shell":
+        # Need to defer import to avoid circular dependency
+        from sweagent.agent.extra.shell_agent import ShellAgent
+
+        return ShellAgent.from_config(config)
     else:
         msg = f"Unknown agent type: {config.type}"
         raise ValueError(msg)
@@ -539,6 +570,16 @@ class DefaultAgent(AbstractAgent):
         This method is called by `self.run`.
         """
         output_dir.mkdir(parents=True, exist_ok=True)
+
+        # apply template configuration to multimodal problem statements
+        if hasattr(problem_statement, "type") and problem_statement.type == "swe_bench_multimodal":
+            from sweagent.agent.problem_statement import SWEBenchMultimodalProblemStatement
+
+            if isinstance(problem_statement, SWEBenchMultimodalProblemStatement):
+                # apply the global disable_image_processing setting if it's not explicitly set
+                if not problem_statement.disable_image_processing and self.templates.disable_image_processing:
+                    problem_statement.disable_image_processing = True
+
         self._problem_statement = problem_statement
         self._env = env
         iid = self._problem_statement.id
@@ -558,7 +599,7 @@ class DefaultAgent(AbstractAgent):
         self.info["swe_rex_hash"] = get_rex_commit_hash()
         assert self._env is not None
         assert self._problem_statement is not None
-        self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement()})
+        self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement_for_env()})
         self.add_system_message_to_history()
         self.add_demonstrations_to_history()
         self.add_instance_template_to_history(state=self.tools.get_state(self._env))
@@ -681,6 +722,7 @@ class DefaultAgent(AbstractAgent):
                 "agent": self.name,
                 "tool_calls": step.tool_calls,
                 "message_type": "action",
+                "thinking_blocks": step.thinking_blocks,
             },
         )
 
@@ -691,7 +733,6 @@ class DefaultAgent(AbstractAgent):
         elif len(step.observation) > self.templates.max_observation_length:
             templates = [self.templates.next_step_truncated_observation_template]
             elided_chars = len(step.observation) - self.templates.max_observation_length
-            step.observation = step.observation[: self.templates.max_observation_length]
         else:
             # Show standard output template if there is observation content
             templates = [self.templates.next_step_template]
@@ -873,9 +914,9 @@ class DefaultAgent(AbstractAgent):
                 pf = (
                     PatchFormatter(
                         patch,
-                        read_method=lambda path: self._env.read_file(
-                            PurePosixPath("/") / self._env.repo.repo_name / path
-                        ),  # type: ignore[attr-defined]
+                        read_method=lambda path: self._env.read_file(  # type: ignore[attr-defined]
+                            PurePosixPath("/") / self._env.repo.repo_name / path  # type: ignore[attr-defined]
+                        ),
                     )
                     if patch
                     else None
@@ -1002,6 +1043,7 @@ class DefaultAgent(AbstractAgent):
             step.output = output["message"]
             # todo: Can't I override the parser in __init__?
             step.thought, step.action = self.tools.parse_actions(output)
+            step.thinking_blocks = output.get("thinking_blocks", [])
             if output.get("tool_calls") is not None:
                 step.tool_call_ids = [call["id"] for call in output["tool_calls"]]
                 step.tool_calls = output["tool_calls"]
@@ -1069,6 +1111,8 @@ class DefaultAgent(AbstractAgent):
             # Errors that are raised
 
             except KeyboardInterrupt:
+                raise
+            except EOFError:
                 raise
 
             # Errors that cause requery
