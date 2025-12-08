@@ -1,0 +1,11 @@
+[
+  {
+    "Name": "google/protobuf",
+    "License": "BSD 3-Clause License",
+    "License File": "LICENSE",
+    "Version Number": "5.29.4",
+    "Upstream URL": "https://github.com/protocolbuffers/protobuf",
+    "Description": "Protocol Buffers - Google's data interchange format.",
+    "Dependencies": [ "abseil-cpp" ]
+  }
+]

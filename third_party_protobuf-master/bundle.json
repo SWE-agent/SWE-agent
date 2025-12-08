@@ -1,0 +1,90 @@
+{
+    "name": "@ohos/protobuf",
+    "description": "Protocol Buffers - Google's data interchange format.",
+    "version": "3.1",
+    "license": "BSD-3-Clause",
+    "publishAs": "code-segment",
+    "segment": {
+        "destPath": "third_party/protobuf"
+    },
+    "dirs": {},
+    "scripts": {},
+    "component": {
+        "name": "protobuf",
+        "subsystem": "thirdparty",
+        "syscap": [],
+        "features": [],
+        "adapted_system_type": [
+            "standard"
+        ],
+        "rom": "",
+        "ram": "",
+        "deps": {
+            "components": [
+                "hilog",
+                "abseil-cpp"
+            ],
+            "third_party": []
+        },
+        "build": {
+            "sub_component": [
+                "//third_party/protobuf:protobuf_static_toolchain"
+            ],
+            "inner_kits": [
+                {
+                    "header": {
+                        "header_base": "//third_party/protobuf/src/google/protobuf",
+                        "header_files": []
+                    },
+                    "name": "//third_party/protobuf:protobuf"
+                },
+                {
+                    "header": {
+                        "header_base": "//third_party/protobuf/src/google/protobuf",
+                        "header_files": []
+                    },
+                    "name": "//third_party/protobuf:protobuf_lite"
+                },
+                {
+                    "header": {
+                        "header_base": "//third_party/protobuf/src/google/protobuf",
+                        "header_files": []
+                    },
+                    "name": "//third_party/protobuf:protobuf_lite_static"
+                },
+                {
+                    "header": {
+                        "header_base": "//third_party/protobuf/src/google/protobuf",
+                        "header_files": []
+                    },
+                    "name": "//third_party/protobuf:protobuf_static"
+                },
+                {
+                    "header": {
+                        "header_base": "//third_party/protobuf/src/google/protobuf",
+                        "header_files": []
+                    },
+                    "name": "//third_party/protobuf:protobuf"
+                },
+                {
+                    "name": "//third_party/protobuf:protoc"
+                },
+                {
+                    "header": {
+                        "header_base": "//third_party/protobuf/src/google/protobuf",
+                        "header_files": []
+                    },
+                    "name": "//third_party/protobuf:protoc_lib"
+                },
+                {
+                    "header": {
+                        "header_base": "//third_party/protobuf/src/google/protobuf/compiler",
+                        "header_files": []
+                    },
+                    "name": "//third_party/protobuf:protoc_static_lib"
+                }
+            ],
+            "test": []
+        }
+    }
+}

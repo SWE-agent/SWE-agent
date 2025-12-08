@@ -161,6 +161,11 @@ class DefaultAgentConfig(BaseModel):
     """
     action_sampler: ActionSamplerConfig | None = None
 
+    role: str | None = None
+    """Agent role for multi-agent systems. For example: 'rca' (root cause analysis), 'patch' (developer).
+    If not set, defaults to using the name field as the role.
+    """
+
     type: Literal["default"] = "default"
 
     # pydantic config
@@ -453,10 +458,26 @@ class DefaultAgent(AbstractAgent):
         _catch_errors: bool = True,
         _always_require_zero_exit_code: bool = False,
         action_sampler_config: ActionSamplerConfig | None = None,
+        injected_env: SWEEnv | None = None,
     ):
         """The agent handles the behaviour of the model and how it interacts with the environment.
 
         To run the agent, either call `self.run` or `self.setup` and then `self.step` in a loop.
+
+        Args:
+            templates: Template configuration for the agent
+            tools: Tool handler for the agent
+            history_processors: History processors for the agent
+            model: The model to use for the agent
+            max_requeries: Maximum number of times to requery the model after an error
+            name: Name of the agent
+            _catch_errors: Whether to catch errors (internal use)
+            _always_require_zero_exit_code: Whether to always require zero exit code (internal use)
+            action_sampler_config: Action sampler configuration
+            injected_env: If provided, this agent will use this pre-initialized environment
+                instead of creating its own. When set, the agent will skip environment
+                initialization steps (tools installation, env variables) as the coordinator
+                has already handled this. This enables true environment sharing in multi-agent systems.
         """
         self._catch_errors = _catch_errors
         self._always_require_zero_exit_code = _always_require_zero_exit_code
@@ -471,8 +492,15 @@ class DefaultAgent(AbstractAgent):
         self.history_processors = history_processors
         self.max_requeries = max_requeries
         self.logger = get_logger("swea-agent", emoji="🤠")
+
+        # Environment injection support for multi-agent systems
+        self._env_is_injected = injected_env is not None
+        if injected_env is not None:
+            self._env = injected_env
+        else:
+            self._env = None
+
         # Set in run method
-        self._env: SWEEnv | None = None
         self._problem_statement: ProblemStatement | ProblemStatementConfig | None = None
         self.traj_path: Path | None = None
 
@@ -499,11 +527,13 @@ class DefaultAgent(AbstractAgent):
         self._total_execution_time = 0.0
 
     @classmethod
-    def from_config(cls, config: DefaultAgentConfig) -> Self:
+    def from_config(cls, config: DefaultAgentConfig, injected_env: SWEEnv | None = None) -> Self:
         # To ensure that all models stay completely independent, we deepcopy the
         # model config, because it lives on as a property in the model, tools, etc.
         config = config.model_copy(deep=True)
         model = get_model(config.model, config.tools)
+        # Use role field if set, otherwise fall back to name
+        agent_name = config.role if config.role else config.name
         return cls(
             templates=config.templates,
             tools=ToolHandler(config.tools),
@@ -511,6 +541,8 @@ class DefaultAgent(AbstractAgent):
             model=model,
             max_requeries=config.max_requeries,
             action_sampler_config=config.action_sampler,
+            name=agent_name,
+            injected_env=injected_env,
         )
 
     def add_hook(self, hook: AbstractAgentHook) -> None:
@@ -560,19 +592,42 @@ class DefaultAgent(AbstractAgent):
 
     def setup(
         self,
-        env: SWEEnv,
-        problem_statement: ProblemStatement | ProblemStatementConfig,
+        env: SWEEnv | None = None,
+        problem_statement: ProblemStatement | ProblemStatementConfig | None = None,
         output_dir: Path = Path("."),
     ) -> None:
         """Setup the agent for a new instance. This includes
         formatting the system message and adding demonstrations to the history.
 
         This method is called by `self.run`.
+
+        Args:
+            env: Environment to use. If None and no injected_env was provided in __init__,
+                this will cause an error. If injected_env was provided in __init__, this
+                parameter is ignored.
+            problem_statement: Problem statement for this instance
+            output_dir: Directory to save trajectory files
+
+        For sub-agents with injected_env, environment initialization steps
+        (tools installation, env variables) are skipped as they should already
+        be handled by the primary agent or orchestrator.
         """
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Handle environment: use injected if available, otherwise use provided
+        if self._env_is_injected:
+            # Environment was injected in __init__, use it
+            assert self._env is not None, "Injected env should not be None"
+            self.logger.info(f"Agent '{self.name}': using injected environment (shared)")
+        else:
+            # No injected env, must be provided via parameter
+            if env is None:
+                msg = "Environment must be provided either via injected_env in __init__ or env parameter in setup()"
+                raise ValueError(msg)
+            self._env = env
+
         # apply template configuration to multimodal problem statements
-        if hasattr(problem_statement, "type") and problem_statement.type == "swe_bench_multimodal":
+        if problem_statement and hasattr(problem_statement, "type") and problem_statement.type == "swe_bench_multimodal":
             from sweagent.agent.problem_statement import SWEBenchMultimodalProblemStatement
 
             if isinstance(problem_statement, SWEBenchMultimodalProblemStatement):
@@ -581,28 +636,38 @@ class DefaultAgent(AbstractAgent):
                     problem_statement.disable_image_processing = True
 
         self._problem_statement = problem_statement
-        self._env = env
-        iid = self._problem_statement.id
-        self.logger.info("Setting up agent for instance %s", iid)
+        if self._problem_statement:
+            iid = self._problem_statement.id
+            self.logger.info("Setting up agent for instance %s", iid)
 
-        # Save/reset some attributes
-        self.traj_path = output_dir / (self._problem_statement.id + ".traj")
-        self.logger.info("Trajectory will be saved to %s", self.traj_path)
+            # Save/reset some attributes
+            self.traj_path = output_dir / (self._problem_statement.id + ".traj")
+            self.logger.info("Trajectory will be saved to %s", self.traj_path)
 
-        self._chook.on_tools_installation_started()
-        self.tools.install(self._env)
-        self._chook.on_setup_attempt()
+        # Only install tools and set env variables if NOT using injected env
+        # (injected env means the coordinator already did this)
+        if not self._env_is_injected:
+            self._chook.on_tools_installation_started()
+            self.tools.install(self._env)
+            self._chook.on_setup_attempt()
+            assert self._env is not None
+            if self._problem_statement is not None:
+                self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement_for_env()})
+        else:
+            # Sub-agent: skip environment initialization, only trigger hooks for consistency
+            self.logger.info(f"Sub-agent '{self.name}': skipping environment initialization (using injected/shared environment)")
+            self._chook.on_setup_attempt()
+
         self.info = AgentInfo()
         self.info["swe_agent_hash"] = get_agent_commit_hash()
         self.info["swe_agent_version"] = __version__
         self.info["swe_rex_version"] = get_rex_version()
         self.info["swe_rex_hash"] = get_rex_commit_hash()
-        assert self._env is not None
-        assert self._problem_statement is not None
-        self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement_for_env()})
+
         self.add_system_message_to_history()
         self.add_demonstrations_to_history()
-        self.add_instance_template_to_history(state=self.tools.get_state(self._env))
+        if self._env:
+            self.add_instance_template_to_history(state=self.tools.get_state(self._env))
         self._chook.on_setup_done()
 
     def add_system_message_to_history(self) -> None:

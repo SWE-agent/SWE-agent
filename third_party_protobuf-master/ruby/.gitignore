@@ -1,0 +1,13 @@
+*.bundle
+tags
+.idea/
+lib/google/protobuf_java.jar
+protobuf-jruby.iml
+target/
+pkg/
+tmp/
+tests/google/
+ext/google/protobuf_c/third_party/utf8_range/utf8_range.h
+ext/google/protobuf_c/third_party/utf8_range/utf8_range.c
+ext/google/protobuf_c/third_party/utf8_range/LICENSE
+lib/google/protobuf/*_pb.rb
