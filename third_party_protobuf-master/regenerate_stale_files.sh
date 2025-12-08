@@ -33,7 +33,7 @@ done
 # Generate C# code.
 # This doesn't currently have Bazel staleness tests, but there's an existing
 # shell script that generates everything required. The output files are stable,
-# so just regenerating in place should be harmless. 
+# so just regenerating in place should be harmless.
 ${BazelBin} build src/google/protobuf/compiler:protoc "$@"
 (export PROTOC=$PWD/bazel-bin/protoc && cd csharp && ./generate_protos.sh)
 

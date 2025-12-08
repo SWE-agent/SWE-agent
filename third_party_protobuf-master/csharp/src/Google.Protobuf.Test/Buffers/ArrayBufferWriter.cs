@@ -15,7 +15,7 @@ namespace Google.Protobuf.Buffers
 {
     /// <summary>
     /// Represents a heap-based, array-backed output sink into which <typeparam name="T"/> data can be written.
-    /// 
+    ///
     /// ArrayBufferWriter is originally from corefx, and has been contributed to Protobuf
     /// https://github.com/dotnet/runtime/blob/071da4c41aa808c949a773b92dca6f88de9d11f3/src/libraries/Common/src/System/Buffers/ArrayBufferWriter.cs
     /// </summary>

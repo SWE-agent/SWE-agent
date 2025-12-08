@@ -8943,7 +8943,7 @@ TEST_F(FeaturesTest, MapFieldFeaturesInheritedMessageEncoding) {
   BuildDescriptorMessagesInTestPool();
   const FileDescriptor* file = ParseAndBuildFile("foo.proto", R"schema(
     edition = "2023";
-    
+
     option features.message_encoding = DELIMITED;
 
     message Foo {

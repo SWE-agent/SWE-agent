@@ -32,7 +32,8 @@ Int64Value
 Int32Value
 value ("
 UInt32Value
-value ("
+value (
+"
 	BoolValue
 value ("
 StringValue
@@ -40,7 +41,8 @@ Int32Value
 
 BytesValue
 value (Bƒ
-com.google.protobufBWrappersProtoPZ1google.golang.org/protobuf/types/known/wrapperspbø¢GPBªGoogle.Protobuf.WellKnownTypesbproto3'
+com.google.protobufB
+WrappersProtoPZ1google.golang.org/protobuf/types/known/wrapperspbø¢GPBªGoogle.Protobuf.WellKnownTypesbproto3'
         , true);
 
         static::$is_initialized = true;

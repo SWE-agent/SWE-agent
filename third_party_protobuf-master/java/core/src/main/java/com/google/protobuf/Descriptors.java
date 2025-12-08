@@ -2824,7 +2824,7 @@ public final class Descriptors {
               this, "Failed to parse features with Java feature extension registry.", e);
         }
       }
-      
+
       FeatureSet.Builder features;
       if (this.parent == null) {
         Edition edition = getFile().getEdition();

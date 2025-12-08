@@ -84,7 +84,7 @@ that were inputs.
 For example:
 
 ```
-$ cat cc_dist_library_example/BUILD.bazel 
+$ cat cc_dist_library_example/BUILD.bazel
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//pkg:cc_dist_library.bzl", "cc_dist_library")
 

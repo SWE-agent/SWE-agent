@@ -13,88 +13,88 @@ from google.protobuf.duration_pb2 import Duration
 
 
 def from_json_string(value: str) -> Duration:
-  """Converts a string to Duration.
+    """Converts a string to Duration.
 
-  Args:
-    value: A string to be converted. The string must end with 's'. Any
-      fractional digits (or none) are accepted as long as they fit into
-      precision. For example: "1s", "1.01s", "1.0000001s", "-3.100s"
+    Args:
+      value: A string to be converted. The string must end with 's'. Any
+        fractional digits (or none) are accepted as long as they fit into
+        precision. For example: "1s", "1.01s", "1.0000001s", "-3.100s"
 
-  Raises:
-    ValueError: On parsing problems.
-  """
-  duration = Duration()
-  duration.FromJsonString(value)
-  return duration
+    Raises:
+      ValueError: On parsing problems.
+    """
+    duration = Duration()
+    duration.FromJsonString(value)
+    return duration
 
 
 def from_microseconds(micros: float) -> Duration:
-  """Converts microseconds to Duration."""
-  duration = Duration()
-  duration.FromMicroseconds(micros)
-  return duration
+    """Converts microseconds to Duration."""
+    duration = Duration()
+    duration.FromMicroseconds(micros)
+    return duration
 
 
 def from_milliseconds(millis: float) -> Duration:
-  """Converts milliseconds to Duration."""
-  duration = Duration()
-  duration.FromMilliseconds(millis)
-  return duration
+    """Converts milliseconds to Duration."""
+    duration = Duration()
+    duration.FromMilliseconds(millis)
+    return duration
 
 
 def from_nanoseconds(nanos: float) -> Duration:
-  """Converts nanoseconds to Duration."""
-  duration = Duration()
-  duration.FromNanoseconds(nanos)
-  return duration
+    """Converts nanoseconds to Duration."""
+    duration = Duration()
+    duration.FromNanoseconds(nanos)
+    return duration
 
 
 def from_seconds(seconds: float) -> Duration:
-  """Converts seconds to Duration."""
-  duration = Duration()
-  duration.FromSeconds(seconds)
-  return duration
+    """Converts seconds to Duration."""
+    duration = Duration()
+    duration.FromSeconds(seconds)
+    return duration
 
 
 def from_timedelta(td: datetime.timedelta) -> Duration:
-  """Converts timedelta to Duration."""
-  duration = Duration()
-  duration.FromTimedelta(td)
-  return duration
+    """Converts timedelta to Duration."""
+    duration = Duration()
+    duration.FromTimedelta(td)
+    return duration
 
 
 def to_json_string(duration: Duration) -> str:
-  """Converts Duration to string format.
+    """Converts Duration to string format.
 
-  Returns:
-    A string converted from self. The string format will contains
-    3, 6, or 9 fractional digits depending on the precision required to
-    represent the exact Duration value. For example: "1s", "1.010s",
-    "1.000000100s", "-3.100s"
-  """
-  return duration.ToJsonString()
+    Returns:
+      A string converted from self. The string format will contains
+      3, 6, or 9 fractional digits depending on the precision required to
+      represent the exact Duration value. For example: "1s", "1.010s",
+      "1.000000100s", "-3.100s"
+    """
+    return duration.ToJsonString()
 
 
 def to_microseconds(duration: Duration) -> int:
-  """Converts a Duration to microseconds."""
-  return duration.ToMicroseconds()
+    """Converts a Duration to microseconds."""
+    return duration.ToMicroseconds()
 
 
 def to_milliseconds(duration: Duration) -> int:
-  """Converts a Duration to milliseconds."""
-  return duration.ToMilliseconds()
+    """Converts a Duration to milliseconds."""
+    return duration.ToMilliseconds()
 
 
 def to_nanoseconds(duration: Duration) -> int:
-  """Converts a Duration to nanoseconds."""
-  return duration.ToNanoseconds()
+    """Converts a Duration to nanoseconds."""
+    return duration.ToNanoseconds()
 
 
 def to_seconds(duration: Duration) -> int:
-  """Converts a Duration to seconds."""
-  return duration.ToSeconds()
+    """Converts a Duration to seconds."""
+    return duration.ToSeconds()
 
 
 def to_timedelta(duration: Duration) -> datetime.timedelta:
-  """Converts Duration to timedelta."""
-  return duration.ToTimedelta()
+    """Converts Duration to timedelta."""
+    return duration.ToTimedelta()

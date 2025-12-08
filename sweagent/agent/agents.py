@@ -627,7 +627,11 @@ class DefaultAgent(AbstractAgent):
             self._env = env
 
         # apply template configuration to multimodal problem statements
-        if problem_statement and hasattr(problem_statement, "type") and problem_statement.type == "swe_bench_multimodal":
+        if (
+            problem_statement
+            and hasattr(problem_statement, "type")
+            and problem_statement.type == "swe_bench_multimodal"
+        ):
             from sweagent.agent.problem_statement import SWEBenchMultimodalProblemStatement
 
             if isinstance(problem_statement, SWEBenchMultimodalProblemStatement):
@@ -652,10 +656,14 @@ class DefaultAgent(AbstractAgent):
             self._chook.on_setup_attempt()
             assert self._env is not None
             if self._problem_statement is not None:
-                self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement_for_env()})
+                self._env.set_env_variables(
+                    {"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement_for_env()}
+                )
         else:
             # Sub-agent: skip environment initialization, only trigger hooks for consistency
-            self.logger.info(f"Sub-agent '{self.name}': skipping environment initialization (using injected/shared environment)")
+            self.logger.info(
+                f"Sub-agent '{self.name}': skipping environment initialization (using injected/shared environment)"
+            )
             self._chook.on_setup_attempt()
 
         self.info = AgentInfo()

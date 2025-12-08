@@ -9,7 +9,7 @@
 
     Copyright (c) 2006-2008 Michael Roth <mroth@nessie.de>
 
-    Permission is hereby granted, free of charge, to any person 
+    Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
     files (the "Software"), to deal in the Software without restriction,
     including without limitation the rights to use, copy, modify, merge,
@@ -17,7 +17,7 @@
     and to permit persons to whom the Software is furnished to do so,
     subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be 
+    The above copyright notice and this permission notice shall be
     included in all copies or substantial portions of the Software.
 
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -53,16 +53,16 @@ lunit = require "lunit"
 
 local lunit_console
 
-if _VERSION >= 'Lua 5.2' then 
+if _VERSION >= 'Lua 5.2' then
 
     lunit_console = setmetatable({},{__index = _ENV})
     _ENV = lunit_console
-    
+
 else
 
     module( "lunit-console", package.seeall )
     lunit_console = _M
-    
+
 end
 
 
@@ -94,7 +94,7 @@ local msgs = {}
 function begin()
   local total_tc = 0
   local total_tests = 0
-  
+
   msgs = {} -- e
 
   for tcname in lunit.testcases() do

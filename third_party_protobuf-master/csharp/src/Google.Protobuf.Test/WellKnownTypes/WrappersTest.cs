@@ -407,7 +407,7 @@ namespace Google.Protobuf.WellKnownTypes
             output.WriteInt32((int) valueTag); // Sneakily "pretend" it's a tag when it's really a value
             output.WriteTag(valueTag);
             output.WriteInt32(65536);
-            
+
             output.Flush();
             Assert.AreEqual(8, stream.Length); // tag (1 byte) + length (1 byte) + message (6 bytes)
             stream.Position = 0;

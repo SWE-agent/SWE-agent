@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Protocol Buffers - Google's data interchange format
 # Copyright 2019 Google LLC.  All rights reserved.
 # https://developers.google.com/protocol-buffers/
@@ -42,18 +41,19 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import google.protobuf
 
 # -- Project information -----------------------------------------------------
 
-project = u"Protocol Buffers"
-copyright = u"2008, Google LLC"
-author = u"Google LLC"
+project = "Protocol Buffers"
+copyright = "2008, Google LLC"
+author = "Google LLC"
 
 # The short X.Y version
-version = u""
+version = ""
 # The full version, including alpha/beta/rc tags
 release = google.protobuf.__version__
 
@@ -68,10 +68,10 @@ release = google.protobuf.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-  "sphinx.ext.autosummary",
-  "sphinx.ext.ifconfig",
-  "sphinx.ext.intersphinx",
-  "sphinx.ext.napoleon",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -96,7 +96,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = [u"_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -135,9 +135,12 @@ html_show_sourcelink = True
 
 # Remove searchbox.html to avoid embedded JavaScript.
 html_sidebars = {
-  "**": [
-    "globaltoc.html", "localtoc.html", "relations.html", "sourcelink.html",
-  ],
+    "**": [
+        "globaltoc.html",
+        "localtoc.html",
+        "relations.html",
+        "sourcelink.html",
+    ],
 }
 
 
@@ -150,31 +153,31 @@ htmlhelp_basename = "ProtocolBuffersdoc"
 # -- Options for LaTeX output ------------------------------------------------
 
 latex_elements = {
-  # The paper size ('letterpaper' or 'a4paper').
-  #
-  # 'papersize': 'letterpaper',
-  # The font size ('10pt', '11pt' or '12pt').
-  #
-  # 'pointsize': '10pt',
-  # Additional stuff for the LaTeX preamble.
-  #
-  # 'preamble': '',
-  # Latex figure (float) alignment
-  #
-  # 'figure_align': 'htbp',
+    # The paper size ('letterpaper' or 'a4paper').
+    #
+    # 'papersize': 'letterpaper',
+    # The font size ('10pt', '11pt' or '12pt').
+    #
+    # 'pointsize': '10pt',
+    # Additional stuff for the LaTeX preamble.
+    #
+    # 'preamble': '',
+    # Latex figure (float) alignment
+    #
+    # 'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (
-    master_doc,
-    "ProtocolBuffers.tex",
-    "Protocol Buffers Documentation",
-    "Google LLC",
-    "manual",
-  )
+    (
+        master_doc,
+        "ProtocolBuffers.tex",
+        "Protocol Buffers Documentation",
+        "Google LLC",
+        "manual",
+    )
 ]
 
 
@@ -183,13 +186,13 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-  (
-    master_doc,  # source start file
-    "protocolbuffers",  # name
-    "Protocol Buffers Documentation",  # description
-    [author],  # authors
-    1,  # manual section
-  )
+    (
+        master_doc,  # source start file
+        "protocolbuffers",  # name
+        "Protocol Buffers Documentation",  # description
+        [author],  # authors
+        1,  # manual section
+    )
 ]
 
 
@@ -199,15 +202,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (
-    master_doc,
-    "ProtocolBuffers",
-    u"Protocol Buffers Documentation",
-    author,
-    "ProtocolBuffers",
-    "One line description of project.",
-    "Miscellaneous",
-  )
+    (
+        master_doc,
+        "ProtocolBuffers",
+        "Protocol Buffers Documentation",
+        author,
+        "ProtocolBuffers",
+        "One line description of project.",
+        "Miscellaneous",
+    )
 ]
 
 
@@ -244,11 +247,12 @@ intersphinx_mapping = {"https://docs.python.org/": None}
 # builder. We use this to show a banner when built on Read the Docs.
 # https://www.sphinx-doc.org/en/master/usage/extensions/ifconfig.html
 
+
 def setup(app):
-  app.add_config_value(
-    "build_env",
-    # Read the Docs sets a READTHEDOCS environment during builds.
-    # https://docs.readthedocs.io/en/stable/builds.html#build-environment
-    "readthedocs" if os.getenv("READTHEDOCS") else "",
-    "env"
-  )
+    app.add_config_value(
+        "build_env",
+        # Read the Docs sets a READTHEDOCS environment during builds.
+        # https://docs.readthedocs.io/en/stable/builds.html#build-environment
+        "readthedocs" if os.getenv("READTHEDOCS") else "",
+        "env",
+    )

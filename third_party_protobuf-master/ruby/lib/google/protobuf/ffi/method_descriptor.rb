@@ -7,7 +7,7 @@
 
 module Google
   module Protobuf
-    class MethodDescriptor 
+    class MethodDescriptor
       attr :method_def, :descriptor_pool
 
       include Google::Protobuf::Internal::Convert

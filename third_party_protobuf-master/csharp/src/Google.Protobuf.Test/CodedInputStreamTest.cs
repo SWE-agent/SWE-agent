@@ -292,7 +292,7 @@ namespace Google.Protobuf
             Assert.AreEqual(0x7FFFFFFFFFFFFFFFL, ParsingPrimitives.DecodeZigZag64(0xFFFFFFFFFFFFFFFEL));
             Assert.AreEqual(unchecked((long) 0x8000000000000000L), ParsingPrimitives.DecodeZigZag64(0xFFFFFFFFFFFFFFFFL));
         }
-        
+
         [Test]
         public void ReadWholeMessage_VaryingBlockSizes()
         {
@@ -505,7 +505,7 @@ namespace Google.Protobuf
             CodedInputStream input = CodedInputStream.CreateWithLimits(new MemoryStream(atRecursiveLimit.ToByteArray()), 1000000, CodedInputStream.DefaultRecursionLimit - 1);
             Assert.Throws<InvalidProtocolBufferException>(() => TestRecursiveMessage.Parser.ParseFrom(input));
         }
-        
+
         private static byte[] MakeMaliciousRecursionUnknownFieldsPayload(int recursionDepth)
         {
             // generate recursively nested groups that will be parsed as unknown fields
@@ -529,7 +529,7 @@ namespace Google.Protobuf
         {
             byte[] payloadAtRecursiveLimit = MakeMaliciousRecursionUnknownFieldsPayload(CodedInputStream.DefaultRecursionLimit);
             byte[] payloadBeyondRecursiveLimit = MakeMaliciousRecursionUnknownFieldsPayload(CodedInputStream.DefaultRecursionLimit + 1);
-            
+
             Assert.DoesNotThrow(() => TestRecursiveMessage.Parser.ParseFrom(payloadAtRecursiveLimit));
             Assert.Throws<InvalidProtocolBufferException>(() => TestRecursiveMessage.Parser.ParseFrom(payloadBeyondRecursiveLimit));
         }
@@ -732,7 +732,7 @@ namespace Google.Protobuf
             var output = new CodedOutputStream(stream);
             output.WriteTag(1, WireFormat.WireType.LengthDelimited);
             output.WriteString("field 1");
-            
+
             // The outer group...
             output.WriteTag(2, WireFormat.WireType.StartGroup);
             output.WriteTag(1, WireFormat.WireType.Fixed32);

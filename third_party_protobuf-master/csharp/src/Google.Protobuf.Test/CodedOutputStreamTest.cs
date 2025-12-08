@@ -244,7 +244,7 @@ namespace Google.Protobuf
 
                 var bufferWriter = new TestArrayBufferWriter<byte> { MaxGrowBy = blockSize };
                 message.WriteTo(bufferWriter);
-                Assert.AreEqual(rawBytes, bufferWriter.WrittenSpan.ToArray()); 
+                Assert.AreEqual(rawBytes, bufferWriter.WrittenSpan.ToArray());
             }
         }
 
@@ -273,7 +273,7 @@ namespace Google.Protobuf
             ctx.Flush();
             Assert.AreEqual(expectedBytes2, bufferWriter.WrittenSpan.ToArray());
         }
-        
+
         [Test]
         public void EncodeZigZag32()
         {

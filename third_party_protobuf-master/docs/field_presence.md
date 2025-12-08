@@ -32,7 +32,7 @@ The generated API for a proto message includes (de)serialization definitions whi
 
 ### Presence in _named-field mapping_ formats
 
-Protobufs can be represented in human-readable, textual forms. Two notable formats are TextFormat (the output format produced by generated message `DebugString` methods) and JSON. 
+Protobufs can be represented in human-readable, textual forms. Two notable formats are TextFormat (the output format produced by generated message `DebugString` methods) and JSON.
 
 These formats have correctness requirements of their own, and are generally stricter than _tagged-value stream_ formats. However, TextFormat more closely mimics the semantics of the wire format, and does, in certain cases, provide similar semantics (for example, appending repeated name-value mappings to a repeated field). In particular, similar to the wire format, TextFormat only includes fields which are present.
 
@@ -234,7 +234,7 @@ This is the definition used in the "no presence" examples below:
 ```protobuf
 syntax = "proto3";
 package example;
-message Msg {  
+message Msg {
   int32 foo = 1;
 }
 ```

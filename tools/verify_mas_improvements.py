@@ -115,7 +115,7 @@ def check_run_mas_script():
     content = script_path.read_text()
 
     checks = {
-        "默认输出目录": 'default=None' in content and 'default=Path("/tmp/marrs_output")' not in content,
+        "默认输出目录": "default=None" in content and 'default=Path("/tmp/marrs_output")' not in content,
         "帮助文本更新": "auto-generated timestamped" in content.lower() or "timestamp" in content.lower(),
     }
 
@@ -173,9 +173,9 @@ def check_trajectories_directory():
         summary_txt = list(latest.glob("workflow_summary_*.txt"))
 
         if summary_json:
-            print(f"  ✅ 找到 workflow summary JSON 文件")
+            print("  ✅ 找到 workflow summary JSON 文件")
         if summary_txt:
-            print(f"  ✅ 找到 workflow summary TXT 文件")
+            print("  ✅ 找到 workflow summary TXT 文件")
 
     else:
         print("  ℹ️  尚无 MARRS 运行目录（正常，将在首次运行时创建）")
@@ -216,7 +216,7 @@ def main():
         print()
         print("下一步：")
         print("1. 运行多Agent系统测试:")
-        print("   python tools/run_mas.py --repo <repo> --issue_text \"test bug\"")
+        print('   python tools/run_mas.py --repo <repo> --issue_text "test bug"')
         print()
         print("2. 检查输出:")
         print("   ls -lt trajectories/")

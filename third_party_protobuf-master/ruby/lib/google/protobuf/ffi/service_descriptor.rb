@@ -80,7 +80,7 @@ module Google
       private
 
       def initialize(service_def, descriptor_pool)
-        @service_def = service_def 
+        @service_def = service_def
         @descriptor_pool = descriptor_pool
       end
 

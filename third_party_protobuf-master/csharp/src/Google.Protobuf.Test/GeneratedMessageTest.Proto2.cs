@@ -384,7 +384,7 @@ namespace Google.Protobuf
             message.SetExtension(TestNestedExtension.Extensions.OptionalGroupExtension, new TestNestedExtension.Types.OptionalGroup_extension { A = 10 });
 
             MessageParsingHelpers.AssertWritingMessage(message);
-            
+
             MessageParsingHelpers.AssertRoundtrip(
                 TestGroupExtension.Parser.WithExtensionRegistry(new ExtensionRegistry() { TestNestedExtension.Extensions.OptionalGroupExtension }),
                 message);

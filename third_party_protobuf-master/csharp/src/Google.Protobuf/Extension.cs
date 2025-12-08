@@ -37,7 +37,7 @@ namespace Google.Protobuf
     }
 
     /// <summary>
-    /// Represents a type-safe extension identifier used for getting and setting single extension values in <see cref="IExtendableMessage{T}"/> instances. 
+    /// Represents a type-safe extension identifier used for getting and setting single extension values in <see cref="IExtendableMessage{T}"/> instances.
     /// This API is experimental and subject to change.
     /// </summary>
     /// <typeparam name="TTarget">The message type this field applies to</typeparam>

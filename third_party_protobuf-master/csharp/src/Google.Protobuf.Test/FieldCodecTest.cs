@@ -111,7 +111,7 @@ namespace Google.Protobuf
                 {
                     ctx.CopyStateTo(codedOutput);
                 }
-                
+
                 codedOutput.Flush();
                 stream.Position = 0;
                 var codedInput = new CodedInputStream(stream);
@@ -170,7 +170,7 @@ namespace Google.Protobuf
                     {
                         ctx.CopyStateTo(codedOutput);
                     }
-                    
+
                     codedOutput.Flush();
                     Assert.AreNotEqual(0, stream.Position);
                     Assert.AreEqual(stream.Position, codec.ValueSizeCalculator(codec.DefaultValue));

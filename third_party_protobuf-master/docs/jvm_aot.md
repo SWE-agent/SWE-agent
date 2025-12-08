@@ -10,11 +10,11 @@ goals as GraalVM's native-image tool.
 
 ## GraalVM native-image
 
-The GraalVM `native-image` tool can be configured with options for the  
-[Java Native Interface](https://www.graalvm.org/22.0/reference-manual/native-image/JNI/) (JNI), 
+The GraalVM `native-image` tool can be configured with options for the
+[Java Native Interface](https://www.graalvm.org/22.0/reference-manual/native-image/JNI/) (JNI),
 http proxying, reflection, and other resources. While these
-configuration options can be manually specified in JSON files, we recommend 
-that you exercise the application with 
+configuration options can be manually specified in JSON files, we recommend
+that you exercise the application with
 [the assisted configuration agent](https://www.graalvm.org/reference-manual/native-image/BuildConfiguration/#assisted-configuration-of-native-image-builds). The agent
 will generate native-image.properties files that you add to the project's
 META-INF/native-image/ directory. The  Native Image builder uses configuration options provided in META-INF/native-image/ to construct native-image command line arguments.

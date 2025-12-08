@@ -57,8 +57,8 @@ public interface IExtendableMessage<T> : IMessage<T> where T : IExtendableMessag
 
 ### Extensions
 
-Extensions are generated in static containers like reflection classes and type classes. 
-For example for a file called `foo.proto` containing extensions in the file scope, a 
+Extensions are generated in static containers like reflection classes and type classes.
+For example for a file called `foo.proto` containing extensions in the file scope, a
 `FooExtensions` class is created containing the extensions defined in the file scope.
 For easy access, this class can be used with `using static` to bring all extensions into scope.
 
@@ -97,7 +97,7 @@ foo.GetOrInitializeExtension(RepeatedFooExt).Add(new Baz());
 
 ### Message initialization
 
-Initialization refers to checking the status of required fields in a proto2 message. If a message is uninitialized, not all required fields are set in either the message itself or any of its submessages. In other languages, missing required fields throw errors depending on the merge method used. This could cause unforeseen errors at runtime if the incorrect method is used. 
+Initialization refers to checking the status of required fields in a proto2 message. If a message is uninitialized, not all required fields are set in either the message itself or any of its submessages. In other languages, missing required fields throw errors depending on the merge method used. This could cause unforeseen errors at runtime if the incorrect method is used.
 However, in this implementation, parsers and input streams don't check messages for initialization on their own and throw errors. Instead it's up to you to handle messages with missing required fields in whatever way you see fit.
 Checking message initialization can be done manually via the `IsInitialized` extension method in `MessageExtensions`.
 
@@ -114,8 +114,8 @@ message Baz {
 }
 ```
 ```cs
-var registry = new ExtensionRegistry() 
-{ 
+var registry = new ExtensionRegistry()
+{
     Baz.Extensions.FooExt
 };
 var foo = Foo.Factory.WithExtensionRegistry(registry).ParseFrom(input);
@@ -126,7 +126,7 @@ Assert.False(foo.HasExtension(Bas.Extensions.FooExt));
 
 ### Custom options
 
-Due to their limited use and lack of type safety, the original `CustomOptions` APIs are now deprecated. Using the new generated extension identifiers, you can access extensions safely through the GetOption APIs. Note that cloneable values such as 
+Due to their limited use and lack of type safety, the original `CustomOptions` APIs are now deprecated. Using the new generated extension identifiers, you can access extensions safely through the GetOption APIs. Note that cloneable values such as
 repeated fields and messages will be deep cloned.
 
 Example based on custom options usage example [here](https://github.com/protocolbuffers/protobuf/issues/5007#issuecomment-411604515).

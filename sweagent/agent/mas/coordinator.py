@@ -13,14 +13,12 @@ Key Design Principles:
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
-from jinja2 import Template
 
 from sweagent.agent.agents import DefaultAgent, DefaultAgentConfig
 from sweagent.agent.problem_statement import TextProblemStatement
@@ -153,7 +151,7 @@ class RepairCoordinator:
             Final patch as string
         """
         logger.info("=" * 60)
-        logger.info(f"Starting Star Topology Repair Workflow")
+        logger.info("Starting Star Topology Repair Workflow")
         logger.info(f"  Request ID: {request_id}")
         logger.info("=" * 60)
 
@@ -272,7 +270,7 @@ class RepairCoordinator:
         logger.info("  Running RCA agent...")
 
         # Store the history before running (in case of shared state issues)
-        pre_run_history_length = len(rca_agent.history) if hasattr(rca_agent, 'history') else 0
+        pre_run_history_length = len(rca_agent.history) if hasattr(rca_agent, "history") else 0
 
         result = rca_agent.run(
             env=None,  # Agent uses injected_env
@@ -282,12 +280,12 @@ class RepairCoordinator:
 
         # 4. Store RCA agent's history in global context for later reference
         # This preserves the complete conversation history of the RCA agent
-        if hasattr(rca_agent, 'history'):
+        if hasattr(rca_agent, "history"):
             self.global_context["rca_history"] = rca_agent.history.copy()
             logger.info(f"  Preserved RCA agent history ({len(rca_agent.history)} entries)")
 
         # Store trajectory as well
-        if hasattr(rca_agent, 'trajectory'):
+        if hasattr(rca_agent, "trajectory"):
             self.global_context["rca_trajectory"] = rca_agent.trajectory.copy()
             logger.info(f"  Preserved RCA agent trajectory ({len(rca_agent.trajectory)} steps)")
 
@@ -336,11 +334,16 @@ class RepairCoordinator:
                 # Extract file mentions from thoughts
                 if thought:
                     # Look for file references (common patterns)
-                    if any(indicator in thought.lower() for indicator in ["file:", "in file", ".py", ".js", ".java", ".go"]):
+                    if any(
+                        indicator in thought.lower() for indicator in ["file:", "in file", ".py", ".js", ".java", ".go"]
+                    ):
                         sections["files"].append(thought)
 
                     # Look for root cause analysis
-                    if any(indicator in thought.lower() for indicator in ["root cause", "because", "issue is", "bug is", "problem is"]):
+                    if any(
+                        indicator in thought.lower()
+                        for indicator in ["root cause", "because", "issue is", "bug is", "problem is"]
+                    ):
                         sections["root_cause"].append(thought)
 
                     # Look for error analysis
@@ -506,11 +509,11 @@ class RepairCoordinator:
         )
 
         # 5. Store Patch agent's history in global context
-        if hasattr(patch_agent, 'history'):
+        if hasattr(patch_agent, "history"):
             self.global_context["patch_history"] = patch_agent.history.copy()
             logger.info(f"  Preserved Patch agent history ({len(patch_agent.history)} entries)")
 
-        if hasattr(patch_agent, 'trajectory'):
+        if hasattr(patch_agent, "trajectory"):
             self.global_context["patch_trajectory"] = patch_agent.trajectory.copy()
             logger.info(f"  Preserved Patch agent trajectory ({len(patch_agent.trajectory)} steps)")
 
@@ -615,16 +618,20 @@ IMPORTANT:
             "agents": {
                 "rca": {
                     "name": self.rca_config.name,
-                    "role": self.rca_config.role if hasattr(self.rca_config, 'role') else "rca",
-                    "model": self.rca_config.model.name if hasattr(self.rca_config.model, 'name') else str(self.rca_config.model),
+                    "role": self.rca_config.role if hasattr(self.rca_config, "role") else "rca",
+                    "model": self.rca_config.model.name
+                    if hasattr(self.rca_config.model, "name")
+                    else str(self.rca_config.model),
                     "history_entries": len(self.global_context.get("rca_history", [])),
                     "trajectory_steps": len(self.global_context.get("rca_trajectory", [])),
                     "trajectory_file": f"rca/{request_id}/{request_id}_rca.traj",
                 },
                 "patch": {
                     "name": self.patch_config.name,
-                    "role": self.patch_config.role if hasattr(self.patch_config, 'role') else "patch",
-                    "model": self.patch_config.model.name if hasattr(self.patch_config.model, 'name') else str(self.patch_config.model),
+                    "role": self.patch_config.role if hasattr(self.patch_config, "role") else "patch",
+                    "model": self.patch_config.model.name
+                    if hasattr(self.patch_config.model, "name")
+                    else str(self.patch_config.model),
                     "history_entries": len(self.global_context.get("patch_history", [])),
                     "trajectory_steps": len(self.global_context.get("patch_trajectory", [])),
                     "trajectory_file": f"patch/{request_id}/{request_id}_patch.traj",

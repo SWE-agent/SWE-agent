@@ -288,7 +288,7 @@ namespace Google.Protobuf
 
             output.WriteTag(TestMap.MapInt32Int32FieldNumber, WireFormat.WireType.LengthDelimited);
 
-            var key = 10; // Field 1 
+            var key = 10; // Field 1
             var value = 20; // Field 2
             var extra = 30; // Field 3
 

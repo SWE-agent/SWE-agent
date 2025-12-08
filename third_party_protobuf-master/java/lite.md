@@ -39,8 +39,8 @@ For example, `3.25.3`.
 
 ## R8 rule to make production app builds work
 
-The Lite runtime internally uses reflection to avoid generating hashCode/equals/(de)serialization methods. 
-R8 by default obfuscates the field names, which makes the reflection fail causing exceptions of the form 
+The Lite runtime internally uses reflection to avoid generating hashCode/equals/(de)serialization methods.
+R8 by default obfuscates the field names, which makes the reflection fail causing exceptions of the form
 `java.lang.RuntimeException: Field {NAME}_ for {CLASS} not found. Known fields are [ {FIELDS} ]` in MessageSchema.java.
 
 There are open issues for this on the [protobuf Github project](https://github.com/protocolbuffers/protobuf/issues/6463) and [R8](https://issuetracker.google.com/issues/144631039).

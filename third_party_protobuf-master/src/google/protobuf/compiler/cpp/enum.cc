@@ -576,7 +576,7 @@ void EnumGenerator::GenerateMethods(int idx, io::Printer* p) {
         R"(
           #if (__cplusplus < 201703) && \
             (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
-          
+
           $constexpr_storage$;
           constexpr $Msg_Enum$ $Msg_$::$Enum$_MIN;
           constexpr $Msg_Enum$ $Msg_$::$Enum$_MAX;

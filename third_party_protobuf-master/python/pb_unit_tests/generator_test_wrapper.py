@@ -28,8 +28,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from google.protobuf.internal.generator_test import *
 import unittest
 
-if __name__ == '__main__':
-  unittest.main(verbosity=2)
+from google.protobuf.internal.generator_test import *
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

@@ -18,13 +18,13 @@ namespace Google.Protobuf
         /// <summary>
         /// Internal implementation of merging data from given parse context into this message.
         /// Users should never invoke this method directly.
-        /// </summary>        
+        /// </summary>
         void InternalMergeFrom(ref ParseContext ctx);
 
         /// <summary>
         /// Internal implementation of writing this message to a given write context.
         /// Users should never invoke this method directly.
-        /// </summary>        
+        /// </summary>
         void InternalWriteTo(ref WriteContext ctx);
     }
 }

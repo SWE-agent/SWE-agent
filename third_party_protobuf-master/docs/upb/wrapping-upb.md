@@ -29,7 +29,7 @@ A protobuf implementation consists of two main pieces:
 
 ```dot {align="center"}
 digraph {
-    rankdir=LR; 
+    rankdir=LR;
     newrank=true;
     node [style="rounded,filled" shape=box]
     "foo.proto" -> protoc;
@@ -105,7 +105,7 @@ want to use minitables.
 
 Reflection-based data access makes the most sense in highly dynamic language
 interpreters, where method dispatch is generally resolved via strings and hash
-table lookups.  
+table lookups.
 
 In such languages, you can often implement a special method like `__getattr__`
 (Python) or `method_missing` (Ruby) that receives the method name as a string.

@@ -252,7 +252,7 @@ module CommonTests
     l3 = l + l.dup
     assert_equal l3.count, l.count * 2
     l.count.times do |i|
-      assert_equal l[i], l3[i] 
+      assert_equal l[i], l3[i]
       assert_equal l[i], l3[l.count + i]
     end
 

@@ -29,9 +29,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import unittest
+
 from google.protobuf.internal.descriptor_pool_test import *
 
 SecondaryDescriptorFromDescriptorDB.testErrorCollector.__unittest_expecting_failure__ = True
 
-if __name__ == '__main__':
-  unittest.main(verbosity=2)
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

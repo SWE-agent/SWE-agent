@@ -144,8 +144,8 @@ namespace Google.Protobuf
             if (ReferenceEquals(this, other))
                 return true;
 
-            return other is RepeatedExtensionValue<T> 
-                && field.Equals((other as RepeatedExtensionValue<T>).field) 
+            return other is RepeatedExtensionValue<T>
+                && field.Equals((other as RepeatedExtensionValue<T>).field)
                 && codec.Equals((other as RepeatedExtensionValue<T>).codec);
         }
 

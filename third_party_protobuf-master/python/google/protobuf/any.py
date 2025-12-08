@@ -7,33 +7,28 @@
 
 """Contains the Any helper APIs."""
 
-from typing import Optional
-
 from google.protobuf import descriptor
-from google.protobuf.message import Message
-
 from google.protobuf.any_pb2 import Any
+from google.protobuf.message import Message
 
 
 def pack(
     msg: Message,
-    type_url_prefix: Optional[str] = 'type.googleapis.com/',
-    deterministic: Optional[bool] = None,
+    type_url_prefix: str | None = "type.googleapis.com/",
+    deterministic: bool | None = None,
 ) -> Any:
-  any_msg = Any()
-  any_msg.Pack(
-      msg=msg, type_url_prefix=type_url_prefix, deterministic=deterministic
-  )
-  return any_msg
+    any_msg = Any()
+    any_msg.Pack(msg=msg, type_url_prefix=type_url_prefix, deterministic=deterministic)
+    return any_msg
 
 
 def unpack(any_msg: Any, msg: Message) -> bool:
-  return any_msg.Unpack(msg=msg)
+    return any_msg.Unpack(msg=msg)
 
 
 def type_name(any_msg: Any) -> str:
-  return any_msg.TypeName()
+    return any_msg.TypeName()
 
 
 def is_type(any_msg: Any, des: descriptor.Descriptor) -> bool:
-  return any_msg.Is(des)
+    return any_msg.Is(des)

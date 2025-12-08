@@ -10,18 +10,18 @@ expect contributors to follow.
   We also appreciate bug reports, even when they don't come with a patch.
   Bug fixes without tests are usually not accepted.
 * New APIs and features with adequate test coverage and documentation
-  may be accepted if they do not compromise backwards 
+  may be accepted if they do not compromise backwards
   compatibility. However there's a fairly high bar of usefulness a new public
-  method must clear before it will be accepted. Features that are fine in 
-  isolation are often rejected because they don't have enough impact to justify the 
-  conceptual burden and ongoing maintenance cost. It's best to file an issue 
+  method must clear before it will be accepted. Features that are fine in
+  isolation are often rejected because they don't have enough impact to justify the
+  conceptual burden and ongoing maintenance cost. It's best to file an issue
   and get agreement from maintainers on the value of a new feature before
   working on a PR.
-* Performance optimizations may be accepted if they have convincing benchmarks that demonstrate 
-  an improvement and they do not significantly increase complexity.  
+* Performance optimizations may be accepted if they have convincing benchmarks that demonstrate
+  an improvement and they do not significantly increase complexity.
 * Changes to existing APIs are almost never accepted. Stability and
-  backwards compatibility are paramount. In the unlikely event a breaking change 
-  is required, it must usually be implemented in google3 first. 
+  backwards compatibility are paramount. In the unlikely event a breaking change
+  is required, it must usually be implemented in google3 first.
 * Changes to the wire and text formats are never accepted. Any breaking change
   to these formats would have to be implemented as a completely new format.
   We cannot begin generating protos that cannot be parsed by existing code.

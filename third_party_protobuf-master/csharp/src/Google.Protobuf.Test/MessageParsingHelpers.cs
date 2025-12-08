@@ -97,7 +97,7 @@ namespace Google.Protobuf
             // serialize using CodedOutputStream
             var bytes = message.ToByteArray();
 
-            int messageSize = message.CalculateSize(); 
+            int messageSize = message.CalculateSize();
             Assert.AreEqual(message.CalculateSize(), bytes.Length);
 
             // serialize using IBufferWriter and check it leads to the same output

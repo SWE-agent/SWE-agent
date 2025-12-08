@@ -20,7 +20,7 @@ class Api
             '
 …
 google/protobuf/api.protogoogle.protobufgoogle/protobuf/type.proto"Å
-Api
+Api
 name (	(
 methods (2.google.protobuf.Method(
 options (2.google.protobuf.Option
@@ -28,7 +28,7 @@ class Api
 source_context (2.google.protobuf.SourceContext&
 mixins (2.google.protobuf.Mixin\'
 syntax (2.google.protobuf.Syntax"’
-Method
+Method
 name (	
 request_type_url (	
 request_streaming (
@@ -36,8 +36,8 @@ class Api
 response_streaming ((
 options (2.google.protobuf.Option\'
 syntax (2.google.protobuf.Syntax"#
-Mixin
-name (	
+Mixin
+name (	
 root (	Bv
 com.google.protobufBApiProtoPZ,google.golang.org/protobuf/types/known/apipb¢GPB™Google.Protobuf.WellKnownTypesbproto3'
         , true);

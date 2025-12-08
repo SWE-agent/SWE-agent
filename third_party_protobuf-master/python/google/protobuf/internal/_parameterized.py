@@ -120,7 +120,7 @@ be wrapped into a tuple:
       self.assertTrue(IsNegative(arg))
 """
 
-__author__ = 'tmarek@google.com (Torsten Marek)'
+__author__ = "tmarek@google.com (Torsten Marek)"
 
 import functools
 import re
@@ -129,292 +129,282 @@ import unittest
 import uuid
 
 try:
-  # Since python 3
-  import collections.abc as collections_abc
+    # Since python 3
+    import collections.abc as collections_abc
 except ImportError:
-  # Won't work after python 3.8
-  import collections as collections_abc
+    # Won't work after python 3.8
+    import collections as collections_abc
 
-ADDR_RE = re.compile(r'\<([a-zA-Z0-9_\-\.]+) object at 0x[a-fA-F0-9]+\>')
+ADDR_RE = re.compile(r"\<([a-zA-Z0-9_\-\.]+) object at 0x[a-fA-F0-9]+\>")
 _SEPARATOR = uuid.uuid1().hex
 _FIRST_ARG = object()
 _ARGUMENT_REPR = object()
 
 
 def _CleanRepr(obj):
-  return ADDR_RE.sub(r'<\1>', repr(obj))
+    return ADDR_RE.sub(r"<\1>", repr(obj))
 
 
 # Helper function formerly from the unittest module, removed from it in
 # Python 2.7.
 def _StrClass(cls):
-  return '%s.%s' % (cls.__module__, cls.__name__)
+    return "%s.%s" % (cls.__module__, cls.__name__)
 
 
 def _NonStringIterable(obj):
-  return (isinstance(obj, collections_abc.Iterable) and
-          not isinstance(obj, str))
+    return isinstance(obj, collections_abc.Iterable) and not isinstance(obj, str)
 
 
 def _FormatParameterList(testcase_params):
-  if isinstance(testcase_params, collections_abc.Mapping):
-    return ', '.join('%s=%s' % (argname, _CleanRepr(value))
-                     for argname, value in testcase_params.items())
-  elif _NonStringIterable(testcase_params):
-    return ', '.join(map(_CleanRepr, testcase_params))
-  else:
-    return _FormatParameterList((testcase_params,))
+    if isinstance(testcase_params, collections_abc.Mapping):
+        return ", ".join("%s=%s" % (argname, _CleanRepr(value)) for argname, value in testcase_params.items())
+    elif _NonStringIterable(testcase_params):
+        return ", ".join(map(_CleanRepr, testcase_params))
+    else:
+        return _FormatParameterList((testcase_params,))
 
 
-class _ParameterizedTestIter(object):
-  """Callable and iterable class for producing new test cases."""
+class _ParameterizedTestIter:
+    """Callable and iterable class for producing new test cases."""
 
-  def __init__(self, test_method, testcases, naming_type):
-    """Returns concrete test functions for a test and a list of parameters.
+    def __init__(self, test_method, testcases, naming_type):
+        """Returns concrete test functions for a test and a list of parameters.
 
-    The naming_type is used to determine the name of the concrete
-    functions as reported by the unittest framework. If naming_type is
-    _FIRST_ARG, the testcases must be tuples, and the first element must
-    have a string representation that is a valid Python identifier.
+        The naming_type is used to determine the name of the concrete
+        functions as reported by the unittest framework. If naming_type is
+        _FIRST_ARG, the testcases must be tuples, and the first element must
+        have a string representation that is a valid Python identifier.
 
-    Args:
-      test_method: The decorated test method.
-      testcases: (list of tuple/dict) A list of parameter
-                 tuples/dicts for individual test invocations.
-      naming_type: The test naming type, either _NAMED or _ARGUMENT_REPR.
-    """
-    self._test_method = test_method
-    self.testcases = testcases
-    self._naming_type = naming_type
+        Args:
+          test_method: The decorated test method.
+          testcases: (list of tuple/dict) A list of parameter
+                     tuples/dicts for individual test invocations.
+          naming_type: The test naming type, either _NAMED or _ARGUMENT_REPR.
+        """
+        self._test_method = test_method
+        self.testcases = testcases
+        self._naming_type = naming_type
 
-  def __call__(self, *args, **kwargs):
-    raise RuntimeError('You appear to be running a parameterized test case '
-                       'without having inherited from parameterized.'
-                       'TestCase. This is bad because none of '
-                       'your test cases are actually being run.')
+    def __call__(self, *args, **kwargs):
+        raise RuntimeError(
+            "You appear to be running a parameterized test case "
+            "without having inherited from parameterized."
+            "TestCase. This is bad because none of "
+            "your test cases are actually being run."
+        )
 
-  def __iter__(self):
-    test_method = self._test_method
-    naming_type = self._naming_type
+    def __iter__(self):
+        test_method = self._test_method
+        naming_type = self._naming_type
 
-    def MakeBoundParamTest(testcase_params):
-      @functools.wraps(test_method)
-      def BoundParamTest(self):
-        if isinstance(testcase_params, collections_abc.Mapping):
-          test_method(self, **testcase_params)
-        elif _NonStringIterable(testcase_params):
-          test_method(self, *testcase_params)
-        else:
-          test_method(self, testcase_params)
+        def MakeBoundParamTest(testcase_params):
+            @functools.wraps(test_method)
+            def BoundParamTest(self):
+                if isinstance(testcase_params, collections_abc.Mapping):
+                    test_method(self, **testcase_params)
+                elif _NonStringIterable(testcase_params):
+                    test_method(self, *testcase_params)
+                else:
+                    test_method(self, testcase_params)
 
-      if naming_type is _FIRST_ARG:
-        # Signal the metaclass that the name of the test function is unique
-        # and descriptive.
-        BoundParamTest.__x_use_name__ = True
-        BoundParamTest.__name__ += str(testcase_params[0])
-        testcase_params = testcase_params[1:]
-      elif naming_type is _ARGUMENT_REPR:
-        # __x_extra_id__ is used to pass naming information to the __new__
-        # method of TestGeneratorMetaclass.
-        # The metaclass will make sure to create a unique, but nondescriptive
-        # name for this test.
-        BoundParamTest.__x_extra_id__ = '(%s)' % (
-            _FormatParameterList(testcase_params),)
-      else:
-        raise RuntimeError('%s is not a valid naming type.' % (naming_type,))
+            if naming_type is _FIRST_ARG:
+                # Signal the metaclass that the name of the test function is unique
+                # and descriptive.
+                BoundParamTest.__x_use_name__ = True
+                BoundParamTest.__name__ += str(testcase_params[0])
+                testcase_params = testcase_params[1:]
+            elif naming_type is _ARGUMENT_REPR:
+                # __x_extra_id__ is used to pass naming information to the __new__
+                # method of TestGeneratorMetaclass.
+                # The metaclass will make sure to create a unique, but nondescriptive
+                # name for this test.
+                BoundParamTest.__x_extra_id__ = "(%s)" % (_FormatParameterList(testcase_params),)
+            else:
+                raise RuntimeError("%s is not a valid naming type." % (naming_type,))
 
-      BoundParamTest.__doc__ = '%s(%s)' % (
-          BoundParamTest.__name__, _FormatParameterList(testcase_params))
-      if test_method.__doc__:
-        BoundParamTest.__doc__ += '\n%s' % (test_method.__doc__,)
-      return BoundParamTest
-    return (MakeBoundParamTest(c) for c in self.testcases)
+            BoundParamTest.__doc__ = "%s(%s)" % (BoundParamTest.__name__, _FormatParameterList(testcase_params))
+            if test_method.__doc__:
+                BoundParamTest.__doc__ += "\n%s" % (test_method.__doc__,)
+            return BoundParamTest
+
+        return (MakeBoundParamTest(c) for c in self.testcases)
 
 
 def _IsSingletonList(testcases):
-  """True iff testcases contains only a single non-tuple element."""
-  return len(testcases) == 1 and not isinstance(testcases[0], tuple)
+    """True iff testcases contains only a single non-tuple element."""
+    return len(testcases) == 1 and not isinstance(testcases[0], tuple)
 
 
 def _ModifyClass(class_object, testcases, naming_type):
-  assert not getattr(class_object, '_id_suffix', None), (
-      'Cannot add parameters to %s,'
-      ' which already has parameterized methods.' % (class_object,))
-  class_object._id_suffix = id_suffix = {}
-  # We change the size of __dict__ while we iterate over it,
-  # which Python 3.x will complain about, so use copy().
-  for name, obj in class_object.__dict__.copy().items():
-    if (name.startswith(unittest.TestLoader.testMethodPrefix)
-        and isinstance(obj, types.FunctionType)):
-      delattr(class_object, name)
-      methods = {}
-      _UpdateClassDictForParamTestCase(
-          methods, id_suffix, name,
-          _ParameterizedTestIter(obj, testcases, naming_type))
-      for name, meth in methods.items():
-        setattr(class_object, name, meth)
+    assert not getattr(class_object, "_id_suffix", None), (
+        "Cannot add parameters to %s, which already has parameterized methods." % (class_object,)
+    )
+    class_object._id_suffix = id_suffix = {}
+    # We change the size of __dict__ while we iterate over it,
+    # which Python 3.x will complain about, so use copy().
+    for name, obj in class_object.__dict__.copy().items():
+        if name.startswith(unittest.TestLoader.testMethodPrefix) and isinstance(obj, types.FunctionType):
+            delattr(class_object, name)
+            methods = {}
+            _UpdateClassDictForParamTestCase(
+                methods, id_suffix, name, _ParameterizedTestIter(obj, testcases, naming_type)
+            )
+            for name, meth in methods.items():
+                setattr(class_object, name, meth)
 
 
 def _ParameterDecorator(naming_type, testcases):
-  """Implementation of the parameterization decorators.
+    """Implementation of the parameterization decorators.
 
-  Args:
-    naming_type: The naming type.
-    testcases: Testcase parameters.
+    Args:
+      naming_type: The naming type.
+      testcases: Testcase parameters.
 
-  Returns:
-    A function for modifying the decorated object.
-  """
-  def _Apply(obj):
-    if isinstance(obj, type):
-      _ModifyClass(
-          obj,
-          list(testcases) if not isinstance(testcases, collections_abc.Sequence)
-          else testcases,
-          naming_type)
-      return obj
-    else:
-      return _ParameterizedTestIter(obj, testcases, naming_type)
+    Returns:
+      A function for modifying the decorated object.
+    """
 
-  if _IsSingletonList(testcases):
-    assert _NonStringIterable(testcases[0]), (
-        'Single parameter argument must be a non-string iterable')
-    testcases = testcases[0]
+    def _Apply(obj):
+        if isinstance(obj, type):
+            _ModifyClass(
+                obj, list(testcases) if not isinstance(testcases, collections_abc.Sequence) else testcases, naming_type
+            )
+            return obj
+        else:
+            return _ParameterizedTestIter(obj, testcases, naming_type)
 
-  return _Apply
+    if _IsSingletonList(testcases):
+        assert _NonStringIterable(testcases[0]), "Single parameter argument must be a non-string iterable"
+        testcases = testcases[0]
+
+    return _Apply
 
 
 def parameters(*testcases):  # pylint: disable=invalid-name
-  """A decorator for creating parameterized tests.
+    """A decorator for creating parameterized tests.
 
-  See the module docstring for a usage example.
-  Args:
-    *testcases: Parameters for the decorated method, either a single
-                iterable, or a list of tuples/dicts/objects (for tests
-                with only one argument).
+    See the module docstring for a usage example.
+    Args:
+      *testcases: Parameters for the decorated method, either a single
+                  iterable, or a list of tuples/dicts/objects (for tests
+                  with only one argument).
 
-  Returns:
-     A test generator to be handled by TestGeneratorMetaclass.
-  """
-  return _ParameterDecorator(_ARGUMENT_REPR, testcases)
+    Returns:
+       A test generator to be handled by TestGeneratorMetaclass.
+    """
+    return _ParameterDecorator(_ARGUMENT_REPR, testcases)
 
 
 def named_parameters(*testcases):  # pylint: disable=invalid-name
-  """A decorator for creating parameterized tests.
+    """A decorator for creating parameterized tests.
 
-  See the module docstring for a usage example. The first element of
-  each parameter tuple should be a string and will be appended to the
-  name of the test method.
+    See the module docstring for a usage example. The first element of
+    each parameter tuple should be a string and will be appended to the
+    name of the test method.
 
-  Args:
-    *testcases: Parameters for the decorated method, either a single
-                iterable, or a list of tuples.
+    Args:
+      *testcases: Parameters for the decorated method, either a single
+                  iterable, or a list of tuples.
 
-  Returns:
-     A test generator to be handled by TestGeneratorMetaclass.
-  """
-  return _ParameterDecorator(_FIRST_ARG, testcases)
+    Returns:
+       A test generator to be handled by TestGeneratorMetaclass.
+    """
+    return _ParameterDecorator(_FIRST_ARG, testcases)
 
 
 class TestGeneratorMetaclass(type):
-  """Metaclass for test cases with test generators.
+    """Metaclass for test cases with test generators.
 
-  A test generator is an iterable in a testcase that produces callables. These
-  callables must be single-argument methods. These methods are injected into
-  the class namespace and the original iterable is removed. If the name of the
-  iterable conforms to the test pattern, the injected methods will be picked
-  up as tests by the unittest framework.
+    A test generator is an iterable in a testcase that produces callables. These
+    callables must be single-argument methods. These methods are injected into
+    the class namespace and the original iterable is removed. If the name of the
+    iterable conforms to the test pattern, the injected methods will be picked
+    up as tests by the unittest framework.
 
-  In general, it is supposed to be used in conjunction with the
-  parameters decorator.
-  """
+    In general, it is supposed to be used in conjunction with the
+    parameters decorator.
+    """
 
-  def __new__(mcs, class_name, bases, dct):
-    dct['_id_suffix'] = id_suffix = {}
-    for name, obj in dct.copy().items():
-      if (name.startswith(unittest.TestLoader.testMethodPrefix) and
-          _NonStringIterable(obj)):
-        iterator = iter(obj)
-        dct.pop(name)
-        _UpdateClassDictForParamTestCase(dct, id_suffix, name, iterator)
+    def __new__(mcs, class_name, bases, dct):
+        dct["_id_suffix"] = id_suffix = {}
+        for name, obj in dct.copy().items():
+            if name.startswith(unittest.TestLoader.testMethodPrefix) and _NonStringIterable(obj):
+                iterator = iter(obj)
+                dct.pop(name)
+                _UpdateClassDictForParamTestCase(dct, id_suffix, name, iterator)
 
-    return type.__new__(mcs, class_name, bases, dct)
+        return type.__new__(mcs, class_name, bases, dct)
 
 
 def _UpdateClassDictForParamTestCase(dct, id_suffix, name, iterator):
-  """Adds individual test cases to a dictionary.
+    """Adds individual test cases to a dictionary.
 
-  Args:
-    dct: The target dictionary.
-    id_suffix: The dictionary for mapping names to test IDs.
-    name: The original name of the test case.
-    iterator: The iterator generating the individual test cases.
-  """
-  for idx, func in enumerate(iterator):
-    assert callable(func), 'Test generators must yield callables, got %r' % (
-        func,)
-    if getattr(func, '__x_use_name__', False):
-      new_name = func.__name__
-    else:
-      new_name = '%s%s%d' % (name, _SEPARATOR, idx)
-    assert new_name not in dct, (
-        'Name of parameterized test case "%s" not unique' % (new_name,))
-    dct[new_name] = func
-    id_suffix[new_name] = getattr(func, '__x_extra_id__', '')
+    Args:
+      dct: The target dictionary.
+      id_suffix: The dictionary for mapping names to test IDs.
+      name: The original name of the test case.
+      iterator: The iterator generating the individual test cases.
+    """
+    for idx, func in enumerate(iterator):
+        assert callable(func), "Test generators must yield callables, got %r" % (func,)
+        if getattr(func, "__x_use_name__", False):
+            new_name = func.__name__
+        else:
+            new_name = "%s%s%d" % (name, _SEPARATOR, idx)
+        assert new_name not in dct, 'Name of parameterized test case "%s" not unique' % (new_name,)
+        dct[new_name] = func
+        id_suffix[new_name] = getattr(func, "__x_extra_id__", "")
 
 
 class TestCase(unittest.TestCase, metaclass=TestGeneratorMetaclass):
-  """Base class for test cases using the parameters decorator."""
+    """Base class for test cases using the parameters decorator."""
 
-  def _OriginalName(self):
-    return self._testMethodName.split(_SEPARATOR)[0]
+    def _OriginalName(self):
+        return self._testMethodName.split(_SEPARATOR)[0]
 
-  def __str__(self):
-    return '%s (%s)' % (self._OriginalName(), _StrClass(self.__class__))
+    def __str__(self):
+        return "%s (%s)" % (self._OriginalName(), _StrClass(self.__class__))
 
-  def id(self):  # pylint: disable=invalid-name
-    """Returns the descriptive ID of the test.
+    def id(self):  # pylint: disable=invalid-name
+        """Returns the descriptive ID of the test.
 
-    This is used internally by the unittesting framework to get a name
-    for the test to be used in reports.
+        This is used internally by the unittesting framework to get a name
+        for the test to be used in reports.
 
-    Returns:
-      The test id.
-    """
-    return '%s.%s%s' % (_StrClass(self.__class__),
-                        self._OriginalName(),
-                        self._id_suffix.get(self._testMethodName, ''))
+        Returns:
+          The test id.
+        """
+        return "%s.%s%s" % (
+            _StrClass(self.__class__),
+            self._OriginalName(),
+            self._id_suffix.get(self._testMethodName, ""),
+        )
 
 
 def CoopTestCase(other_base_class):
-  """Returns a new base class with a cooperative metaclass base.
+    """Returns a new base class with a cooperative metaclass base.
 
-  This enables the TestCase to be used in combination
-  with other base classes that have custom metaclasses, such as
-  mox.MoxTestBase.
+    This enables the TestCase to be used in combination
+    with other base classes that have custom metaclasses, such as
+    mox.MoxTestBase.
 
-  Only works with metaclasses that do not override type.__new__.
+    Only works with metaclasses that do not override type.__new__.
 
-  Example:
+    Example:
 
-    import google3
-    import mox
+      import google3
+      import mox
 
-    from google.protobuf.internal import _parameterized
+      from google.protobuf.internal import _parameterized
 
-    class ExampleTest(parameterized.CoopTestCase(mox.MoxTestBase)):
-      ...
+      class ExampleTest(parameterized.CoopTestCase(mox.MoxTestBase)):
+        ...
 
-  Args:
-    other_base_class: (class) A test case base class.
+    Args:
+      other_base_class: (class) A test case base class.
 
-  Returns:
-    A new class object.
-  """
-  metaclass = type(
-      'CoopMetaclass',
-      (other_base_class.__metaclass__,
-       TestGeneratorMetaclass), {})
-  return metaclass(
-      'CoopTestCase',
-      (other_base_class, TestCase), {})
+    Returns:
+      A new class object.
+    """
+    metaclass = type("CoopMetaclass", (other_base_class.__metaclass__, TestGeneratorMetaclass), {})
+    return metaclass("CoopTestCase", (other_base_class, TestCase), {})

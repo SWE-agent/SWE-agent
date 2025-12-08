@@ -8,7 +8,7 @@
 
     Copyright (c) 2004, 2006-2010 Michael Roth <mroth@nessie.de>
 
-    Permission is hereby granted, free of charge, to any person 
+    Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
     files (the "Software"), to deal in the Software without restriction,
     including without limitation the rights to use, copy, modify, merge,
@@ -16,7 +16,7 @@
     and to permit persons to whom the Software is furnished to do so,
     subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be 
+    The above copyright notice and this permission notice shall be
     included in all copies or substantial portions of the Software.
 
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -58,16 +58,16 @@ local _G = _G
 
 local lunit
 
-if _VERSION >= 'Lua 5.2' then 
+if _VERSION >= 'Lua 5.2' then
 
     lunit = {}
     _ENV = lunit
-    
+
 else
 
     module("lunit")
     lunit = _M
-    
+
 end
 
 
@@ -458,7 +458,7 @@ do
       end
     end
   end
-  
+
   function lunit.module(name,seeall)
     local m = {}
     if seeall == "seeall" then
@@ -597,7 +597,7 @@ end
 
 
 local lunitpat2luapat
-do 
+do
   local conv = {
     ["^"] = "%^",
     ["$"] = "%$",

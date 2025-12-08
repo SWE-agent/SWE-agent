@@ -247,7 +247,7 @@ would probably require some kind of code generation.
 * Most messages in C++ will not bother to declare themselves as "lite".  This means
   that many C++ messages will link in reflection even when it is never used, bloating
   binaries unnecessarily.
-* `optimize_for = LITE_RUNTIME` is difficult to use in practice, because it prevents 
+* `optimize_for = LITE_RUNTIME` is difficult to use in practice, because it prevents
   any non-lite protos from `import`ing that file.
 * Forcing all protos to lite via a codegen parameter (for example, when building for
   mobile) is more practical than `optimize_for = LITE_RUNTIME`.  But this will break

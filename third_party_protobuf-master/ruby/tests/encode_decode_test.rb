@@ -145,7 +145,7 @@ class EncodeDecodeTest < Test::Unit::TestCase
     # Test for enums printing as ints.
     msg = A::B::C::TestMessage.new({ optional_enum: 1 })
     json = A::B::C::TestMessage.encode_json(
-      msg, 
+      msg,
       { :format_enums_as_integers => true }
     )
 
@@ -154,7 +154,7 @@ class EncodeDecodeTest < Test::Unit::TestCase
     # Test for default enum being printed as int.
     msg = A::B::C::TestMessage.new({ optional_enum: 0 })
     json = A::B::C::TestMessage.encode_json(
-      msg, 
+      msg,
       { :format_enums_as_integers => true, :emit_defaults => true }
     )
 
@@ -163,7 +163,7 @@ class EncodeDecodeTest < Test::Unit::TestCase
     # Test for repeated enums printing as ints.
     msg = A::B::C::TestMessage.new({ repeated_enum: [0,1,2,3] })
     json = A::B::C::TestMessage.encode_json(
-      msg, 
+      msg,
       { :format_enums_as_integers => true }
     )
 

@@ -51,7 +51,7 @@ puts MyTestMessage.encode_json(mymessage)
 
 Installation from Source (Building Gem)
 ---------------------------------------
- 
+
 
 Protocol Buffers has a new experimental backend that uses the
 [ffi](https://github.com/ffi/ffi) gem to provide a unified C-based

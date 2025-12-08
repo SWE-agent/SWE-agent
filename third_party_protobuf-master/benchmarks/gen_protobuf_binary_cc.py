@@ -30,40 +30,42 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import re
+import sys
 
 include = sys.argv[1]
 msg_basename = sys.argv[2]
 count = 1
 
-m = re.search(r'(.*\D)(\d+)$', sys.argv[2])
+m = re.search(r"(.*\D)(\d+)$", sys.argv[2])
 if m:
-  msg_basename = m.group(1)
-  count = int(m.group(2))
+    msg_basename = m.group(1)
+    count = int(m.group(2))
 
-print('''
+print(f'''
 #include "{include}"
 
 char buf[1];
 
 int main() {{
-'''.format(include=include))
+''')
+
 
 def RefMessage(name):
-  print('''
+    print(f"""
   {{
     {name} proto;
     proto.ParseFromArray(buf, 0);
     proto.SerializePartialToArray(&buf[0], 0);
   }}
-  '''.format(name=name))
+  """)
+
 
 RefMessage(msg_basename)
 
 for i in range(2, count + 1):
-  RefMessage(msg_basename + str(i))
+    RefMessage(msg_basename + str(i))
 
-print('''
+print("""
   return 0;
-}''')
+}""")

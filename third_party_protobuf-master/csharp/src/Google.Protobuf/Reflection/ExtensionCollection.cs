@@ -57,13 +57,13 @@ namespace Google.Protobuf.Reflection
         }
 
         /// <summary>
-        /// Returns a readonly list of all the extensions defined in this type in 
+        /// Returns a readonly list of all the extensions defined in this type in
         /// the order they were defined in the source .proto file
         /// </summary>
         public IList<FieldDescriptor> UnorderedExtensions { get; }
 
         /// <summary>
-        /// Returns a readonly list of all the extensions define in this type that extend 
+        /// Returns a readonly list of all the extensions define in this type that extend
         /// the provided descriptor type in the order they were defined in the source .proto file
         /// </summary>
         public IList<FieldDescriptor> GetExtensionsInDeclarationOrder(MessageDescriptor descriptor)
@@ -72,7 +72,7 @@ namespace Google.Protobuf.Reflection
         }
 
         /// <summary>
-        /// Returns a readonly list of all the extensions define in this type that extend 
+        /// Returns a readonly list of all the extensions define in this type that extend
         /// the provided descriptor type in ascending field order
         /// </summary>
         public IList<FieldDescriptor> GetExtensionsInNumberOrder(MessageDescriptor descriptor)

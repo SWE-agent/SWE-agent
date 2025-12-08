@@ -77,7 +77,7 @@ def _embed_edition_defaults_impl(ctx):
         command = """
             DEFAULTS_RAW=$({escape} {args} < {defaults})
             # Windows requires extra escaping.
-            DEFAULTS_ESCAPED=$(echo $DEFAULTS_RAW | sed 's/\\\\/\\\\\\\\/g' || 
+            DEFAULTS_ESCAPED=$(echo $DEFAULTS_RAW | sed 's/\\\\/\\\\\\\\/g' ||
                 echo $DEFAULTS_RAW | sed 's/\\\\\\\\/\\\\\\\\\\\\\\\\/g')
             cp -f {template} {output}
             # MacOS requires a backup file.

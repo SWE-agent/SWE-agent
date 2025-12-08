@@ -116,7 +116,7 @@ Ignoring the four special cases(E0,ED,F0,F4), how should we set range index for 
 * Set range index to 0(00..7F) for all bytes by default
 * Find non-ASCII First Byte (C0..FF), set their range index to 8(C2..F4)
 * For First Byte within C0..DF, set next byte's range index to 1(80..BF)
-* For First Byte within E0..EF, set next two byte's range index to 2,1(80..BF) in sequence 
+* For First Byte within E0..EF, set next two byte's range index to 2,1(80..BF) in sequence
 * For First Byte within F0..FF, set next three byte's range index to 3,2,1(80..BF) in sequence
 
 To implement above operations efficiently with SIMD:

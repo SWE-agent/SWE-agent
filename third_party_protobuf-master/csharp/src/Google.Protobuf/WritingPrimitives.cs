@@ -203,7 +203,7 @@ namespace Google.Protobuf
             // The logic inside this check will be elided by JIT in 32bit programs.
             if (IntPtr.Size == 8)
             {
-                // Need at least 4 chars available to use this optimization. 
+                // Need at least 4 chars available to use this optimization.
                 if (length >= 4)
                 {
                     ref byte sourceBytes = ref Unsafe.As<char, byte>(ref sourceChars);
@@ -542,7 +542,7 @@ namespace Google.Protobuf
         {
             if (buffer.Length - state.position >= value.Length)
             {
-                // We have room in the current buffer.    
+                // We have room in the current buffer.
                 value.CopyTo(buffer.Slice(state.position, value.Length));
                 state.position += value.Length;
             }
@@ -708,7 +708,7 @@ namespace Google.Protobuf
         /// </summary>
         /// <remarks>
         /// ZigZag encodes signed integers into values that can be efficiently
-        /// encoded with varint.  (Otherwise, negative values must be 
+        /// encoded with varint.  (Otherwise, negative values must be
         /// sign-extended to 64 bits to be varint encoded, thus always taking
         /// 10 bytes on the wire.)
         /// </remarks>
@@ -723,7 +723,7 @@ namespace Google.Protobuf
         /// </summary>
         /// <remarks>
         /// ZigZag encodes signed integers into values that can be efficiently
-        /// encoded with varint.  (Otherwise, negative values must be 
+        /// encoded with varint.  (Otherwise, negative values must be
         /// sign-extended to 64 bits to be varint encoded, thus always taking
         /// 10 bytes on the wire.)
         /// </remarks>

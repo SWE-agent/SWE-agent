@@ -4,7 +4,7 @@ This document explains how to use the function `protobuf_generate` which is prov
 
 ## Usage
 
-In the same directory that called `find_package(protobuf CONFIG)` and any of its subdirectories, the CMake function `protobuf_generate` is made available by 
+In the same directory that called `find_package(protobuf CONFIG)` and any of its subdirectories, the CMake function `protobuf_generate` is made available by
 [`protobuf-generate.cmake`](../cmake/protobuf-generate.cmake). It can be used to automatically generate source files from `.proto` schema files at build time.
 
 ### Basic example
@@ -49,7 +49,7 @@ and (depending on the build system) output:
 
 ### gRPC example
 
-`protobuf_generate` can also be customized to invoke plugins like gRPC's `grpc_cpp_plugin`. Given the same directory structure as in the [basic example](#basic-example) 
+`protobuf_generate` can also be customized to invoke plugins like gRPC's `grpc_cpp_plugin`. Given the same directory structure as in the [basic example](#basic-example)
 and let `CMakeLists.txt` contain:
 
 ```cmake
@@ -89,7 +89,7 @@ And `protoc` will automatically be re-run whenever the schema files change and `
 
 ### Note on unity builds
 
-Since protobuf's generated source files are unsuited for [jumbo/unity builds](https://cmake.org/cmake/help/latest/prop_tgt/UNITY_BUILD.html) it is recommended 
+Since protobuf's generated source files are unsuited for [jumbo/unity builds](https://cmake.org/cmake/help/latest/prop_tgt/UNITY_BUILD.html) it is recommended
 to exclude them from such builds which can be achieved by adjusting their properties:
 
 ```cmake
@@ -103,9 +103,9 @@ set_source_files_properties(${PROTO_GENERATED_FILES} PROPERTIES SKIP_UNITY_BUILD
 ## How it works
 
 For each source file ending in `proto` of the argument provided to `TARGET` or each file provided through `PROTOS`, `protobuf_generate` will set up
-a [add_custom_command](https://cmake.org/cmake/help/latest/command/add_custom_command.html) which depends on `protobuf::protoc` and the proto files. 
-It declares the generated source files as `OUTPUT` which means that any target that depends on them will automatically cause the custom command to execute 
-when it is brought up to date. The command itself is made up of the arguments for `protoc`, like the output directory, the schema files, the language to 
+a [add_custom_command](https://cmake.org/cmake/help/latest/command/add_custom_command.html) which depends on `protobuf::protoc` and the proto files.
+It declares the generated source files as `OUTPUT` which means that any target that depends on them will automatically cause the custom command to execute
+when it is brought up to date. The command itself is made up of the arguments for `protoc`, like the output directory, the schema files, the language to
 generate for, the plugins to use, etc.
 
 ## Reference

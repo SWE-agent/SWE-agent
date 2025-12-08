@@ -28,8 +28,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from google.protobuf.internal.message_test import *
 import unittest
+
+from google.protobuf.internal.message_test import *
 
 # Python/C++ customizes the C++ TextFormat to always print trailing ".0" for
 # floats. upb doesn't do this, it matches C++ TextFormat.
@@ -44,5 +45,5 @@ Proto3Test.testMergeFromBadType.__unittest_expecting_failure__ = True
 
 Proto2Test.test_documentation.__unittest_expecting_failure__ = True
 
-if __name__ == '__main__':
-  unittest.main(verbosity=2)
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

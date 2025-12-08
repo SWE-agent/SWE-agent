@@ -12,7 +12,7 @@ using System;
 namespace Google.Protobuf
 {
     /// <summary>
-    /// Struct used to hold the keys for the fieldByNumber table in DescriptorPool and the keys for the 
+    /// Struct used to hold the keys for the fieldByNumber table in DescriptorPool and the keys for the
     /// extensionByNumber table in ExtensionRegistry.
     /// </summary>
     internal struct ObjectIntPair<T> : IEquatable<ObjectIntPair<T>> where T : class

@@ -30,10 +30,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+import shutil
 import subprocess
 import sys
-import shutil
-import os
 
 if len(sys.argv) < 2:
     print("Must pass a filename argument")
@@ -64,9 +64,9 @@ with open(out_filename, "wb") as out_file, open(in_filename, "rb") as in_file:
                 dot_lines.append(dot_line)
             dot_input = b"".join(dot_lines)
             svg_filename = out_dir + "/" + str(file_num) + ".svg"
-            svg = subprocess.check_output(['dot', '-Tsvg', '-o', svg_filename], input=dot_input)
+            svg = subprocess.check_output(["dot", "-Tsvg", "-o", svg_filename], input=dot_input)
             out_file.write(b"<div align=center>\n")
-            out_file.write(b"<img src='%s'/>\n" % (svg_filename.encode('utf-8')))
+            out_file.write(b"<img src='%s'/>\n" % (svg_filename.encode("utf-8")))
             out_file.write(b"</div>\n")
             file_num += 1
         else:

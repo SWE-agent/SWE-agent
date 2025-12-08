@@ -51,7 +51,7 @@ class DecoderTest(unittest.TestCase):
     input_io = io.BytesIO(b'')
     size = decoder._DecodeVarint(input_io)
     self.assertEqual(size, None)
-  
+
   def test_decode_unknown_group_field_too_many_levels(self):
   data = memoryview(b'\023' * 5_000_000)
   self.assertRaisesRegex(

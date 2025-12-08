@@ -333,14 +333,14 @@ namespace Google.Protobuf
         public static FieldCodec<T> ForMessage<T>(uint tag, MessageParser<T> parser) where T : class, IMessage<T>
         {
             return new FieldCodec<T>(
-                (ref ParseContext ctx) => 
-                { 
-                    T message = parser.CreateTemplate(); 
-                    ctx.ReadMessage(message); 
-                    return message; 
+                (ref ParseContext ctx) =>
+                {
+                    T message = parser.CreateTemplate();
+                    ctx.ReadMessage(message);
+                    return message;
                 },
                 (ref WriteContext output, T value) => output.WriteMessage(value),
-                (ref ParseContext ctx, ref T v) => 
+                (ref ParseContext ctx, ref T v) =>
                 {
                     if (v == null)
                     {
@@ -364,7 +364,7 @@ namespace Google.Protobuf
                         v.MergeFrom(v2);
                     }
                     return true;
-                }, 
+                },
                 message => CodedOutputStream.ComputeMessageSize(message), tag);
         }
 
@@ -378,14 +378,14 @@ namespace Google.Protobuf
         public static FieldCodec<T> ForGroup<T>(uint startTag, uint endTag, MessageParser<T> parser) where T : class, IMessage<T>
         {
             return new FieldCodec<T>(
-                (ref ParseContext ctx) => 
-                { 
+                (ref ParseContext ctx) =>
+                {
                     T message = parser.CreateTemplate();
                     ctx.ReadGroup(message);
                     return message;
                 },
-                (ref WriteContext output, T value) => output.WriteGroup(value), 
-                (ref ParseContext ctx, ref T v) => 
+                (ref WriteContext output, T value) => output.WriteGroup(value),
+                (ref ParseContext ctx, ref T v) =>
                 {
                     if (v == null)
                     {
@@ -409,7 +409,7 @@ namespace Google.Protobuf
                         v.MergeFrom(v2);
                     }
                     return true;
-                }, 
+                },
                 message => CodedOutputStream.ComputeGroupSize(message), startTag, endTag);
         }
 

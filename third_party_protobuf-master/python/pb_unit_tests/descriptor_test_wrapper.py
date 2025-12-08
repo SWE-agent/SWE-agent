@@ -28,8 +28,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from google.protobuf.internal.descriptor_test import *
 import unittest
+
+from google.protobuf.internal.descriptor_test import *
 
 # We pass this test, but the error message is slightly different.
 # Our error message is better.
@@ -37,5 +38,5 @@ NewDescriptorTest.testImmutableCppDescriptor.__unittest_expecting_failure__ = Tr
 
 DescriptorTest.testGetDebugString.__unittest_expecting_failure__ = True
 
-if __name__ == '__main__':
-  unittest.main(verbosity=2)
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

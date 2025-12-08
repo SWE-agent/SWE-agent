@@ -17,7 +17,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="All" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Google.Protobuf\Google.Protobuf.csproj" />
   </ItemGroup>

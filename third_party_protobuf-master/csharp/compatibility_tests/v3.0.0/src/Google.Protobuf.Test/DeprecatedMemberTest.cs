@@ -6,7 +6,7 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 #endregion
-    
+
 using System;
 using System.Reflection;
 using Google.Protobuf.TestProtos;

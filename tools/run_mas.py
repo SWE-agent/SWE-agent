@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 from sweagent.agent.mas.coordinator import RepairCoordinator, load_agent_config_from_yaml
-from sweagent.environment.repo import LocalRepoConfig, GithubRepoConfig
+from sweagent.environment.repo import GithubRepoConfig, LocalRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
 from sweagent.utils.log import get_logger
 
@@ -114,8 +114,9 @@ def get_issue_description(args) -> str:
 def main():
     """Main entry point for MARRS."""
     # Fix Docker permissions if needed (in dev container, permissions can be reset)
-    import subprocess
     import os
+    import subprocess
+
     docker_socket = "/var/run/docker.sock"
     if os.path.exists(docker_socket):
         try:
@@ -126,7 +127,7 @@ def main():
             )
         except Exception as e:
             logger.warning(f"Failed to fix Docker permissions: {e}")
-    
+
     args = parse_args()
 
     logger.info("=" * 70)

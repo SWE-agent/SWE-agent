@@ -104,7 +104,7 @@ Of most interest to Windows programmers are the following:
 
 * [Ninja](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#ninja-generator)
   This uses the external tool [Ninja](https://ninja-build.org/) to build. It is the fastest solution available.
-  
+
 Note that as of Visual Studio 2015, Visual Studio includes
 [support for opening directly CMake-based projects](https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio).
 

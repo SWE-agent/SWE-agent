@@ -191,7 +191,7 @@ void ReflectionClassGenerator::WriteDescriptor(io::Printer* printer) {
   }
   else {
       printer->Print("null, ");
-  }  
+  }
   if (file_->extension_count() > 0) {
     std::vector<std::string> extensions;
     for (int i = 0; i < file_->extension_count(); i++) {
