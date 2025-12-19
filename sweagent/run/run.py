@@ -24,6 +24,7 @@ Display usage instructions for a specific command:
     This can be useful to fill in environment output when creating demonstrations.
 [bold][green]traj-to-demo[/green][/bold]: Convert a trajectory file to an easy to edit demo file.
 [bold][green]run-api[/green][/bold]: Run swe-agent as a backend for a GUI
+[bold][green]acp[/green][/bold]: Run swe-agent as an ACP stdio server.
 [bold][green]remove-unfinished[/green][/bold] or [bold][green]ru[/green][/bold]: Remove unfinished trajectories
 [bold][green]quick-stats[/green][/bold] or [bold][green]qs[/green][/bold]: Calculate quick stats from a directory of trajectories
 """
@@ -33,6 +34,7 @@ import sys
 
 import rich
 
+from sweagent import __version__
 
 def get_cli():
     parser = argparse.ArgumentParser(add_help=False)
@@ -44,6 +46,7 @@ def get_cli():
             "run-replay",
             "traj-to-demo",
             "run-api",
+            "acp",
             "merge-preds",
             "inspect",
             "inspector",
@@ -64,6 +67,7 @@ def get_cli():
         nargs="?",
     )
     parser.add_argument("-h", "--help", action="store_true", help="Show this help message and exit")
+    parser.add_argument("-v", "--version", action="store_true", help="Show version and exit")
     return parser
 
 
@@ -74,6 +78,9 @@ def main(args: list[str] | None = None):
     parsed_args, remaining_args = cli.parse_known_args(args)  # type: ignore
     command = parsed_args.command
     show_help = parsed_args.help
+    if parsed_args.version:
+        print(__version__)
+        sys.exit(0)
     if show_help:
         if not command:
             # Show main help
@@ -106,6 +113,10 @@ def main(args: list[str] | None = None):
         from sweagent.api.server import run_from_cli as run_api_main
 
         run_api_main(remaining_args)
+    elif command == "acp":
+        from sweagent.acp.server import run_from_cli as run_acp_main
+
+        run_acp_main(remaining_args)
     elif command == "merge-preds":
         from sweagent.run.merge_predictions import run_from_cli as merge_predictions_main
 
