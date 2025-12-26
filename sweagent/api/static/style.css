@@ -1,0 +1,239 @@
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2em;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    opacity: 0.95;
+    font-size: 1.1em;
+}
+
+/* Problem Input */
+.problem-input {
+    padding: 30px;
+    background-color: #f8f9fa;
+}
+
+#problemStatement {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    margin-bottom: 15px;
+    resize: vertical;
+    min-height: 120px;
+    font-family: 'Inter', sans-serif;
+}
+
+#problemStatement:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Runs List */
+.runs-list {
+    padding: 30px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.runs-list h2 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.5em;
+}
+
+.runs-container {
+    display: grid;
+    gap: 15px;
+}
+
+.run-card {
+    background-color: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.run-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.run-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.run-id {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.run-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.status-started {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Chat Interface */
+.chat-interface {
+    padding: 30px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.chat-interface h2 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.5em;
+}
+
+.chat-messages {
+    height: 400px;
+    overflow-y: auto;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+}
+
+.chat-message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.message-system {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.message-user {
+    background-color: #fff3e0;
+    color: #e65100;
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.message-assistant {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.run-details {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+}
+
+.hidden {
+    display: none;
+}
+
+.run-info {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.info-item {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        border-radius: 8px;
+    }
+    
+    header h1 {
+        font-size: 1.5em;
+    }
+}

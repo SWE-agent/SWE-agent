@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWE-agent Chatbot Interface</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 SWE-agent Chatbot Interface</h1>
+            <p class="subtitle">Run software engineering tasks with AI-powered automation</p>
+        </header>
+        
+        <div class="problem-input">
+            <textarea id="problemStatement" placeholder="Enter your problem statement or GitHub issue description here..." rows="8"></textarea>
+            <button id="startRun" class="btn-primary">Start SWE-agent</button>
+        </div>
+        
+        <div class="runs-list">
+            <h2>Active Runs</h2>
+            <div id="activeRuns" class="runs-container"></div>
+        </div>
+        
+        <div class="chat-interface">
+            <h2>Chat Interface</h2>
+            <div id="chatMessages" class="chat-messages"></div>
+            <div id="runDetails" class="run-details hidden">
+                <div class="run-info">
+                    <span id="runStatus"></span>
+                    <span id="exitStatus"></span>
+                    <span id="stepCount"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
