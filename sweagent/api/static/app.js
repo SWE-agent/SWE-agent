@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Create run card
+    // Create run card with enhanced information
     function createRunCard(run) {
         const card = document.createElement('div');
         card.className = 'run-card';
@@ -337,6 +337,34 @@ document.addEventListener('DOMContentLoaded', function() {
             statusClass = run.error ? 'status-error' : 'status-completed';
         }
         
+        // Build problem statement display
+        const problemStatement = run.problem_statement ? 
+            `<div class="run-problem">${escapeHtml(run.problem_statement)}</div>` : '';
+        
+        // Build current action display
+        let currentActionDisplay = '';
+        if (run.current_action) {
+            const actionText = run.current_action.length > 100 ? 
+                escapeHtml(run.current_action.substring(0, 100)) + '...' : 
+                escapeHtml(run.current_action);
+            currentActionDisplay = `
+                <div class="run-action">
+                    <strong>Current Action:</strong> ${actionText}
+                </div>`;
+        }
+        
+        // Build model stats display
+        let modelStatsDisplay = '';
+        if (run.model_stats && Object.keys(run.model_stats).length > 0) {
+            const cost = run.model_stats.cost_usd || 0;
+            const tokens = run.model_stats.total_tokens || 0;
+            modelStatsDisplay = `
+                <div class="run-stats">
+                    <strong>Cost:</strong> $${typeof cost === 'number' ? cost.toFixed(2) : cost} | 
+                    <strong>Tokens:</strong> ${typeof tokens === 'number' ? tokens.toFixed(0) : tokens}
+                </div>`;
+        }
+        
         card.innerHTML = `
             <div class="run-header">
                 <span class="run-id">Run ${run.run_id}</span>
@@ -344,7 +372,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${run.completed ? (run.error ? 'Error' : 'Completed') : 'Running'}
                 </span>
             </div>
-            <div>Steps: ${run.steps || 0}</div>
+            ${problemStatement}
+            <div class="run-steps">Steps: ${run.steps || 0}</div>
+            ${currentActionDisplay}
+            ${modelStatsDisplay}
         `;
         
         card.addEventListener('click', function() {
