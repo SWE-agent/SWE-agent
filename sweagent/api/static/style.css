@@ -160,6 +160,205 @@ header h1 {
     font-size: 1.5em;
 }
 
+/* Timeline View - Professional Accordion Style */
+.timeline-container {
+    height: 400px;
+    overflow-y: auto;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+}
+
+.step-card {
+    margin-bottom: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background-color: white;
+}
+
+.step-header {
+    padding: 15px 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #333;
+    background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+    transition: all 0.3s ease;
+}
+
+.step-header:hover {
+    background: linear-gradient(90deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.step-number {
+    color: #667eea;
+    font-weight: 700;
+}
+
+.step-icon {
+    transition: transform 0.3s ease;
+}
+
+.step-card.active .step-icon {
+    transform: rotate(180deg);
+}
+
+.step-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.step-card.active .step-content {
+    max-height: 2000px; /* Large enough for most content */
+    transition: max-height 0.5s ease-in;
+}
+
+.step-details {
+    padding: 15px 20px;
+}
+
+/* Component-specific styling with distinct colors */
+.component-section {
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 4px solid transparent;
+}
+
+.thought-section {
+    background-color: #f3e5f5;
+    border-left-color: #9c27b0;
+}
+
+.action-section {
+    background-color: #e3f2fd;
+    border-left-color: #1976d2;
+}
+
+.observation-section {
+    background-color: #e8f5e9;
+    border-left-color: #2e7d32;
+}
+
+.response-section {
+    background-color: #fff3e0;
+    border-left-color: #ff6b35;
+}
+
+.component-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.thought-section .component-label {
+    color: #9c27b0;
+}
+
+.action-section .component-label {
+    color: #1976d2;
+}
+
+.observation-section .component-label {
+    color: #2e7d32;
+}
+
+.response-section .component-label {
+    color: #ff6b35;
+}
+
+.component-content {
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Code blocks within components */
+.component-section pre {
+    background-color: white;
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin-top: 8px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9em;
+}
+
+/* Cost Display - Fixed placement in sidebar */
+.cost-display {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 20px;
+    width: 280px;
+    z-index: 1000;
+}
+
+.cost-header {
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cost-icon {
+    color: #ff6b35;
+    font-size: 1.2em;
+}
+
+.cost-stat {
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.cost-label {
+    font-size: 0.9em;
+    color: #666;
+    font-weight: 500;
+}
+
+.cost-value {
+    font-size: 1em;
+    font-weight: 700;
+    color: #333;
+}
+
+.cost-total {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.cost-total .cost-label {
+    font-weight: 700;
+    color: #ff6b35;
+}
+
+.cost-total .cost-value {
+    color: #ff6b35;
+    font-size: 1.2em;
+}
+
+/* Hide cost display by default, show when data is available */
+.cost-display.hidden {
+    display: none;
+}
+
+/* Chat messages (fallback for non-timeline views) */
 .chat-messages {
     height: 400px;
     overflow-y: auto;

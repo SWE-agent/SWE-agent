@@ -23,9 +23,14 @@ agent:
       3. Edit the source code of the repo to resolve the issue
       4. Rerun your test script and confirm that the error is fixed!
       5. Think about edgecases and make sure your fix handles them as well
-      6. Keep modules and files small
-      7. Work iteratively on one thing at the time so in order to keep changes small and make it easy to locate where something could have gone wrong
+      
+      Remember to keep modules and files small. Work iteratively on one thing at the time so in order to keep changes small and make it easy to locate where something could have gone wrong
       Your thinking should be thorough and so it's fine if it's very long.
+
+      Note: You can use the view_image command to display images as embedded base64 data when relevant.
+      You'll also be given access browser tools to interact with the web or a local server.
+      In the browser, your mouse is shown as a red crosshair.
+
     next_step_template: |-
       OBSERVATION:
       {{observation}}
@@ -43,6 +48,8 @@ agent:
       - path: tools/registry
       - path: tools/edit_anthropic
       - path: tools/review_on_submit_m
+      - path: tools/image_tools  # lets models view image files
+      - path: tools/web_browser  # browser tool for interacting with web servers
     registry_variables:
       USE_FILEMAP: 'true'
       SUBMIT_REVIEW_MESSAGES:
@@ -52,7 +59,7 @@ agent:
           1. If you made any changes to your code after running the reproduction script, please run the reproduction script again.
             If the reproduction script is failing, please revisit your changes and make sure they are correct.
             If you have already removed your reproduction script, please ignore this step.
-          2. Refactor or remove your reproduction script (if you haven't done so already).
+          2. Remove your reproduction script (if you haven't done so already).
           3. If you have modified any TEST files, please revert them to the state they had before you started fixing the issue.
             You can do this with `git checkout -- /path/to/test/file.py`. Use below <diff> to find the files you need to revert.
           4. Run the submit command again to confirm.
@@ -66,6 +73,7 @@ agent:
     parse_function:
       type: function_calling
   history_processors:
+    - type: image_parsing  # parses base64 encoded images in the observation
     - type: cache_control
       last_n_messages: 5
   model:

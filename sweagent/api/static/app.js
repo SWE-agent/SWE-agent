@@ -7,10 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const startRunButton = document.getElementById('startRun');
     const activeRunsContainer = document.getElementById('activeRuns');
     const chatMessagesContainer = document.getElementById('chatMessages');
+    const timelineViewContainer = document.getElementById('timelineView');
     const runDetailsContainer = document.getElementById('runDetails');
     const runStatusElement = document.getElementById('runStatus');
     const exitStatusElement = document.getElementById('exitStatus');
     const stepCountElement = document.getElementById('stepCount');
+    
+    // Cost display elements
+    const costDisplayContainer = document.getElementById('costDisplay');
+    const costStatsContainer = document.getElementById('costStats');
     
     // Repository configuration elements
     const repoTypeSelect = document.getElementById('repoType');
@@ -56,6 +61,111 @@ document.addEventListener('DOMContentLoaded', function() {
             fileNameDisplay.textContent = 'No file chosen';
         }
     });
+    
+    // Add step to timeline view
+    function addStepToTimeline(stepNum, stepData) {
+        const stepCard = document.createElement('div');
+        stepCard.className = 'step-card';
+        
+        let thoughtContent = '';
+        let actionContent = '';
+        let observationContent = '';
+        let responseContent = '';
+        
+        if (stepData.thought) {
+            thoughtContent = formatComponent('Thought', stepData.thought, 'thought');
+        }
+        
+        if (stepData.action) {
+            // Check if action is a bash command
+            const bashRegex = /^bash: (.+)$/i;
+            if (bashRegex.test(stepData.action)) {
+                const bashCommand = stepData.action.replace(bashRegex, '$1');
+                actionContent = formatComponent('Action', `<pre>${escapeHtml(bashCommand)}</pre>`, 'action');
+            } else {
+                actionContent = formatComponent('Action', escapeHtml(stepData.action), 'action');
+            }
+        }
+        
+        if (stepData.observation) {
+            observationContent = formatComponent('Observation', escapeHtml(stepData.observation), 'observation');
+        }
+        
+        if (stepData.response && stepData.response.trim() !== '') {
+            // Check if response looks like code
+            const lines = stepData.response.split('\n');
+            if (lines.length > 1 || stepData.response.includes('\t') || stepData.response.match(/^[a-zA-Z0-9_]+:/)) {
+                responseContent = formatComponent('Response', `<pre>${escapeHtml(stepData.response)}</pre>`, 'response');
+            } else {
+                responseContent = formatComponent('Response', escapeHtml(stepData.response), 'response');
+            }
+        }
+        
+        stepCard.innerHTML = `
+            <div class="step-header">
+                <span class="step-number">Step ${stepNum}</span>
+                <span class="step-icon">▼</span>
+            </div>
+            <div class="step-content">
+                <div class="step-details">
+                    ${thoughtContent}
+                    ${actionContent}
+                    ${observationContent}
+                    ${responseContent}
+                </div>
+            </div>`;
+        
+        // Add click handler for accordion
+        stepCard.addEventListener('click', function(e) {
+            // Don't toggle if clicking on a copy button or link
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+                return;
+            }
+            
+            stepCard.classList.toggle('active');
+        });
+        
+        timelineViewContainer.appendChild(stepCard);
+    }
+    
+    // Format a component (thought, action, observation, response) with proper styling
+    function formatComponent(label, content, type) {
+        const className = `${type}-section component-section`;
+        return `<div class="${className}"><span class="component-label">${label}</span><div class="component-content">${content}</div></div>`;
+    }
+    
+    // Update cost display with model stats
+    function updateCostDisplay(stats) {
+        let html = '';
+        
+        // Format stat key for display
+        const formatStatKey = (key) => {
+            const mappings = {
+                'total_tokens': 'Total Tokens',
+                'input_tokens': 'Input Tokens',
+                'output_tokens': 'Output Tokens',
+                'cost_usd': 'Cost ($)',
+                'execution_time': 'Time (s)'
+            };
+            return mappings[key] || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        };
+        
+        // Display all stats except cost
+        Object.entries(stats).forEach(([key, value]) => {
+            if (key !== 'cost_usd') {
+                const formattedValue = typeof value === 'number' ? value.toFixed(2) : value;
+                html += `<div class="cost-stat"><span class="cost-label">${formatStatKey(key)}:</span><span class="cost-value">${formattedValue}</span></div>`;
+            }
+        });
+        
+        // Display cost separately with emphasis
+        if (stats.cost_usd !== undefined) {
+            const costValue = typeof stats.cost_usd === 'number' ? stats.cost_usd.toFixed(2) : stats.cost_usd;
+            html += `<div class="cost-stat cost-total"><span class="cost-label">Total Cost:</span><span class="cost-value">$${costValue}</span></div>`;
+        }
+        
+        costStatsContainer.innerHTML = html;
+    }
     
     // Add message to chat
     function addChatMessage(role, content) {
@@ -200,48 +310,23 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const data = await response.json();
             
-            // Clear previous messages
+            // Clear previous content
             chatMessagesContainer.innerHTML = '';
+            timelineViewContainer.innerHTML = '';
             runDetailsContainer.classList.remove('hidden');
             
-            // Add problem statement
+            // Add problem statement to chat (for context)
             addChatMessage('user', data.problem_statement);
             
-            // Add trajectory steps with better formatting
+            // Use timeline view for trajectory steps
             if (data.trajectory && data.trajectory.length > 0) {
+                // Switch to timeline view
+                chatMessagesContainer.classList.add('hidden');
+                timelineViewContainer.classList.remove('hidden');
+                
                 data.trajectory.forEach((step, index) => {
                     const stepNum = index + 1;
-                    
-                    // Group related messages together for each step
-                    addChatMessage('system', `<strong>Step ${stepNum}</strong>`);
-                    
-                    if (step.thought) {
-                        addChatMessage('assistant', `Thought: ${step.thought}`);
-                    }
-                    
-                    if (step.action) {
-                        // Check if action contains code that should be collapsible
-                        const bashRegex = /^bash: (.+)$/i;
-                        if (bashRegex.test(step.action)) {
-                            addCodeBlock('system', 'Bash', step.action.replace(bashRegex, '$1'));
-                        } else {
-                            addChatMessage('system', `Action: ${step.action}`);
-                        }
-                    }
-                    
-                    if (step.observation) {
-                        addChatMessage('assistant', `Observation: ${step.observation}`);
-                    }
-                    
-                    if (step.response && step.response.trim() !== '') {
-                        // Check if response looks like code or file content
-                        const lines = step.response.split('\n');
-                        if (lines.length > 1 || step.response.includes('\t') || step.response.match(/^[a-zA-Z0-9_]+:/)) {
-                            addCodeBlock('system', 'Output', step.response);
-                        } else {
-                            addChatMessage('system', `Response: ${step.response}`);
-                        }
-                    }
+                    addStepToTimeline(stepNum, step);
                 });
             }
             
@@ -263,7 +348,11 @@ document.addEventListener('DOMContentLoaded', function() {
         stepCountElement.innerHTML = `<span class="info-item">Steps: ${data.trajectory ? data.trajectory.length : 0}</span>`;
         
         if (data.model_stats && Object.keys(data.model_stats).length > 0) {
-            // Add model stats to the chat as well
+            // Update cost display sidebar
+            updateCostDisplay(data.model_stats);
+            costDisplayContainer.classList.remove('hidden');
+            
+            // Add model stats to the chat as well (for backward compatibility)
             addModelStats(data.model_stats);
             
             // Also update the info bar for quick reference
@@ -494,6 +583,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Display model stats in a consistent format
                 if (data.model_stats && Object.keys(data.model_stats).length > 0) {
+                    updateCostDisplay(data.model_stats);
+                    costDisplayContainer.classList.remove('hidden');
                     addModelStats(data.model_stats);
                 }
             } else if (data.status === 'completed') {
@@ -501,6 +592,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Display final model stats
                 if (data.model_stats && Object.keys(data.model_stats).length > 0) {
+                    updateCostDisplay(data.model_stats);
+                    costDisplayContainer.classList.remove('hidden');
                     addModelStats(data.model_stats);
                 }
             } else if (data.status === 'running' && data.message) {

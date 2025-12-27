@@ -91,8 +91,20 @@
             <div id="activeRuns" class="runs-container"></div>
         </div>
         
+        <!-- Cost Display Sidebar - Fixed Placement -->
+        <div id="costDisplay" class="cost-display hidden">
+            <div class="cost-header">
+                <span>💰 Cost</span>
+                <span class="cost-icon">$</span>
+            </div>
+            <div id="costStats"></div>
+        </div>
+
         <div class="chat-interface">
             <h2>Chat Interface</h2>
+            <!-- Timeline View (will replace chat-messages when run is loaded) -->
+            <div id="timelineView" class="timeline-container hidden"></div>
+            <!-- Fallback Chat Messages View -->
             <div id="chatMessages" class="chat-messages"></div>
             <div id="runDetails" class="run-details hidden">
                 <div class="run-info">
