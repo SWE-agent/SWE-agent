@@ -139,31 +139,10 @@ def create_agent_config(problem_statement: str, config_path: Optional[str] = Non
     """Create a configuration for the SWE-agent."""
     # Load default config
     config_dict = {
-        "environment": {
-            "type": "local",
-            "repo_dir": "/tmp/swe_agent_repo",
-            "reset_on_every_step": False,
-        },
-        "agent": {
-            "max_steps": 30,
-            "thought_processing": {
-                "type": "default",
-            },
-            "tool_call_parser": {
-                "type": "markdown",
-            },
-            "model": {
-                "type": "openai",
-                "chat_completion_model": "gpt-4o-mini",  # Default to a cheaper model
-                "temperature": 0.0,
-                "max_tokens": 4096,
-            },
-        },
         "problem_statement": {
             "text": problem_statement,
         }
     }
-    
     if config_path:
         # Load from file and merge
         with open(config_path) as f:
@@ -230,7 +209,7 @@ async def run_agent_async(run_id: str, problem_statement: str, config_path: Opti
 
 
 @app.route("/api/runs", methods=["POST"])
-def create_run():
+async def create_run():
     """Create a new SWE-agent run."""
     data = request.get_json()
     
@@ -238,7 +217,7 @@ def create_run():
         return jsonify({"error": "problem_statement is required"}), 400
     
     problem_statement = data["problem_statement"]
-    config_path = data.get("config_path")
+    config_path = data.get("config_path", "./config/api_default.yaml")
     
     run_id = generate_run_id()
     
@@ -289,7 +268,7 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(args: Optional[List[str]] = None):
+async def main(args: Optional[List[str]] = None):
     """Main entry point for the API server."""
     parser = get_parser()
     args_parsed = parser.parse_args(args)
@@ -313,4 +292,4 @@ def main(args: Optional[List[str]] = None):
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
