@@ -169,7 +169,29 @@ The interface uses WebSocket for real-time updates:
 
 ## Configuration
 
-You can customize the SWE-agent behavior by providing a configuration file:
+You can customize the SWE-agent behavior in several ways:
+
+### Method 1: Inline JSON Configuration
+
+Pass configuration directly as JSON when creating a run:
+
+```json
+{
+  "problem_statement": "Fix the bug in login.py",
+  "config": {
+    "agent": {
+      "model": {
+        "temperature": 0.7,
+        "per_instance_cost_limit": 2.0
+      }
+    }
+  }
+}
+```
+
+### Method 2: Upload YAML Configuration File
+
+Upload a YAML file through the web interface or reference it by path:
 
 ```yaml
 # config.yaml
@@ -179,11 +201,9 @@ environment:
   reset_on_every_step: false
 
 agent:
-  max_steps: 50
   model:
-    type: "openai"
-    chat_completion_model: "gpt-4o-mini"
-    temperature: 0.0
+    temperature: 0.7
+    per_instance_cost_limit: 2.0
 ```
 
 Then pass it when creating a run:
@@ -192,6 +212,51 @@ Then pass it when creating a run:
 {
   "problem_statement": "Your problem here",
   "config_path": "/path/to/config.yaml"
+}
+```
+
+### Method 3: Get Configuration Schema
+
+To understand all available configuration options, fetch the schema:
+
+```bash
+curl http://localhost:5000/api/config/schema
+```
+
+This returns a complete JSON schema with all available fields and their descriptions.
+
+### Configuration Examples
+
+#### Simple Text Problem
+```json
+{
+  "problem_statement": "Fix the bug in login.py"
+}
+```
+
+#### GitHub Issue
+```json
+{
+  "problem_statement": {
+    "type": "github",
+    "github_url": "https://github.com/owner/repo/issues/123"
+  }
+}
+```
+
+#### Custom Model Configuration
+```json
+{
+  "problem_statement": "Implement feature X",
+  "config": {
+    "agent": {
+      "model": {
+        "name": "gpt-4o-mini",
+        "temperature": 0.7,
+        "per_instance_cost_limit": 3.0
+      }
+    }
+  }
 }
 ```
 

@@ -270,6 +270,17 @@ def create_run():
     config_path = data.get("config_path", "./config/api_default.yaml")
     inline_config = data.get("config")
     
+    # Validate configuration if provided
+    if inline_config:
+        try:
+            # Try to validate the structure
+            test_config = RunSingleConfig.model_validate(inline_config)
+        except Exception as e:
+            return jsonify({
+                "error": f"Invalid configuration: {str(e)}",
+                "details": "Please check your configuration format and values."
+            }), 400
+    
     run_id = generate_run_id()
     
     # Start the agent in a background thread
@@ -300,6 +311,40 @@ def get_status():
         "active_runs": len(active_runs),
         "timestamp": time.time(),
     })
+
+
+@app.route("/api/config/schema", methods=["GET"])
+def get_config_schema():
+    """Get the configuration schema for SWE-agent."""
+    try:
+        # Get JSON schema from RunSingleConfig
+        schema = RunSingleConfig.model_json_schema()
+        
+        return jsonify({
+            "schema": schema,
+            "description": "Configuration schema for SWE-agent runs. Use this to understand available options.",
+            "example_configs": {
+                "simple_text": {
+                    "problem_statement": "Fix the bug in login.py",
+                    "config": {
+                        "agent": {
+                            "model": {
+                                "temperature": 0.7
+                            }
+                        }
+                    }
+                },
+                "github_issue": {
+                    "problem_statement": {
+                        "type": "github",
+                        "github_url": "https://github.com/owner/repo/issues/123"
+                    }
+                }
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error generating config schema: {e}")
+        return jsonify({"error": "Unable to generate configuration schema"}), 500
 
 
 @app.route("/", methods=["GET"])

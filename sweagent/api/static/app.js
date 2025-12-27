@@ -43,7 +43,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle config file upload
     configFileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
-            fileNameDisplay.textContent = e.target.files[0].name;
+            const file = e.target.files[0];
+            fileNameDisplay.textContent = file.name;
+            
+            // Validate file type
+            if (!file.name.endsWith('.yaml') && !file.name.endsWith('.yml')) {
+                alert('Please upload a YAML file (.yaml or .yml)');
+                configFileInput.value = ''; // Clear the input
+                fileNameDisplay.textContent = 'No file chosen';
+            }
         } else {
             fileNameDisplay.textContent = 'No file chosen';
         }
@@ -347,19 +355,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 const reader = new FileReader();
                 
                 // Read the file asynchronously
-                uploadedConfig = await new Promise((resolve, reject) => {
-                    reader.onload = (e) => {
-                        try {
-                            const yamlContent = e.target.result;
-                            // Simple YAML parsing - in a real app, use js-yaml library
-                            resolve(yamlContent);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    };
+                const yamlText = await new Promise((resolve, reject) => {
+                    reader.onload = (e) => resolve(e.target.result);
                     reader.onerror = reject;
                     reader.readAsText(file);
                 });
+                
+                // Parse YAML content using js-yaml
+                let yamlConfig;
+                try {
+                    // Load js-yaml dynamically if not available
+                    let jsyaml;
+                    if (typeof window.jsyaml === 'undefined') {
+                        const response = await fetch('/static/js-yaml.min.js');
+                        if (!response.ok) {
+                            throw new Error('js-yaml library not found. Please ensure it\'s included in the static files.');
+                        }
+                        const yamlScript = document.createElement('script');
+                        yamlScript.src = '/static/js-yaml.min.js';
+                        yamlScript.onload = () => {
+                            jsyaml = window.jsyaml;
+                        };
+                        await new Promise((resolve) => { yamlScript.onload = resolve; document.head.appendChild(yamlScript); });
+                    }
+                    
+                    // Use js-yaml to parse the YAML content
+                    yamlConfig = jsyaml ? window.jsyaml.load(yamlText) : JSON.parse(yamlText.replace(/\:/g, '"'));
+                    uploadedConfig = yamlConfig || {};
+                } catch (parseError) {
+                    console.error('Error parsing YAML file:', parseError);
+                    alert('Error parsing configuration file. Please ensure it is a valid YAML file.');
+                    throw parseError;
+                }
             }
             
             const requestBody = { problem_statement: finalProblemStatement };
@@ -368,9 +395,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (uploadedConfig) {
                 // If we have both inline config and uploaded config, merge them
-                // Uploaded config takes precedence
-                const mergedConfig = uploadedConfig;
-                Object.assign(mergedConfig, config);
+                // Uploaded config takes precedence over inline config
+                const mergedConfig = JSON.parse(JSON.stringify(uploadedConfig)); // Deep copy
+                
+                // Merge inline config into uploaded config
+                for (const [key, value] of Object.entries(config)) {
+                    if (typeof value === 'object' && value !== null) {
+                        if (!mergedConfig[key]) {
+                            mergedConfig[key] = {};
+                        }
+                        Object.assign(mergedConfig[key], value);
+                    } else {
+                        mergedConfig[key] = value;
+                    }
+                }
+                
                 requestBody.config = mergedConfig;
             }
             
