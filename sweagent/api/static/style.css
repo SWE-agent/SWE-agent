@@ -44,6 +44,66 @@ header h1 {
     background-color: #f8f9fa;
 }
 
+/* Radio button styling for problem type selection */
+.problem-type-selection {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 16px;
+    background-color: white;
+    border-radius: 6px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.radio-label:hover {
+    border-color: #667eea;
+    background-color: #f8f9fa;
+}
+
+.radio-label input[type="radio"] {
+    display: none; /* Hide default radio */
+}
+
+.radio-custom {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: white;
+    border: 2px solid #667eea;
+    margin-right: 10px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.radio-label input[type="radio"]:checked + .radio-custom {
+    background-color: #667eea;
+}
+
+.radio-label input[type="radio"]:checked + .radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.radio-text {
+    font-weight: 600;
+    color: #333;
+}
+
 #problemStatement {
     width: 100%;
     padding: 15px;

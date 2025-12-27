@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const exitStatusElement = document.getElementById('exitStatus');
     const stepCountElement = document.getElementById('stepCount');
     
+    // Problem statement type radio buttons
+    const textProblemTypeRadio = document.getElementById('textProblemType');
+    const githubProblemTypeRadio = document.getElementById('githubProblemType');
+    const inputHint = document.getElementById('inputHint');
+    const githubHint = document.getElementById('githubHint');
+    
     // Cost display elements
     const costDisplayContainer = document.getElementById('costDisplay');
     const costStatsContainer = document.getElementById('costStats');
@@ -45,6 +51,23 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             repoPathGroup.style.display = 'none';
             githubRepoGroup.style.display = 'none';
+        }
+    });
+    
+    // Handle problem statement type selection
+    textProblemTypeRadio.addEventListener('change', function() {
+        if (this.checked) {
+            inputHint.classList.remove('hidden');
+            githubHint.classList.add('hidden');
+            problemStatementInput.placeholder = "Enter your problem statement here...";
+        }
+    });
+    
+    githubProblemTypeRadio.addEventListener('change', function() {
+        if (this.checked) {
+            inputHint.classList.add('hidden');
+            githubHint.classList.remove('hidden');
+            problemStatementInput.placeholder = "Enter GitHub issue URL: https://github.com/owner/repo/issues/123";
         }
     });
     
@@ -425,15 +448,19 @@ document.addEventListener('DOMContentLoaded', function() {
             config.env.repo.github_url = githubRepoUrlInput.value;
         }
         
-        // Handle problem statement - check if it's a GitHub issue URL
+        // Handle problem statement based on radio button selection
         let finalProblemStatement = problemStatement;
-        const githubIssueRegex = /https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\d+/i;
-        if (githubIssueRegex.test(problemStatement)) {
+        const problemType = document.querySelector('input[name="problem-statement-type"]:checked').value;
+        
+        if (problemType === 'github') {
             // It's a GitHub issue URL
             finalProblemStatement = {
                 type: 'github',
                 github_url: problemStatement
             };
+        } else {
+            // It's text
+            finalProblemStatement = problemStatement;
         }
         
         // Handle agent configuration

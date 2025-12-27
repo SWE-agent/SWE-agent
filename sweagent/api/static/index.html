@@ -15,9 +15,26 @@
         </header>
         
         <div class="problem-input">
+            <!-- Problem Statement Type Selection -->
+            <div class="problem-type-selection">
+                <label class="radio-label">
+                    <input type="radio" name="problem-statement-type" id="textProblemType" value="text" checked>
+                    <span class="radio-custom"></span>
+                    <span class="radio-text">📝 Text Problem Statement</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="problem-statement-type" id="githubProblemType" value="github">
+                    <span class="radio-custom"></span>
+                    <span class="radio-text">🐙 GitHub Issue URL</span>
+                </label>
+            </div>
+            
             <!-- Problem Statement Input - can be text or GitHub issue URL -->
-            <textarea id="problemStatement" placeholder="Enter your problem statement or GitHub issue URL here...\nExample: https://github.com/owner/repo/issues/123" rows="6"></textarea>
-            <small>💡 Enter a text description, GitHub issue URL (https://github.com/owner/repo/issues/123), or file path to problem statement</small>
+            <textarea id="problemStatement" placeholder="Enter your problem statement here..." rows="6"></textarea>
+            <small id="inputHint">💡 Enter a text description of the problem you want to solve</small>
+             
+            <!-- GitHub-specific hint (shown when GitHub radio is selected) -->
+            <small id="githubHint" class="hidden">💡 Enter GitHub issue URL: https://github.com/owner/repo/issues/123</small>
             
             <!-- Repository Configuration -->
             <div class="config-section">
