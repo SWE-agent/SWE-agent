@@ -20,6 +20,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO
 
 # Import SWE-agent components
+from sweagent.api.websocket_hook import WebSocketHook
 from sweagent.run.run_single import RunSingleConfig
 from sweagent.types import AgentRunResult
 
@@ -49,6 +50,7 @@ class RunState:
         self.problem_statement = ""
         self.exit_status = None
         self.model_stats = {}
+        self.websocket_hook: Optional[WebSocketHook] = None
     
     def to_dict(self):
         return {
@@ -83,12 +85,16 @@ def generate_run_id() -> str:
     return f"run_{int(time.time() * 1000)}"
 
 
-def _run_single_with_result(config: RunSingleConfig) -> AgentRunResult:
+def _run_single_with_result(config: RunSingleConfig, websocket_hook: Optional[WebSocketHook] = None) -> AgentRunResult:
     """Wrapper around run_from_config that returns the result."""
     from sweagent.run.run_single import RunSingle
     
     # Create RunSingle instance from config
     run_single_instance = RunSingle.from_config(config)
+    
+    # Add WebSocket hook if provided
+    if websocket_hook:
+        run_single_instance.agent.add_hook(websocket_hook)
     
     # Run and return the result
     return run_single_instance.run()
@@ -119,9 +125,16 @@ def get_trajectory(run_id: str):
     if not state:
         return jsonify({"error": f"Run {run_id} not found"}), 404
     
+    # Get trajectory from WebSocket hook if available, otherwise use stored steps
+    trajectory_steps = []
+    if state.websocket_hook and state.websocket_hook.trajectory_steps:
+        trajectory_steps = state.websocket_hook.trajectory_steps
+    elif state.trajectory_steps:
+        trajectory_steps = state.trajectory_steps
+    
     # Return the full trajectory with history
     result = {
-        "trajectory": state.trajectory_steps,
+        "trajectory": trajectory_steps,
         "problem_statement": state.problem_statement,
         "exit_status": state.exit_status,
         "model_stats": state.model_stats,
@@ -180,14 +193,24 @@ async def run_agent_async(run_id: str, problem_statement: str, config_path: Opti
         config = create_agent_config(problem_statement, config_path)
         state.config = config
         
-        # Run the agent and get result
+        # Create WebSocket hook and attach it to the state
+        websocket_hook = WebSocketHook(run_id)
+        websocket_hook._emit_function = emit_update
+        state.websocket_hook = websocket_hook
+        
+        # Run the agent with the WebSocket hook in a separate thread
         result = await asyncio.to_thread(
             _run_single_with_result,
             config,
+            websocket_hook,
         )
         
-        # Update state with results
-        state.trajectory_steps = result.trajectory
+        # Update state with results from the hook if available
+        if state.websocket_hook and state.websocket_hook.trajectory_steps:
+            state.trajectory_steps = state.websocket_hook.trajectory_steps
+        else:
+            state.trajectory_steps = result.trajectory
+            
         state.exit_status = result.info.get("exit_status")
         state.model_stats = result.info.get("model_stats", {})
         
