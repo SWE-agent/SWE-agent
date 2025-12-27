@@ -1,0 +1,107 @@
+# Formerly called: anthropic_filemap.yaml
+# This template is heavily inspired by anthropic's computer use demo, but you can use
+# it with any LM.
+agent:
+  templates:
+    system_template: |-
+      You are a helpful assistant that can interact with a computer to solve tasks.
+    instance_template: |-
+      <uploaded_files>
+      {{working_dir}}
+      </uploaded_files>
+      I've uploaded a python code repository in the directory {{working_dir}}. Consider the following PR description:
+
+      <pr_description>
+      {{problem_statement}}
+      </pr_description>
+
+      Can you help me implement the necessary changes to the repository so that the requirements specified in the <pr_description> are met?
+      If you write tests depending on a server running, make sure to start the server in a background process so it won't timeout the console.
+      
+      1. As a first step, it might be a good idea to find and read code relevant to the <pr_description>
+      2. Create a script to test the error or feature and execute it with `python <filename.py>` using the bash tool, to confirm unsucessful test.
+      3. Edit the source code of the repo to resolve the issue
+      4. Rerun your test script and confirm that the error is fixed!
+      5. Think about edgecases and make sure your fix handles them as well
+      
+      Remember to keep modules and files small. Work iteratively on one thing at the time so in order to keep changes small and make it easy to locate where something could have gone wrong
+      Your thinking should be thorough and so it's fine if it's very long.
+
+      Note: You can use the view_image command to display images as embedded base64 data when relevant.
+      You'll also be given access browser tools to interact with the web or a local server.
+      In the browser, your mouse is shown as a red crosshair.
+
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+    next_step_no_output_template: |-
+      Your command ran successfully and did not produce any output.
+  tools:
+    env_variables:
+      PAGER: cat
+      MANPAGER: cat
+      LESS: -R
+      PIP_PROGRESS_BAR: 'off'
+      TQDM_DISABLE: '1'
+      GIT_PAGER: cat
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/review_on_submit_m
+      - path: tools/image_tools  # lets models view image files
+      - path: tools/web_browser  # browser tool for interacting with web servers
+    registry_variables:
+      USE_FILEMAP: 'true'
+      SUBMIT_REVIEW_MESSAGES:
+        - |
+          Thank you for your work on this issue. Please carefully follow the steps below to help review your changes.
+
+          1. If you made any changes to your code after running the reproduction script, please run the reproduction script again.
+            If the reproduction script is failing, please revisit your changes and make sure they are correct.
+            If you have already removed your reproduction script, please ignore this step.
+          2. Remove your reproduction script (if you haven't done so already).
+          3. If you have modified any TEST files, please revert them to the state they had before you started fixing the issue.
+            You can do this with `git checkout -- /path/to/test/file.py`. Use below <diff> to find the files you need to revert.
+          4. Run the submit command again to confirm.
+
+          Here is a list of all of your changes:
+
+          <diff>
+          {{diff}}
+          </diff>
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling
+  history_processors:
+    - type: image_parsing  # parses base64 encoded images in the observation
+    - type: cache_control
+      last_n_messages: 5
+  model:
+    #temperature: 1.
+    # completion_kwargs:
+    name: "openai/mistralai/devstral-small-2-2512"
+    api_key: sk-unk
+    api_base: http://hal-8999:12345/v1
+    per_instance_cost_limit: 0   
+    total_cost_limit: 0
+    # completion_kwargs:
+    #   reasoning_effort: high
+    #   allowed_openai_params:
+    #     - reasoning_effort
+    #   #parallel_tool_calls: True
+    per_instance_call_limit: 500
+    # max_input_tokens: 40960  
+    litellm_model_registry: "./models.json"
+
+env:
+  post_startup_commands:
+    - pip install -e .
+  repo:
+    # github_url: https://github.com/gatepoet/SWE-agent-web
+    # base_commit: "main" 
+    path: ./
+  deployment:
+    image: kavai/swe-agent
+# out_path: output/swe-agent-web
+actions:
+  apply_patch_locally: True

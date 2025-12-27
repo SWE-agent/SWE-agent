@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWE-agent Chatbot Interface</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 SWE-agent Chatbot Interface</h1>
+            <p class="subtitle">Run software engineering tasks with AI-powered automation</p>
+        </header>
+        
+        <div class="problem-input">
+            <!-- Problem Statement Input - can be text or GitHub issue URL -->
+            <textarea id="problemStatement" placeholder="Enter your problem statement or GitHub issue URL here...\nExample: https://github.com/owner/repo/issues/123" rows="6"></textarea>
+            <small>💡 Enter a text description, GitHub issue URL (https://github.com/owner/repo/issues/123), or file path to problem statement</small>
+            
+            <!-- Repository Configuration -->
+            <div class="config-section">
+                <summary>📁 Repository Configuration (Optional)</summary>
+                <div class="config-options">
+                    <div class="config-group">
+                        <label for="repoType">Repository Type:</label>
+                        <select id="repoType">
+                            <option value="none">None (use current directory)</option>
+                            <option value="local">Local Path</option>
+                            <option value="github">GitHub Repository</option>
+                        </select>
+                    </div>
+                    <div class="config-group" id="repoPathGroup" style="display: none;">
+                        <label for="repoPath">Local Repository Path:</label>
+                        <input type="text" id="repoPath" placeholder="/path/to/repository">
+                    </div>
+                    <div class="config-group" id="githubRepoGroup" style="display: none;">
+                        <label for="githubRepoUrl">GitHub Repository URL:</label>
+                        <input type="text" id="githubRepoUrl" placeholder="https://github.com/owner/repo">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advanced Configuration -->
+            <details id="configSection" class="config-section">
+                <summary>🔧 Advanced Agent Configuration (Optional)</summary>
+                <div class="config-options">
+                    <div class="config-group">
+                        <label for="modelTemperature">Model Temperature:</label>
+                        <input type="number" id="modelTemperature" min="0" max="2" step="0.1" placeholder="0.7 (default)">
+                        <small>💡 Higher values = more creative, lower values = more focused</small>
+                    </div>
+                    <div class="config-group">
+                        <label for="modelName">Model Name:</label>
+                        <input type="text" id="modelName" placeholder="e.g., gpt-4o-mini">
+                        <small>💡 Override the default model (e.g., gpt-4o, claude-3-opus)</small>
+                    </div>
+                    <div class="config-group">
+                        <label for="costLimit">Cost Limit ($):</label>
+                        <input type="number" id="costLimit" min="0" step="0.1" placeholder="2.0 (default)">
+                        <small>💡 Maximum cost per run to prevent unexpected charges</small>
+                    </div>
+                    <div class="config-group">
+                        <label for="enableBash">Enable Bash Tools:</label>
+                        <select id="enableBash">
+                            <option value="">Use default</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                        <small>💡 Control whether the agent can execute bash commands</small>
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Config File Upload -->
+            <div class="config-section">
+                <label for="configFile" class="file-upload-label">
+                    📄 Upload Configuration File (YAML)
+                    <input type="file" id="configFile" accept=".yaml,.yml" style="display: none;">
+                    <span id="fileName">No file chosen</span>
+                </label>
+                <small>Or <a href="/api/config/schema" target="_blank">view configuration schema</a> for available options</small>
+            </div>
+            
+            <button id="startRun" class="btn-primary">Start SWE-agent</button>
+        </div>
+        
+        <div class="runs-list">
+            <h2>Active Runs</h2>
+            <div id="activeRuns" class="runs-container"></div>
+        </div>
+        
+        <!-- Cost Display Sidebar - Fixed Placement -->
+        <div id="costDisplay" class="cost-display hidden">
+            <div class="cost-header">
+                <span>💰 Cost</span>
+                <span class="cost-icon">$</span>
+            </div>
+            <div id="costStats"></div>
+        </div>
+
+        <div class="chat-interface">
+            <h2>Chat Interface</h2>
+            <!-- Timeline View (will replace chat-messages when run is loaded) -->
+            <div id="timelineView" class="timeline-container hidden"></div>
+            <!-- Fallback Chat Messages View -->
+            <div id="chatMessages" class="chat-messages"></div>
+            <div id="runDetails" class="run-details hidden">
+                <div class="run-info">
+                    <span id="runStatus"></span>
+                    <span id="exitStatus"></span>
+                    <span id="stepCount"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
