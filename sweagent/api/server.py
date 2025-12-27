@@ -20,8 +20,8 @@ from flask_cors import CORS
 from flask_socketio import SocketIO
 
 # Import SWE-agent components
-from sweagent.run.run_single import run_single
-from sweagent.types import Config
+from sweagent.run.run_single import RunSingleConfig
+from sweagent.types import AgentRunResult
 
 
 logging.basicConfig(level=logging.INFO)
@@ -83,6 +83,17 @@ def generate_run_id() -> str:
     return f"run_{int(time.time() * 1000)}"
 
 
+def _run_single_with_result(config: RunSingleConfig) -> AgentRunResult:
+    """Wrapper around run_from_config that returns the result."""
+    from sweagent.run.run_single import RunSingle
+    
+    # Create RunSingle instance from config
+    run_single_instance = RunSingle.from_config(config)
+    
+    # Run and return the result
+    return run_single_instance.run()
+
+
 @app.route("/api/runs", methods=["GET"])
 def list_runs():
     """List all active and completed runs."""
@@ -124,7 +135,7 @@ def emit_update(run_id: str, event: str, data: Any):
     socketio.emit("update", {"run_id": run_id, **data})
 
 
-def create_agent_config(problem_statement: str, config_path: Optional[str] = None) -> Config:
+def create_agent_config(problem_statement: str, config_path: Optional[str] = None) -> RunSingleConfig:
     """Create a configuration for the SWE-agent."""
     # Load default config
     config_dict = {
@@ -148,6 +159,9 @@ def create_agent_config(problem_statement: str, config_path: Optional[str] = Non
                 "max_tokens": 4096,
             },
         },
+        "problem_statement": {
+            "text": problem_statement,
+        }
     }
     
     if config_path:
@@ -162,7 +176,7 @@ def create_agent_config(problem_statement: str, config_path: Optional[str] = Non
             else:
                 config_dict[key] = value
     
-    return Config.from_dict(config_dict)
+    return RunSingleConfig.model_validate(config_dict)
 
 
 async def run_agent_async(run_id: str, problem_statement: str, config_path: Optional[str] = None):
@@ -182,19 +196,16 @@ async def run_agent_async(run_id: str, problem_statement: str, config_path: Opti
         config = create_agent_config(problem_statement, config_path)
         state.config = config
         
-        # Run the agent
+        # Run the agent and get result
         result = await asyncio.to_thread(
-            run_single,
-            problem_statement=problem_statement,
-            config=config,
-            trajectory_save_path=f"/tmp/swe_agent_{run_id}.traj",
-            verbose=True,
+            _run_single_with_result,
+            config,
         )
         
         # Update state with results
-        state.trajectory_steps = result.get("trajectory", [])
-        state.exit_status = result.get("info", {}).get("exit_status")
-        state.model_stats = result.get("info", {}).get("model_stats", {})
+        state.trajectory_steps = result.trajectory
+        state.exit_status = result.info.get("exit_status")
+        state.model_stats = result.info.get("model_stats", {})
         
         # Emit completion event
         emit_update(run_id, "complete", {
