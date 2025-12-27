@@ -83,7 +83,7 @@ agent:
       #parallel_tool_calls: True
     per_instance_call_limit: 500
     # max_input_tokens: 40960  
-    litellm_model_registry: "/home/kristoffer/.config/mini-swe-agent/models.json"
+    litellm_model_registry: "./models.json"
 
 env:
   repo:

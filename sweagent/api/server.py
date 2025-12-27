@@ -143,17 +143,22 @@ def create_agent_config(problem_statement: str, config_path: Optional[str] = Non
             "text": problem_statement,
         }
     }
-    if config_path:
-        # Load from file and merge
-        with open(config_path) as f:
-            file_config = yaml.safe_load(f)
-        # Merge configurations (file config takes precedence)
-        for key, value in file_config.items():
-            if isinstance(value, dict):
-                config_dict.setdefault(key, {})
-                config_dict[key].update(value)
-            else:
-                config_dict[key] = value
+    
+    # Determine which config file to use
+    if not config_path:
+        config_path = "./config/api_default.yaml"
+    
+    # Load from file and merge
+    with open(config_path) as f:
+        file_config = yaml.safe_load(f)
+    
+    # Merge configurations (file config takes precedence over our minimal config)
+    for key, value in file_config.items():
+        if isinstance(value, dict):
+            config_dict.setdefault(key, {})
+            config_dict[key].update(value)
+        else:
+            config_dict[key] = value
     
     return RunSingleConfig.model_validate(config_dict)
 
@@ -203,13 +208,13 @@ async def run_agent_async(run_id: str, problem_statement: str, config_path: Opti
             "status": "error",
             "error": str(e),
         })
-    finally:
-        state.completed = True
-        remove_run_state(run_id)
+    
+    # Mark as completed but keep the state for retrieval
+    state.completed = True
 
 
 @app.route("/api/runs", methods=["POST"])
-async def create_run():
+def create_run():
     """Create a new SWE-agent run."""
     data = request.get_json()
     
@@ -222,7 +227,17 @@ async def create_run():
     run_id = generate_run_id()
     
     # Start the agent in a background thread
-    asyncio.create_task(run_agent_async(run_id, problem_statement, config_path))
+    # Use threading to avoid async issues with Flask
+    def start_agent_task():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(run_agent_async(run_id, problem_statement, config_path))
+        finally:
+            loop.close()
+    
+    thread = threading.Thread(target=start_agent_task, daemon=True)
+    thread.start()
     
     return jsonify({
         "run_id": run_id,
