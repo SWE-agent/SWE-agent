@@ -68,14 +68,25 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add problem statement
             addChatMessage('user', data.problem_statement);
             
-            // Add trajectory steps
+            // Add trajectory steps with better formatting
             if (data.trajectory && data.trajectory.length > 0) {
-                data.trajectory.forEach(step => {
-                    if (step.observation) {
-                        addChatMessage('assistant', step.observation);
+                data.trajectory.forEach((step, index) => {
+                    const stepNum = index + 1;
+                    
+                    if (step.thought) {
+                        addChatMessage('assistant', `Step ${stepNum} - Thought: ${step.thought}`);
                     }
+                    
                     if (step.action) {
-                        addChatMessage('system', `Action: ${step.action}`);
+                        addChatMessage('system', `Step ${stepNum} - Action: ${step.action}`);
+                    }
+                    
+                    if (step.observation) {
+                        addChatMessage('assistant', `Step ${stepNum} - Observation: ${step.observation}`);
+                    }
+                    
+                    if (step.response) {
+                        addChatMessage('system', `Step ${stepNum} - Response: ${step.response}`);
                     }
                 });
             }
@@ -175,7 +186,43 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Received update:', data);
         
         if (data.run_id === currentRunId) {
-            addChatMessage('system', `Update: ${data.status || 'progress'}`);
+            // Handle different types of updates with meaningful messages
+            if (data.status === 'running' && data.current_step) {
+                // Show the actual action and observation from the step
+                const step = data.current_step;
+                let message = `Step ${data.step_count}: ${step.action}`;
+                
+                if (step.thought) {
+                    addChatMessage('assistant', `Thought: ${step.thought}`);
+                }
+                
+                if (step.action) {
+                    addChatMessage('system', message);
+                }
+                
+                if (step.observation) {
+                    addChatMessage('assistant', `Observation: ${step.observation}`);
+                }
+                
+                if (data.model_stats && Object.keys(data.model_stats).length > 0) {
+                    const statsText = Object.entries(data.model_stats)
+                        .map(([key, value]) => `${key}: ${typeof value === 'number' ? value.toFixed(2) : value}`)
+                        .join(' | ');
+                    addChatMessage('system', `Model stats: ${statsText}`);
+                }
+            } else if (data.status === 'completed') {
+                addChatMessage('system', `Run completed! Exit status: ${data.exit_status || 'success'}. Total steps: ${data.step_count}`);
+            } else if (data.status === 'running' && data.message) {
+                // Handle intermediate messages like step start, action planning, etc.
+                addChatMessage('system', data.message);
+            } else if (data.status === 'running') {
+                // Generic running update
+                addChatMessage('system', `Agent is running... Step ${data.step_count || 0}`);
+            } else {
+                // Fallback for other statuses
+                const statusText = data.message || data.status || 'progress';
+                addChatMessage('system', `Update: ${statusText}`);
+            }
         }
         
         // Refresh runs list on any update

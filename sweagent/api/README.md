@@ -139,18 +139,33 @@ The interface uses WebSocket for real-time updates:
 - `disconnect`: Client disconnected from server
 
 ### Global Updates
-- `update`: General update event with run information
+- `update`: General update event with run information and detailed step data
   ```json
   {
     "run_id": "run_1234567890",
-    "status": "started"
+    "status": "running",
+    "step_count": 1,
+    "current_step": {
+      "action": "Reading file requirements.txt",
+      "observation": "File contains flask==2.0.0",
+      "thought": "I need to understand the dependencies first",
+      "response": "Successfully read file"
+    },
+    "model_stats": {
+      "total_tokens": 1500.5,
+      "cost_usd": 0.045
+    }
   }
   ```
 
 ### Run-Specific Events
-- `run_{run_id}_start`: Run started
-- `run_{run_id}_complete`: Run completed
-- `run_{run_id}_error`: Run error occurred
+- `run_{run_id}_start`: Run started (status: running, step_count: 0)
+- `run_{run_id}_step_start`: Step started (status: running, message: "Starting new step...")
+- `run_{run_id}_actions_planned`: Actions being planned (status: running, message: "Planning: ...")
+- `run_{run_id}_action_start`: Action starting (status: running, message: "Executing: ...")
+- `run_{run_id}_step_complete`: Step completed (status: running, step_count: N, current_step: {...})
+- `run_{run_id}_complete`: Run completed (status: completed, step_count: N, exit_status: "success")
+- `run_{run_id}_error`: Run error occurred (status: error, error: "...")
 
 ## Configuration
 

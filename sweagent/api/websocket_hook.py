@@ -29,19 +29,34 @@ class WebSocketHook(AbstractAgentHook):
         self._emit_update("run_start", {
             "status": "running",
             "step_count": 0,
+            "message": "Agent execution started",
         })
 
     def on_step_start(self):
         """Called when a step starts."""
-        pass
+        # Emit update to indicate step started
+        self._emit_update("step_start", {
+            "status": "running",
+            "message": "Starting new step...",
+        })
 
     def on_actions_generated(self, *, step: StepOutput):
         """Called when actions are generated."""
-        pass
+        # Emit update to indicate actions are being planned
+        if step.thought:
+            self._emit_update("actions_planned", {
+                "status": "running",
+                "message": f"Planning: {step.thought[:100]}..." if len(step.thought) > 100 else step.thought,
+            })
 
     def on_action_started(self, *, step: StepOutput):
         """Called when an action starts execution."""
-        pass
+        # Emit update to indicate action is starting
+        if step.action:
+            self._emit_update("action_start", {
+                "status": "running",
+                "message": f"Executing: {step.action[:100]}..." if len(step.action) > 100 else step.action,
+            })
 
     def on_action_executed(self, *, step: StepOutput):
         """Called when an action is executed."""
@@ -63,13 +78,14 @@ class WebSocketHook(AbstractAgentHook):
             }
             self.trajectory_steps.append(trajectory_step)
         
-        # Emit update with current step count and info
+        # Emit update with current step count, info, and the actual step details
         step_count = len(self.trajectory_steps) if self.trajectory_steps else 0
         self._emit_update("step_complete", {
             "status": "running",
             "step_count": step_count,
             "exit_status": info.get("exit_status"),
             "model_stats": info.get("model_stats", {}),
+            "current_step": trajectory_step,  # Include the actual step details
         })
 
     def on_run_done(self, *, trajectory: Any, info: "AgentInfo"):
