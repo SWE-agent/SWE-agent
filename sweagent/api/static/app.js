@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const configFileInput = document.getElementById('configFile');
     const fileNameDisplay = document.getElementById('fileName');
     
+    // Model selection element
+    const modelSelect = document.getElementById('modelName');
+    
     let currentRunId = null;
     
     // Handle repository type selection
@@ -270,6 +273,34 @@ document.addEventListener('DOMContentLoaded', function() {
         navigator.clipboard.writeText(text).then(function() {
             alert('Copied to clipboard!');
         });
+    }
+    
+    // Fetch available models from API and populate dropdown
+    async function fetchModels() {
+        try {
+            const response = await fetch('/api/models');
+            if (!response.ok) throw new Error('Failed to load models');
+            
+            const data = await response.json();
+            
+            if (data.model_names && data.model_names.length > 0) {
+                // Clear existing options except the default one
+                while (modelSelect.options.length > 1) {
+                    modelSelect.remove(1);
+                }
+                
+                // Add model options
+                data.model_names.forEach(modelName => {
+                    const option = document.createElement('option');
+                    option.value = modelName;
+                    option.textContent = modelName;
+                    modelSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading models:', error);
+            // Show a message to the user or keep the dropdown empty
+        }
     }
     
     // Create run card
@@ -620,4 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial load
     refreshRunsList();
+    
+    // Load available models for the dropdown
+    fetchModels();
 });
