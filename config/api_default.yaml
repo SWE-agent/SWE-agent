@@ -17,13 +17,13 @@ agent:
 
       Can you help me implement the necessary changes to the repository so that the requirements specified in the <pr_description> are met?
       If you write tests depending on a server running, make sure to start the server in a background process so it won't timeout the console.
-      
+
       1. As a first step, it might be a good idea to find and read code relevant to the <pr_description>
-      2. Create a script to test the error or feature and execute it with `python <filename.py>` using the bash tool, to confirm unsucessful test.
+      2. Create a script to test the error or feature and execute it with `python <filename.py>` using the bash tool, to confirm unsuccessful test.
       3. Edit the source code of the repo to resolve the issue
       4. Rerun your test script and confirm that the error is fixed!
       5. Think about edgecases and make sure your fix handles them as well
-      
+
       Remember to keep modules and files small. Work iteratively on one thing at the time so in order to keep changes small and make it easy to locate where something could have gone wrong
       Your thinking should be thorough and so it's fine if it's very long.
 
@@ -82,7 +82,7 @@ agent:
     name: "openai/mistralai/devstral-small-2-2512"
     api_key: sk-unk
     api_base: http://hal-8999:12345/v1
-    per_instance_cost_limit: 0   
+    per_instance_cost_limit: 0
     total_cost_limit: 0
     # completion_kwargs:
     #   reasoning_effort: high
@@ -90,7 +90,7 @@ agent:
     #     - reasoning_effort
     #   #parallel_tool_calls: True
     per_instance_call_limit: 500
-    # max_input_tokens: 40960  
+    # max_input_tokens: 40960
     litellm_model_registry: "./models.json"
 
 env:
@@ -98,7 +98,7 @@ env:
     - pip install -e .
   repo:
     # github_url: https://github.com/gatepoet/SWE-agent-web
-    # base_commit: "main" 
+    # base_commit: "main"
     path: ./
   deployment:
     image: kavai/swe-agent

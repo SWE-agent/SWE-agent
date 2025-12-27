@@ -13,12 +13,12 @@
             <h1>🤖 SWE-agent Chatbot Interface</h1>
             <p class="subtitle">Run software engineering tasks with AI-powered automation</p>
         </header>
-        
+
         <div class="problem-input">
             <!-- Problem Statement Input - can be text or GitHub issue URL -->
             <textarea id="problemStatement" placeholder="Enter your problem statement or GitHub issue URL here...\nExample: https://github.com/owner/repo/issues/123" rows="6"></textarea>
             <small>💡 Enter a text description, GitHub issue URL (https://github.com/owner/repo/issues/123), or file path to problem statement</small>
-            
+
             <!-- Repository Configuration -->
             <div class="config-section">
                 <summary>📁 Repository Configuration (Optional)</summary>
@@ -41,7 +41,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Advanced Configuration -->
             <details id="configSection" class="config-section">
                 <summary>🔧 Advanced Agent Configuration (Optional)</summary>
@@ -72,7 +72,7 @@
                     </div>
                 </div>
             </details>
-            
+
             <!-- Config File Upload -->
             <div class="config-section">
                 <label for="configFile" class="file-upload-label">
@@ -82,15 +82,15 @@
                 </label>
                 <small>Or <a href="/api/config/schema" target="_blank">view configuration schema</a> for available options</small>
             </div>
-            
+
             <button id="startRun" class="btn-primary">Start SWE-agent</button>
         </div>
-        
+
         <div class="runs-list">
             <h2>Active Runs</h2>
             <div id="activeRuns" class="runs-container"></div>
         </div>
-        
+
         <!-- Cost Display Sidebar - Fixed Placement -->
         <div id="costDisplay" class="cost-display hidden">
             <div class="cost-header">
@@ -115,7 +115,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
     <script src="/static/app.js"></script>
 </body>
