@@ -223,6 +223,67 @@ header h1 {
     font-weight: 600;
 }
 
+/* Configuration Section */
+.config-section {
+    margin: 20px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: white;
+}
+
+.config-section summary {
+    padding: 15px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.config-section summary:hover {
+    background-color: #f8f9fa;
+}
+
+.config-options {
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.config-group {
+    margin-bottom: 15px;
+}
+
+.config-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.config-group input,
+.config-group select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1em;
+    font-family: 'Inter', sans-serif;
+}
+
+.config-group input:focus,
+.config-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.config-group small {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: #666;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     body {

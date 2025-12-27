@@ -130,15 +130,51 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Build configuration from UI inputs
+        const config = {};
+        
+        const modelTemperature = document.getElementById('modelTemperature').value;
+        const modelName = document.getElementById('modelName').value;
+        const costLimit = document.getElementById('costLimit').value;
+        const enableBash = document.getElementById('enableBash').value;
+        
+        if (modelTemperature || modelName || costLimit || enableBash) {
+            config.agent = {};
+            
+            if (modelTemperature || modelName || costLimit) {
+                config.agent.model = {};
+                
+                if (modelTemperature) {
+                    config.agent.model.temperature = parseFloat(modelTemperature);
+                }
+                
+                if (modelName) {
+                    config.agent.model.name = modelName;
+                }
+                
+                if (costLimit) {
+                    config.agent.model.per_instance_cost_limit = parseFloat(costLimit);
+                }
+            }
+            
+            if (enableBash !== '') {
+                if (!config.agent.tools) config.agent.tools = {};
+                config.agent.tools.enable_bash_tool = enableBash === 'true';
+            }
+        }
+        
         try {
+            const requestBody = { problem_statement: problemStatement };
+            if (Object.keys(config).length > 0) {
+                requestBody.config = config;
+            }
+            
             const response = await fetch('/api/runs', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    problem_statement: problemStatement
-                })
+                body: JSON.stringify(requestBody)
             });
             
             const data = await response.json();

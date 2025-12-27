@@ -148,7 +148,20 @@ def emit_update(run_id: str, event: str, data: Any):
     socketio.emit("update", {"run_id": run_id, **data})
 
 
-def create_agent_config(problem_statement: str, config_path: Optional[str] = None) -> RunSingleConfig:
+def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+    """Deep merge two dictionaries. Values from dict2 take precedence."""
+    result = dict1.copy()
+    for key, value in dict2.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            # Recursively merge nested dictionaries
+            result[key] = deep_merge(result[key], value)
+        else:
+            # Override with value from dict2
+            result[key] = value
+    return result
+
+
+def create_agent_config(problem_statement: str, config_path: Optional[str] = None, inline_config: Optional[Dict[str, Any]] = None) -> RunSingleConfig:
     """Create a configuration for the SWE-agent."""
     # Load default config
     config_dict = {
@@ -166,17 +179,16 @@ def create_agent_config(problem_statement: str, config_path: Optional[str] = Non
         file_config = yaml.safe_load(f)
     
     # Merge configurations (file config takes precedence over our minimal config)
-    for key, value in file_config.items():
-        if isinstance(value, dict):
-            config_dict.setdefault(key, {})
-            config_dict[key].update(value)
-        else:
-            config_dict[key] = value
+    config_dict = deep_merge(config_dict, file_config)
+    
+    # Apply inline configuration overrides if provided
+    if inline_config:
+        config_dict = deep_merge(config_dict, inline_config)
     
     return RunSingleConfig.model_validate(config_dict)
 
 
-async def run_agent_async(run_id: str, problem_statement: str, config_path: Optional[str] = None):
+async def run_agent_async(run_id: str, problem_statement: str, config_path: Optional[str] = None, inline_config: Optional[Dict[str, Any]] = None):
     """Run SWE-agent asynchronously and emit updates via Socket.IO."""
     state = RunState(run_id)
     state.problem_statement = problem_statement
@@ -190,7 +202,7 @@ async def run_agent_async(run_id: str, problem_statement: str, config_path: Opti
         })
         
         # Create config
-        config = create_agent_config(problem_statement, config_path)
+        config = create_agent_config(problem_statement, config_path, inline_config)
         state.config = config
         
         # Create WebSocket hook and attach it to the state
@@ -246,6 +258,7 @@ def create_run():
     
     problem_statement = data["problem_statement"]
     config_path = data.get("config_path", "./config/api_default.yaml")
+    inline_config = data.get("config")
     
     run_id = generate_run_id()
     
@@ -255,7 +268,7 @@ def create_run():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            loop.run_until_complete(run_agent_async(run_id, problem_statement, config_path))
+            loop.run_until_complete(run_agent_async(run_id, problem_statement, config_path, inline_config))
         finally:
             loop.close()
     
