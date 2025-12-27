@@ -284,6 +284,29 @@ header h1 {
     color: #666;
 }
 
+/* File upload styling */
+.file-upload-label {
+    display: inline-block;
+    padding: 12px 20px;
+    background-color: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.file-upload-label:hover {
+    border-color: #667eea;
+    background-color: #f8f9fa;
+}
+
+#fileName {
+    margin-left: 10px;
+    color: #666;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     body {

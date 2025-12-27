@@ -12,7 +12,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const exitStatusElement = document.getElementById('exitStatus');
     const stepCountElement = document.getElementById('stepCount');
     
+    // Repository configuration elements
+    const repoTypeSelect = document.getElementById('repoType');
+    const repoPathGroup = document.getElementById('repoPathGroup');
+    const githubRepoGroup = document.getElementById('githubRepoGroup');
+    const repoPathInput = document.getElementById('repoPath');
+    const githubRepoUrlInput = document.getElementById('githubRepoUrl');
+    
+    // Config file upload elements
+    const configFileInput = document.getElementById('configFile');
+    const fileNameDisplay = document.getElementById('fileName');
+    
     let currentRunId = null;
+    
+    // Handle repository type selection
+    repoTypeSelect.addEventListener('change', function() {
+        const repoType = this.value;
+        if (repoType === 'local') {
+            repoPathGroup.style.display = 'block';
+            githubRepoGroup.style.display = 'none';
+        } else if (repoType === 'github') {
+            repoPathGroup.style.display = 'none';
+            githubRepoGroup.style.display = 'block';
+        } else {
+            repoPathGroup.style.display = 'none';
+            githubRepoGroup.style.display = 'none';
+        }
+    });
+    
+    // Handle config file upload
+    configFileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            fileNameDisplay.textContent = e.target.files[0].name;
+        } else {
+            fileNameDisplay.textContent = 'No file chosen';
+        }
+    });
     
     // Add message to chat
     function addChatMessage(role, content) {
@@ -133,6 +168,32 @@ document.addEventListener('DOMContentLoaded', function() {
         // Build configuration from UI inputs
         const config = {};
         
+        // Handle repository configuration
+        const repoType = repoTypeSelect.value;
+        if (repoType === 'local' && repoPathInput.value) {
+            if (!config.env) config.env = {};
+            if (!config.env.repo) config.env.repo = {};
+            config.env.repo.type = 'local';
+            config.env.repo.path = repoPathInput.value;
+        } else if (repoType === 'github' && githubRepoUrlInput.value) {
+            if (!config.env) config.env = {};
+            if (!config.env.repo) config.env.repo = {};
+            config.env.repo.type = 'github';
+            config.env.repo.github_url = githubRepoUrlInput.value;
+        }
+        
+        // Handle problem statement - check if it's a GitHub issue URL
+        let finalProblemStatement = problemStatement;
+        const githubIssueRegex = /https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\d+/i;
+        if (githubIssueRegex.test(problemStatement)) {
+            // It's a GitHub issue URL
+            finalProblemStatement = {
+                type: 'github',
+                github_url: problemStatement
+            };
+        }
+        
+        // Handle agent configuration
         const modelTemperature = document.getElementById('modelTemperature').value;
         const modelName = document.getElementById('modelName').value;
         const costLimit = document.getElementById('costLimit').value;
@@ -164,9 +225,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            const requestBody = { problem_statement: problemStatement };
+            // Handle config file upload if present
+            let uploadedConfig = null;
+            if (configFileInput.files.length > 0) {
+                const file = configFileInput.files[0];
+                const reader = new FileReader();
+                
+                // Read the file asynchronously
+                uploadedConfig = await new Promise((resolve, reject) => {
+                    reader.onload = (e) => {
+                        try {
+                            const yamlContent = e.target.result;
+                            // Simple YAML parsing - in a real app, use js-yaml library
+                            resolve(yamlContent);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsText(file);
+                });
+            }
+            
+            const requestBody = { problem_statement: finalProblemStatement };
             if (Object.keys(config).length > 0) {
                 requestBody.config = config;
+            }
+            if (uploadedConfig) {
+                // If we have both inline config and uploaded config, merge them
+                // Uploaded config takes precedence
+                const mergedConfig = uploadedConfig;
+                Object.assign(mergedConfig, config);
+                requestBody.config = mergedConfig;
             }
             
             const response = await fetch('/api/runs', {

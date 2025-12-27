@@ -15,10 +15,35 @@
         </header>
         
         <div class="problem-input">
-            <textarea id="problemStatement" placeholder="Enter your problem statement or GitHub issue description here..." rows="8"></textarea>
+            <!-- Problem Statement Input - can be text or GitHub issue URL -->
+            <textarea id="problemStatement" placeholder="Enter your problem statement or GitHub issue URL here...\nExample: https://github.com/owner/repo/issues/123" rows="6"></textarea>
             
+            <!-- Repository Configuration -->
+            <div class="config-section">
+                <summary>📁 Repository Configuration (Optional)</summary>
+                <div class="config-options">
+                    <div class="config-group">
+                        <label for="repoType">Repository Type:</label>
+                        <select id="repoType">
+                            <option value="none">None (use current directory)</option>
+                            <option value="local">Local Path</option>
+                            <option value="github">GitHub Repository</option>
+                        </select>
+                    </div>
+                    <div class="config-group" id="repoPathGroup" style="display: none;">
+                        <label for="repoPath">Local Repository Path:</label>
+                        <input type="text" id="repoPath" placeholder="/path/to/repository">
+                    </div>
+                    <div class="config-group" id="githubRepoGroup" style="display: none;">
+                        <label for="githubRepoUrl">GitHub Repository URL:</label>
+                        <input type="text" id="githubRepoUrl" placeholder="https://github.com/owner/repo">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advanced Configuration -->
             <details id="configSection" class="config-section">
-                <summary>🔧 Advanced Configuration (Optional)</summary>
+                <summary>🔧 Advanced Agent Configuration (Optional)</summary>
                 <div class="config-options">
                     <div class="config-group">
                         <label for="modelTemperature">Model Temperature:</label>
@@ -43,6 +68,15 @@
                     </div>
                 </div>
             </details>
+            
+            <!-- Config File Upload -->
+            <div class="config-section">
+                <label for="configFile" class="file-upload-label">
+                    📄 Upload Configuration File (YAML)
+                    <input type="file" id="configFile" accept=".yaml,.yml" style="display: none;">
+                    <span id="fileName">No file chosen</span>
+                </label>
+            </div>
             
             <button id="startRun" class="btn-primary">Start SWE-agent</button>
         </div>

@@ -76,16 +76,18 @@ agent:
     api_base: http://hal-8999:12345/v1
     per_instance_cost_limit: 0   
     total_cost_limit: 0
-    completion_kwargs:
-      reasoning_effort: high
-      allowed_openai_params:
-        - reasoning_effort
-      #parallel_tool_calls: True
+    # completion_kwargs:
+    #   reasoning_effort: high
+    #   allowed_openai_params:
+    #     - reasoning_effort
+    #   #parallel_tool_calls: True
     per_instance_call_limit: 500
     # max_input_tokens: 40960  
     litellm_model_registry: "./models.json"
 
 env:
+  post_startup_commands:
+    - pip install -e .
   repo:
     # github_url: https://github.com/gatepoet/SWE-agent-web
     # base_commit: "main" 
@@ -93,3 +95,5 @@ env:
   deployment:
     image: kavai/swe-agent
 # out_path: output/swe-agent-web
+actions:
+  apply_patch_locally: True

@@ -165,10 +165,16 @@ def create_agent_config(problem_statement: str, config_path: Optional[str] = Non
     """Create a configuration for the SWE-agent."""
     # Load default config
     config_dict = {
-        "problem_statement": {
-            "text": problem_statement,
-        }
+        "problem_statement": {}
     }
+    
+    # Handle different problem statement formats
+    if isinstance(problem_statement, dict):
+        # Problem statement is already a structured config (e.g., GitHub issue)
+        config_dict["problem_statement"] = problem_statement
+    elif isinstance(problem_statement, str):
+        # Simple text problem statement
+        config_dict["problem_statement"]["text"] = problem_statement
     
     # Determine which config file to use
     if not config_path:
