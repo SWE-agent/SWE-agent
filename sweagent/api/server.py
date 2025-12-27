@@ -303,6 +303,37 @@ def create_run():
     }), 202
 
 
+@app.route("/api/models", methods=["GET"])
+def get_models():
+    """Get available models from models.json."""
+    try:
+        # Look for models.json in the root directory
+        models_path = Path(__file__).parent.parent.parent / "models.json"
+        
+        if not models_path.exists():
+            return jsonify({
+                "error": "models.json not found",
+                "available_models": []
+            }), 404
+        
+        with open(models_path, 'r') as f:
+            models_data = json.load(f)
+        
+        # Extract just the model names for the dropdown
+        model_names = list(models_data.keys())
+        
+        return jsonify({
+            "models": models_data,
+            "model_names": model_names
+        })
+    except Exception as e:
+        logger.error(f"Error loading models: {e}")
+        return jsonify({
+            "error": str(e),
+            "available_models": []
+        }), 500
+
+
 @app.route("/api/status", methods=["GET"])
 def get_status():
     """Get server status."""

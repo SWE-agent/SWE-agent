@@ -53,8 +53,11 @@
                     </div>
                     <div class="config-group">
                         <label for="modelName">Model Name:</label>
-                        <input type="text" id="modelName" placeholder="e.g., gpt-4o-mini">
-                        <small>💡 Override the default model (e.g., gpt-4o, claude-3-opus)</small>
+                        <select id="modelName">
+                            <option value="">Use default model</option>
+                            <!-- Model options will be populated by JavaScript -->
+                        </select>
+                        <small>💡 Select a model from the available options</small>
                     </div>
                     <div class="config-group">
                         <label for="costLimit">Cost Limit ($):</label>

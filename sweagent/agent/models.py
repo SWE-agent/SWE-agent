@@ -48,6 +48,71 @@ except ImportError:
 litellm.suppress_debug_info = True
 
 
+_MODELS_JSON_PATH = REPO_ROOT / "models.json"
+
+
+def _load_models_json() -> dict[str, Any]:
+    """Load models from models.json file."""
+    if not _MODELS_JSON_PATH.exists():
+        return {}
+    
+    try:
+        with open(_MODELS_JSON_PATH, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        logger = get_logger("swea-models", emoji="📋")
+        logger.warning(f"Could not load models.json: {e}")
+        return {}
+
+
+_AVAILABLE_MODELS_CACHE = None
+_AVAILABLE_MODELS_LOCK = Lock()
+
+
+def _get_available_models_cache() -> dict[str, Any]:
+    """Get cached available models from models.json."""
+    global _AVAILABLE_MODELS_CACHE
+    with _AVAILABLE_MODELS_LOCK:
+        if _AVAILABLE_MODELS_CACHE is None:
+            _AVAILABLE_MODELS_CACHE = _load_models_json()
+        return _AVAILABLE_MODELS_CACHE
+
+
+def get_available_models() -> dict[str, Any]:
+    """Get all available models listed in models.json.
+    
+    Returns:
+        Dictionary of model names to their properties.
+    """
+    return _get_available_models_cache()
+
+
+def is_model_available(model_name: str) -> bool:
+    """Check if a model is available in models.json.
+    
+    Args:
+        model_name: Name of the model to check.
+        
+    Returns:
+        True if the model is listed in models.json, False otherwise.
+    """
+    available_models = _get_available_models_cache()
+    return model_name in available_models
+
+
+def get_model_properties(model_name: str) -> dict[str, Any] | None:
+    """Get properties for a specific model from models.json.
+    
+    Args:
+        model_name: Name of the model to get properties for.
+        
+    Returns:
+        Dictionary of model properties if found, None otherwise.
+    """
+    available_models = _get_available_models_cache()
+    return available_models.get(model_name)
+
+
 _THREADS_THAT_USED_API_KEYS = []
 """Keeps track of thread orders so that we can choose the same API key for the same thread."""
 
@@ -584,6 +649,40 @@ class LiteLLMModel(AbstractModel):
         self.tools = tools
         self.logger = get_logger("swea-lm", emoji="🤖")
 
+        # Check if model is in models.json and provide info/warnings
+        available_models = _get_available_models_cache()
+        if available_models:
+            if self.config.name in available_models:
+                model_info = available_models[self.config.name]
+                
+                # Set default values from models.json if not explicitly set
+                if self.config.max_input_tokens is None and "max_input_tokens" in model_info:
+                    self.logger.info(
+                        f"Using max_input_tokens={model_info['max_input_tokens']} from models.json for {self.config.name}"
+                    )
+                    self.config.max_input_tokens = model_info["max_input_tokens"]
+                
+                if self.config.max_output_tokens is None and "max_output_tokens" in model_info:
+                    self.logger.info(
+                        f"Using max_output_tokens={model_info['max_output_tokens']} from models.json for {self.config.name}"
+                    )
+                    self.config.max_output_tokens = model_info["max_output_tokens"]
+                
+                # Warn if function calling is not supported but tools require it
+                if tools.use_function_calling and not model_info.get("supports_function_calling", True):
+                    msg = (
+                        f"Model {self.config.name} does not support function calling according to models.json. "
+                        "If your model does not support function calling, you can use `parse_function='thought_action'` instead. "
+                        "See https://swe-agent.com/latest/faq/ for more information."
+                    )
+                    self.logger.warning(msg)
+            else:
+                # Model not in models.json - this is fine, but log it
+                self.logger.info(
+                    f"Model {self.config.name} not found in models.json. "
+                    f"Available models: {list(available_models.keys())[:5]}{'...' if len(available_models) > 5 else ''}"
+                )
+        
         if tools.use_function_calling:
             if not litellm.utils.supports_function_calling(model=self.config.name):
                 msg = (
