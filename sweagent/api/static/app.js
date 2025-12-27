@@ -53,9 +53,105 @@ document.addEventListener('DOMContentLoaded', function() {
     function addChatMessage(role, content) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message message-${role}`;
-        messageDiv.innerHTML = `<strong>${role}:</strong> ${content}`;
+        
+        // Check if content contains code (bash commands or file content)
+        let formattedContent = content;
+        
+        // Detect bash commands
+        const bashRegex = /^bash: (.+)$/i;
+        const bashMatch = content.match(bashRegex);
+        
+        if (bashMatch) {
+            // Format as code block with copy button
+            formattedContent = `
+                <div class="message-content">
+                    <div class="code-header">
+                        <span class="code-language">Bash</span>
+                        <button class="copy-button" onclick="copyToClipboard('${encodeHTML(bashMatch[1])}')">Copy</button>
+                    </div>
+                    <pre class="code-block"><code>${escapeHtml(bashMatch[1])}</code></pre>
+                </div>`;
+        } else if (content.includes('\n')) {
+            // Multi-line content - format as preformatted
+            formattedContent = `
+                <div class="message-content">
+                    <pre>${escapeHtml(content)}</pre>
+                </div>`;
+        }
+        
+        messageDiv.innerHTML = `<strong>${role}:</strong> ${formattedContent}`;
         chatMessagesContainer.appendChild(messageDiv);
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    }
+    
+    // Add collapsible code block
+    function addCodeBlock(role, language, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message message-${role}`;
+        
+        messageDiv.innerHTML = `
+            <strong>${role}:</strong>
+            <div class="message-content">
+                <details class="code-details">
+                    <summary class="code-summary">
+                        <span class="code-language">${language}</span>
+                        <button class="copy-button" onclick="copyToClipboard('${encodeHTML(content)}')">Copy</button>
+                    </summary>
+                    <pre class="code-block"><code>${escapeHtml(content)}</code></pre>
+                </details>
+            </div>`;
+        
+        chatMessagesContainer.appendChild(messageDiv);
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    }
+    
+    // Add model stats display
+    function addModelStats(stats) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chat-message message-system model-stats';
+        
+        let statsHtml = '<strong>Model Stats:</strong> ';
+        statsHtml += Object.entries(stats)
+            .map(([key, value]) => {
+                const formattedValue = typeof value === 'number' ? value.toFixed(2) : value;
+                return `<span class="stat-item">${formatStatKey(key)}: ${formattedValue}</span>`;
+            })
+            .join(' | ');
+        
+        messageDiv.innerHTML = statsHtml;
+        chatMessagesContainer.appendChild(messageDiv);
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    }
+    
+    // Format stat key for display
+    function formatStatKey(key) {
+        const mappings = {
+            'total_tokens': 'Total Tokens',
+            'input_tokens': 'Input Tokens',
+            'output_tokens': 'Output Tokens',
+            'cost_usd': 'Cost ($)',
+            'execution_time': 'Time (s)'
+        };
+        return mappings[key] || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+    
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Encode HTML for use in onclick handlers
+    function encodeHTML(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    
+    // Copy to clipboard utility
+    window.copyToClipboard = function(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Copied to clipboard!');
+        });
     }
     
     // Create run card
@@ -108,20 +204,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.trajectory.forEach((step, index) => {
                     const stepNum = index + 1;
                     
+                    // Group related messages together for each step
+                    addChatMessage('system', `<strong>Step ${stepNum}</strong>`);
+                    
                     if (step.thought) {
-                        addChatMessage('assistant', `Step ${stepNum} - Thought: ${step.thought}`);
+                        addChatMessage('assistant', `Thought: ${step.thought}`);
                     }
                     
                     if (step.action) {
-                        addChatMessage('system', `Step ${stepNum} - Action: ${step.action}`);
+                        // Check if action contains code that should be collapsible
+                        const bashRegex = /^bash: (.+)$/i;
+                        if (bashRegex.test(step.action)) {
+                            addCodeBlock('system', 'Bash', step.action.replace(bashRegex, '$1'));
+                        } else {
+                            addChatMessage('system', `Action: ${step.action}`);
+                        }
                     }
                     
                     if (step.observation) {
-                        addChatMessage('assistant', `Step ${stepNum} - Observation: ${step.observation}`);
+                        addChatMessage('assistant', `Observation: ${step.observation}`);
                     }
                     
-                    if (step.response) {
-                        addChatMessage('system', `Step ${stepNum} - Response: ${step.response}`);
+                    if (step.response && step.response.trim() !== '') {
+                        // Check if response looks like code or file content
+                        const lines = step.response.split('\n');
+                        if (lines.length > 1 || step.response.includes('\t') || step.response.match(/^[a-zA-Z0-9_]+:/)) {
+                            addCodeBlock('system', 'Output', step.response);
+                        } else {
+                            addChatMessage('system', `Response: ${step.response}`);
+                        }
                     }
                 });
             }
@@ -144,9 +255,13 @@ document.addEventListener('DOMContentLoaded', function() {
         stepCountElement.innerHTML = `<span class="info-item">Steps: ${data.trajectory ? data.trajectory.length : 0}</span>`;
         
         if (data.model_stats && Object.keys(data.model_stats).length > 0) {
+            // Add model stats to the chat as well
+            addModelStats(data.model_stats);
+            
+            // Also update the info bar for quick reference
             const statsHtml = Object.entries(data.model_stats)
                 .map(([key, value]) => `
-                    <span class="info-item">${key}: ${typeof value === 'number' ? value.toFixed(2) : value}</span>
+                    <span class="info-item">${formatStatKey(key)}: ${typeof value === 'number' ? value.toFixed(2) : value}</span>
                 `)
                 .join('');
             
@@ -316,28 +431,39 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'running' && data.current_step) {
                 // Show the actual action and observation from the step
                 const step = data.current_step;
-                let message = `Step ${data.step_count}: ${step.action}`;
+                
+                // Group related messages together for real-time updates
+                addChatMessage('system', `<strong>Step ${data.step_count}</strong>`);
                 
                 if (step.thought) {
                     addChatMessage('assistant', `Thought: ${step.thought}`);
                 }
                 
                 if (step.action) {
-                    addChatMessage('system', message);
+                    // Check if action contains code that should be collapsible
+                    const bashRegex = /^bash: (.+)$/i;
+                    if (bashRegex.test(step.action)) {
+                        addCodeBlock('system', 'Bash', step.action.replace(bashRegex, '$1'));
+                    } else {
+                        addChatMessage('system', `Action: ${step.action}`);
+                    }
                 }
                 
                 if (step.observation) {
                     addChatMessage('assistant', `Observation: ${step.observation}`);
                 }
                 
+                // Display model stats in a consistent format
                 if (data.model_stats && Object.keys(data.model_stats).length > 0) {
-                    const statsText = Object.entries(data.model_stats)
-                        .map(([key, value]) => `${key}: ${typeof value === 'number' ? value.toFixed(2) : value}`)
-                        .join(' | ');
-                    addChatMessage('system', `Model stats: ${statsText}`);
+                    addModelStats(data.model_stats);
                 }
             } else if (data.status === 'completed') {
                 addChatMessage('system', `Run completed! Exit status: ${data.exit_status || 'success'}. Total steps: ${data.step_count}`);
+                
+                // Display final model stats
+                if (data.model_stats && Object.keys(data.model_stats).length > 0) {
+                    addModelStats(data.model_stats);
+                }
             } else if (data.status === 'running' && data.message) {
                 // Handle intermediate messages like step start, action planning, etc.
                 addChatMessage('system', data.message);

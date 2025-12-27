@@ -198,6 +198,93 @@ header h1 {
     margin-right: auto;
 }
 
+/* Code blocks and collapsible sections */
+.code-details {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: white;
+}
+
+.code-summary {
+    padding: 12px 15px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.code-summary:hover {
+    background-color: #e9ecef;
+}
+
+.code-language {
+    color: #d73a49;
+}
+
+.code-block {
+    margin: 0;
+    padding: 15px;
+    background-color: white;
+    border-top: 1px solid #ddd;
+    overflow-x: auto;
+}
+
+.code-block code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9em;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Copy button styling */
+.copy-button {
+    background-color: #667eea;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: background-color 0.3s ease;
+}
+
+.copy-button:hover {
+    background-color: #764ba2;
+}
+
+/* Model stats styling */
+.model-stats {
+    background-color: #e8f5e9 !important;
+    color: #2e7d32 !important;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.stat-item {
+    font-weight: 600;
+}
+
+/* Message content container */
+.message-content {
+    margin-top: 8px;
+}
+
+.message-content pre {
+    background-color: #f5f5f5;
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
 .run-details {
     margin-top: 20px;
     padding: 15px;

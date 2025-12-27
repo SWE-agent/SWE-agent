@@ -97,7 +97,11 @@ def _run_single_with_result(config: RunSingleConfig, websocket_hook: Optional[We
         run_single_instance.agent.add_hook(websocket_hook)
     
     # Run and return the result
-    return run_single_instance.run()
+    run_single_instance.run()
+
+    data = run_single_instance.agent.get_trajectory_data()
+    return AgentRunResult(info=data["info"], trajectory=data["trajectory"])
+
 
 
 @app.route("/api/runs", methods=["GET"])
