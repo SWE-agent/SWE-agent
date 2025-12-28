@@ -33,9 +33,63 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 
+# Global cache for GitHub search results to avoid duplicate API calls
+_github_search_cache = {}
+_github_search_cache_timestamp = {}
+
+def parse_github_query(query: str) -> str:
+    """
+    Parse user input query and convert it to optimal GitHub search format.
+    
+    Supports:
+    - Username only: "torvalds" -> "user:torvalds"
+    - Repo name only: "react" -> "react in:name"
+    - Full path: "facebook/react" -> exact match for full_name
+    - Already formatted queries: "user:torvalds repo:linux" -> unchanged
+    """
+    query = query.strip()
+    
+    if not query:
+        return ""
+    
+    # If query already contains GitHub search operators, use as-is
+    github_operators = ['in:', 'user:', 'org:', 'repo:', 'language:', 'stars:', 'forks:']
+    if any(op in query for op in github_operators):
+        return query
+    
+    # Check if it looks like a full repository path (owner/repo)
+    if '/' in query:
+        parts = query.split('/')
+        if len(parts) == 2 and all(part.strip() for part in parts):
+            owner, repo = parts
+            # Search for exact repository match
+            return f"{owner}/{repo} in:path"
+    
+    # Check if it looks like a username (no special characters, lowercase)
+    if query.isalnum() or '-' in query:
+        # Could be either username or repo name, search both
+        return f"{query}"
+    
+    # Default: search for the query in repository names
+    return query
+
 def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any]]:
-    """Search for GitHub repositories using the GitHub API."""
+    """Search for GitHub repositories using the GitHub API with caching and improved query parsing."""
     import requests
+    
+    # Normalize query
+    normalized_query = parse_github_query(query)
+    if not normalized_query:
+        return []
+    
+    # Check cache first (cache for 30 seconds to avoid duplicate API calls)
+    current_time = time.time()
+    cache_key = f"{normalized_query}:{max_results}"
+    
+    if cache_key in _github_search_cache:
+        if current_time - _github_search_cache_timestamp.get(cache_key, 0) < 30:
+            logger.debug(f"Using cached results for query: {query}")
+            return _github_search_cache[cache_key].copy()
     
     # Check if we have a GitHub token in environment variables
     github_token = os.getenv("GITHUB_TOKEN", "")
@@ -44,7 +98,7 @@ def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any
         headers["Authorization"] = f"token {github_token}"
     
     # Build search URL
-    search_url = f"https://api.github.com/search/repositories?q={query}&per_page={max_results}"
+    search_url = f"https://api.github.com/search/repositories?q={normalized_query}&per_page={max_results}"
     
     try:
         response = requests.get(search_url, headers=headers, timeout=10)
@@ -64,6 +118,10 @@ def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any
                 "forks_count": repo.get("forks_count", 0),
             }
             repositories.append(repo_info)
+        
+        # Cache the results
+        _github_search_cache[cache_key] = repositories.copy()
+        _github_search_cache_timestamp[cache_key] = current_time
         
         return repositories
         
