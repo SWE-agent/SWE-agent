@@ -208,6 +208,47 @@ header h1 {
     color: #721c24;
 }
 
+/* Enhanced run card styles */
+.run-problem {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: #555;
+    line-height: 1.5;
+    max-height: 60px;
+    overflow: hidden;
+}
+
+.run-steps {
+    margin: 8px 0;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.run-action {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #e3f2fd;
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: #1976d2;
+}
+
+.run-stats {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #e8f5e9;
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: #2e7d32;
+}
+
+.run-stats strong {
+    font-weight: 700;
+}
+
 /* Chat Interface */
 .chat-interface {
     padding: 30px;
