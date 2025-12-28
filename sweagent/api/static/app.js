@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const githubRepoGroup = document.getElementById('githubRepoGroup');
     const repoPathInput = document.getElementById('repoPath');
     const githubRepoUrlInput = document.getElementById('githubRepoUrl');
+    const githubRepoAutocomplete = document.getElementById('githubRepoAutocomplete');
     
     // Config file upload elements
     const configFileInput = document.getElementById('configFile');
@@ -53,6 +54,95 @@ document.addEventListener('DOMContentLoaded', function() {
             githubRepoGroup.style.display = 'none';
         }
     });
+
+    // GitHub repository autocomplete functionality
+    let autocompleteTimeout = null;
+    let selectedAutocompleteIndex = -1;
+
+    function showGitHubAutocomplete(query) {
+        if (query.length < 2) {
+            githubRepoAutocomplete.classList.add('hidden');
+            return;
+        }
+
+        // Clear previous timeout
+        if (autocompleteTimeout) {
+            clearTimeout(autocompleteTimeout);
+        }
+
+        // Debounce the search request
+        autocompleteTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/github/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error('Search failed');
+                
+                const data = await response.json();
+                displayAutocompleteResults(data.repositories || []);
+            } catch (error) {
+                console.error('Error fetching autocomplete results:', error);
+                githubRepoAutocomplete.classList.add('hidden');
+            }
+        }, 300); // Wait 300ms after user stops typing
+    }
+
+    function displayAutocompleteResults(repositories) {
+        if (repositories.length === 0) {
+            githubRepoAutocomplete.classList.add('hidden');
+            return;
+        }
+
+        let html = '';
+        repositories.forEach((repo, index) => {
+            const fullName = repo.full_name || `${repo.owner}/${repo.name}`;
+            html += `
+                <div class="autocomplete-item" data-index="${index}">
+                    <span class="autocomplete-repo-icon">🐙</span>
+                    <div class="autocomplete-repo-info">
+                        <div class="autocomplete-repo-name">${repo.name || 'Unknown'}</div>
+                        <div class="autocomplete-repo-fullname">${fullName}</div>
+                        ${repo.description ? `<div class="autocomplete-repo-description">${repo.description}</div>` : ''}
+                        <div class="autocomplete-repo-stats">
+                            <span class="autocomplete-repo-stat">⭐ ${repo.stargazers_count || 0}</span>
+                            <span class="autocomplete-repo-stat">🍴 ${repo.forks_count || 0}</span>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        githubRepoAutocomplete.innerHTML = html;
+        githubRepoAutocomplete.classList.remove('hidden');
+    }
+
+    function selectAutocompleteItem(index) {
+        const items = githubRepoAutocomplete.querySelectorAll('.autocomplete-item');
+        if (index >= 0 && index < items.length) {
+            // Remove active class from all items
+            items.forEach(item => item.classList.remove('active'));
+            // Add active class to selected item
+            items[index].classList.add('active');
+            return true;
+        }
+        return false;
+    }
+
+    function useSelectedAutocompleteItem() {
+        const activeItem = githubRepoAutocomplete.querySelector('.autocomplete-item.active');
+        if (activeItem) {
+            const index = parseInt(activeItem.dataset.index);
+            const items = Array.from(githubRepoAutocomplete.querySelectorAll('.autocomplete-item'));
+            const selectedRepo = items[index];
+            
+            // Extract the full GitHub URL
+            const repoInfo = selectedRepo.querySelector('.autocomplete-repo-info');
+            const fullNameElement = repoInfo.querySelector('.autocomplete-repo-fullname');
+            const fullName = fullNameElement.textContent;
+            
+            githubRepoUrlInput.value = `https://github.com/${fullName}`;
+            githubRepoAutocomplete.classList.add('hidden');
+            return true;
+        }
+        return false;
+    }
     
     // Handle problem statement type selection
     textProblemTypeRadio.addEventListener('change', function() {
@@ -69,6 +159,42 @@ document.addEventListener('DOMContentLoaded', function() {
             githubHint.classList.remove('hidden');
             problemStatementInput.placeholder = "Enter GitHub issue URL: https://github.com/owner/repo/issues/123";
         }
+    });
+
+    // Add event listeners for GitHub repository autocomplete
+    githubRepoUrlInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        showGitHubAutocomplete(query);
+    });
+
+    githubRepoUrlInput.addEventListener('keydown', function(e) {
+        const items = githubRepoAutocomplete.querySelectorAll('.autocomplete-item');
+        
+        if (!githubRepoAutocomplete.classList.contains('hidden') && items.length > 0) {
+            // Handle arrow key navigation
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, items.length - 1);
+                selectAutocompleteItem(selectedAutocompleteIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, 0);
+                selectAutocompleteItem(selectedAutocompleteIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (useSelectedAutocompleteItem()) {
+                    return;
+                }
+            }
+        }
+    });
+
+    githubRepoUrlInput.addEventListener('blur', function() {
+        // Hide autocomplete when input loses focus
+        setTimeout(() => {
+            githubRepoAutocomplete.classList.add('hidden');
+            selectedAutocompleteIndex = -1;
+        }, 200);
     });
     
     // Handle config file upload

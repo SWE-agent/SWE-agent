@@ -597,6 +597,75 @@ header h1 {
     display: none;
 }
 
+/* Autocomplete dropdown styling */
+.autocomplete-results {
+    position: absolute;
+    background-color: white;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.autocomplete-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.autocomplete-item:hover {
+    background-color: #f8f9fa;
+}
+
+.autocomplete-item.active {
+    background-color: #e3f2fd;
+}
+
+.autocomplete-repo-icon {
+    color: #667eea;
+    font-weight: bold;
+}
+
+.autocomplete-repo-info {
+    flex: 1;
+}
+
+.autocomplete-repo-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.autocomplete-repo-fullname {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.autocomplete-repo-description {
+    font-size: 0.85em;
+    color: #999;
+    margin-top: 4px;
+}
+
+.autocomplete-repo-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85em;
+    color: #666;
+}
+
+.autocomplete-repo-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .run-info {
     display: flex;
     gap: 15px;
