@@ -32,6 +32,46 @@ app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+
+def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any]]:
+    """Search for GitHub repositories using the GitHub API."""
+    import requests
+    
+    # Check if we have a GitHub token in environment variables
+    github_token = os.getenv("GITHUB_TOKEN", "")
+    headers = {}
+    if github_token:
+        headers["Authorization"] = f"token {github_token}"
+    
+    # Build search URL
+    search_url = f"https://api.github.com/search/repositories?q={query}&per_page={max_results}"
+    
+    try:
+        response = requests.get(search_url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        repositories = []
+        
+        for repo in data.get("items", []):
+            repo_info = {
+                "full_name": repo.get("full_name", ""),
+                "name": repo.get("name", ""),
+                "owner": repo.get("owner", {}).get("login", ""),
+                "html_url": repo.get("html_url", ""),
+                "description": repo.get("description", ""),
+                "stargazers_count": repo.get("stargazers_count", 0),
+                "forks_count": repo.get("forks_count", 0),
+            }
+            repositories.append(repo_info)
+        
+        return repositories
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"GitHub API request failed: {e}")
+        # Return empty results on error
+        return []
+
 # Global state for active runs
 active_runs: Dict[str, Any] = {}
 runs_lock = threading.Lock()
@@ -346,6 +386,44 @@ def get_models():
         return jsonify({
             "error": str(e),
             "available_models": []
+        }), 500
+
+
+@app.route("/api/github/search", methods=["GET", "POST"])
+def search_github_repositories():
+    """Search for GitHub repositories by name or query."""
+    try:
+        # Get search query from either GET params or POST body
+        if request.method == "GET":
+            query = request.args.get('q', '')
+        else:  # POST
+            # Try JSON first, then form data
+            json_data = request.get_json(silent=True)
+            if json_data and 'q' in json_data:
+                query = json_data['q']
+            elif request.form and 'q' in request.form:
+                query = request.form['q']
+            else:
+                query = ''
+        
+        if not query:
+            return jsonify({
+                "error": "Search query 'q' is required",
+                "repositories": []
+            }), 400
+        
+        # Use GitHub API to search for repositories
+        results = search_github_repos(query)
+        
+        return jsonify({
+            "query": query,
+            "repositories": results
+        })
+    except Exception as e:
+        logger.error(f"Error searching GitHub repositories: {e}")
+        return jsonify({
+            "error": str(e),
+            "repositories": []
         }), 500
 
 
