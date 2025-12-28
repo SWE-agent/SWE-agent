@@ -58,9 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // GitHub repository autocomplete functionality
     let autocompleteTimeout = null;
     let selectedAutocompleteIndex = -1;
+    let isSearching = false; // Track if a search is in progress
 
     function showGitHubAutocomplete(query) {
-        if (query.length < 2) {
+        if (query.length < 3) { // Minimum 3 characters for better results
             githubRepoAutocomplete.classList.add('hidden');
             return;
         }
@@ -70,7 +71,12 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(autocompleteTimeout);
         }
 
-        // Debounce the search request
+        // Show loading state
+        isSearching = true;
+        githubRepoAutocomplete.innerHTML = '<div class="autocomplete-loading">🔍 Searching GitHub...</div>';
+        githubRepoAutocomplete.classList.remove('hidden');
+
+        // Debounce the search request with longer delay for better UX
         autocompleteTimeout = setTimeout(async () => {
             try {
                 const response = await fetch(`/api/github/search?q=${encodeURIComponent(query)}`);
@@ -80,14 +86,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayAutocompleteResults(data.repositories || []);
             } catch (error) {
                 console.error('Error fetching autocomplete results:', error);
-                githubRepoAutocomplete.classList.add('hidden');
+                githubRepoAutocomplete.innerHTML = '<div class="autocomplete-error">❌ Failed to load results</div>';
+            } finally {
+                isSearching = false;
             }
-        }, 300); // Wait 300ms after user stops typing
+        }, 500); // Wait 500ms after user stops typing for better UX
     }
 
     function displayAutocompleteResults(repositories) {
         if (repositories.length === 0) {
-            githubRepoAutocomplete.classList.add('hidden');
+            githubRepoAutocomplete.innerHTML = '<div class="autocomplete-no-results">🔍 No repositories found</div>';
             return;
         }
 
