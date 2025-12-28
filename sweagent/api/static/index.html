@@ -54,8 +54,12 @@
                     </div>
                     <div class="config-group" id="githubRepoGroup" style="display: none;">
                         <label for="githubRepoUrl">GitHub Repository URL:</label>
-                        <input type="text" id="githubRepoUrl" placeholder="https://github.com/owner/repo">
-                        <div id="githubRepoAutocomplete" class="autocomplete-results hidden"></div>
+                        <auto-complete src="/api/github/search" for="github-repo-results">
+                            <input type="text" id="githubRepoUrl" name="githubRepoUrl" placeholder="https://github.com/owner/repo">
+                            <button id="githubRepoUrl-clear">×</button>
+                            <ul id="github-repo-results"></ul>
+                            <div id="github-repo-results-feedback" class="sr-only"></div>
+                        </auto-complete>
                     </div>
                 </div>
             </div>
@@ -138,6 +142,7 @@
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+    <script type="module" src="/static/auto-complete-element.js"></script>
     <script src="/static/app.js"></script>
 </body>
 </html>

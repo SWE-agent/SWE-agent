@@ -56,101 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // GitHub repository autocomplete functionality
-    let autocompleteTimeout = null;
-    let selectedAutocompleteIndex = -1;
-    let isSearching = false; // Track if a search is in progress
-
-    function showGitHubAutocomplete(query) {
-        if (query.length < 3) { // Minimum 3 characters for better results
-            githubRepoAutocomplete.classList.add('hidden');
-            return;
-        }
-
-        // Clear previous timeout
-        if (autocompleteTimeout) {
-            clearTimeout(autocompleteTimeout);
-        }
-
-        // Show loading state
-        isSearching = true;
-        githubRepoAutocomplete.innerHTML = '<div class="autocomplete-loading">🔍 Searching GitHub...</div>';
-        githubRepoAutocomplete.classList.remove('hidden');
-
-        // Debounce the search request with longer delay for better UX
-        autocompleteTimeout = setTimeout(async () => {
-            try {
-                const response = await fetch(`/api/github/search?q=${encodeURIComponent(query)}`);
-                if (!response.ok) throw new Error('Search failed');
-                
-                const data = await response.json();
-                displayAutocompleteResults(data.repositories || []);
-            } catch (error) {
-                console.error('Error fetching autocomplete results:', error);
-                githubRepoAutocomplete.innerHTML = '<div class="autocomplete-error">❌ Failed to load results</div>';
-            } finally {
-                isSearching = false;
-            }
-        }, 500); // Wait 500ms after user stops typing for better UX
-    }
-
-    function displayAutocompleteResults(repositories) {
-        if (repositories.length === 0) {
-            githubRepoAutocomplete.innerHTML = '<div class="autocomplete-no-results">🔍 No repositories found</div>';
-            return;
-        }
-
-        let html = '';
-        repositories.forEach((repo, index) => {
-            const fullName = repo.full_name || `${repo.owner}/${repo.name}`;
-            html += `
-                <div class="autocomplete-item" data-index="${index}">
-                    <span class="autocomplete-repo-icon">🐙</span>
-                    <div class="autocomplete-repo-info">
-                        <div class="autocomplete-repo-name">${repo.name || 'Unknown'}</div>
-                        <div class="autocomplete-repo-fullname">${fullName}</div>
-                        ${repo.description ? `<div class="autocomplete-repo-description">${repo.description}</div>` : ''}
-                        <div class="autocomplete-repo-stats">
-                            <span class="autocomplete-repo-stat">⭐ ${repo.stargazers_count || 0}</span>
-                            <span class="autocomplete-repo-stat">🍴 ${repo.forks_count || 0}</span>
-                        </div>
-                    </div>
-                </div>`;
-        });
-
-        githubRepoAutocomplete.innerHTML = html;
-        githubRepoAutocomplete.classList.remove('hidden');
-    }
-
-    function selectAutocompleteItem(index) {
-        const items = githubRepoAutocomplete.querySelectorAll('.autocomplete-item');
-        if (index >= 0 && index < items.length) {
-            // Remove active class from all items
-            items.forEach(item => item.classList.remove('active'));
-            // Add active class to selected item
-            items[index].classList.add('active');
-            return true;
-        }
-        return false;
-    }
-
-    function useSelectedAutocompleteItem() {
-        const activeItem = githubRepoAutocomplete.querySelector('.autocomplete-item.active');
-        if (activeItem) {
-            const index = parseInt(activeItem.dataset.index);
-            const items = Array.from(githubRepoAutocomplete.querySelectorAll('.autocomplete-item'));
-            const selectedRepo = items[index];
-            
-            // Extract the full GitHub URL
-            const repoInfo = selectedRepo.querySelector('.autocomplete-repo-info');
-            const fullNameElement = repoInfo.querySelector('.autocomplete-repo-fullname');
-            const fullName = fullNameElement.textContent;
-            
-            githubRepoUrlInput.value = `https://github.com/${fullName}`;
-            githubRepoAutocomplete.classList.add('hidden');
-            return true;
-        }
-        return false;
-    }
+    // Now using the GitHub auto-complete-element component
+    // No custom implementation needed
     
     // Handle problem statement type selection
     textProblemTypeRadio.addEventListener('change', function() {
@@ -170,40 +77,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Add event listeners for GitHub repository autocomplete
-    githubRepoUrlInput.addEventListener('input', function(e) {
-        const query = e.target.value.trim();
-        showGitHubAutocomplete(query);
-    });
-
-    githubRepoUrlInput.addEventListener('keydown', function(e) {
-        const items = githubRepoAutocomplete.querySelectorAll('.autocomplete-item');
-        
-        if (!githubRepoAutocomplete.classList.contains('hidden') && items.length > 0) {
-            // Handle arrow key navigation
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, items.length - 1);
-                selectAutocompleteItem(selectedAutocompleteIndex);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, 0);
-                selectAutocompleteItem(selectedAutocompleteIndex);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (useSelectedAutocompleteItem()) {
-                    return;
-                }
-            }
-        }
-    });
-
-    githubRepoUrlInput.addEventListener('blur', function() {
-        // Hide autocomplete when input loses focus
-        setTimeout(() => {
-            githubRepoAutocomplete.classList.add('hidden');
-            selectedAutocompleteIndex = -1;
-        }, 200);
-    });
+// GitHub repository URL input is now handled by the auto-complete element
+// No custom event listeners needed
     
     // Handle config file upload
     configFileInput.addEventListener('change', function(e) {
