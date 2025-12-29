@@ -1,5 +1,6 @@
 import asyncio
 import os
+import shlex
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
@@ -12,7 +13,6 @@ from typing_extensions import Self
 
 from sweagent.utils.github import _parse_gh_repo_url
 from sweagent.utils.log import get_logger
-import shlex
 
 logger = get_logger("swea-config", emoji="🔧")
 
