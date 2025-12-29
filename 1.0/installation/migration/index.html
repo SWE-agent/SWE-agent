@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2696,15 +2696,15 @@
 <h1 id="swe-agent-100-migration-guide">SWE-agent 1.0.0 migration guide</h1>
 <p>Welcome to SWE-agent 1.0! So much new stuff! Here's a quick rundown of the cool new things you can do:</p>
 <ul>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> Fast, massively parallel code execution with <a href="https://github.com/swe-agent/SWE-ReX">SWE-ReX</a>.</li>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> Run SWE-agent locally but execute code in the cloud (using modal, AWS, or anything else that runs <a href="https://github.com/swe-agent/SWE-ReX">SWE-ReX</a>).</li>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> Configurable retry mechanisms: Try multiple agent configurations, models, parameters, etc., then choose the best one.</li>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> Flexible tool definitions with <a href="../../config/tools/">tool bundles</a>.</li>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> All language models supported using <code>litellm</code> (see <a href="../keys/">models</a>).</li>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> Override any configuration option from the command line (see <a href="../../usage/cl_tutorial/">command line basics</a>).</li>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> New <a href="../../usage/inspector/">command line trajectory inspector</a> to scroll few hundreds of trajectories with ease.</li>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> <a href="../../usage/cli/">New command line interface</a> with subcommands for running over single issues, batches, and various utility commands.</li>
-<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2728.svg" title=":sparkles:"> Greatly simplified and cleaned up codebase. In particular, the <code>Agent</code> class is now much easier to modify.</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> Fast, massively parallel code execution with <a href="https://github.com/swe-agent/SWE-ReX">SWE-ReX</a>.</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> Run SWE-agent locally but execute code in the cloud (using modal, AWS, or anything else that runs <a href="https://github.com/swe-agent/SWE-ReX">SWE-ReX</a>).</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> Configurable retry mechanisms: Try multiple agent configurations, models, parameters, etc., then choose the best one.</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> Flexible tool definitions with <a href="../../config/tools/">tool bundles</a>.</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> All language models supported using <code>litellm</code> (see <a href="../keys/">models</a>).</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> Override any configuration option from the command line (see <a href="../../usage/cl_tutorial/">command line basics</a>).</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> New <a href="../../usage/inspector/">command line trajectory inspector</a> to scroll few hundreds of trajectories with ease.</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> <a href="../../usage/cli/">New command line interface</a> with subcommands for running over single issues, batches, and various utility commands.</li>
+<li><img alt="✨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2728.svg" title=":sparkles:"> Greatly simplified and cleaned up codebase. In particular, the <code>Agent</code> class is now much easier to modify.</li>
 </ul>
 <p>If you're familiar with the old SWE-agent, here are the main changes you need to be aware of.</p>
 <div class="admonition tip">
@@ -2860,10 +2860,10 @@ Additionally, every <a href="../../config/tools/">tool bundle</a> can include a 
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.top", "content.action.edit", "navigation.footer", "content.code.copy", "content.footnote.tooltips", "header.autohide", "announce.dismiss", "content.code.annotate", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.top", "content.action.edit", "navigation.footer", "content.code.copy", "content.footnote.tooltips", "header.autohide", "announce.dismiss", "content.code.annotate", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
         <script src="../../assets/js/sh-annotation.js"></script>
       
