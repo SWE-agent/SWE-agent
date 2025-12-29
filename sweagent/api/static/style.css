@@ -809,3 +809,8 @@ header h1 {
     white-space: nowrap;
     border-width: 0;
 }
+
+
+auto-complete [aria-selected='true'], auto-complete [role='option']:hover {  background-color: lavender; }
+auto-complete [aria-disabled='true'] { color: grey; }
+auto-complete li { list-style: none;}

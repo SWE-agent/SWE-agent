@@ -52,11 +52,11 @@
                         <label for="repoPath">Local Repository Path:</label>
                         <input type="text" id="repoPath" placeholder="/path/to/repository">
                     </div>
-                    <div class="config-group" id="githubRepoGroup" style="display: none;">
-                        <label for="githubRepoUrl">GitHub Repository URL:</label>
-                        <auto-complete src="/api/github/search" for="github-repo-results">
-                            <input type="text" id="githubRepoUrl" name="githubRepoUrl" placeholder="https://github.com/owner/repo">
-                            <button id="githubRepoUrl-clear">×</button>
+                    <div class="config-group" id="github-repo-group" style="display: none;">
+                        <label id="github-repo-label" for="github-repo-input">GitHub Repository URL:</label>
+                        <auto-complete id="github-repo-auto-complete" src="/api/github/search" for="github-repo-results" aria-labelledby="github-repo-label">
+                            <input type="text" id="github-repo-input" name="githubRepoUrl" aria-labelledby="github-repo-label" placeholder="https://github.com/owner/repo">
+                            <button id="github-repo-clear">×</button>
                             <ul id="github-repo-results"></ul>
                             <div id="github-repo-results-feedback" class="sr-only"></div>
                         </auto-complete>
@@ -142,7 +142,7 @@
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
-    <script type="module" src="/static/auto-complete-element.js"></script>
+    <script type="module" src="https://unpkg.com/@github/auto-complete-element@latest/dist/bundle.js"></script>
     <script src="/static/app.js"></script>
 </body>
 </html>

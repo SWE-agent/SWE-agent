@@ -26,10 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Repository configuration elements
     const repoTypeSelect = document.getElementById('repoType');
     const repoPathGroup = document.getElementById('repoPathGroup');
-    const githubRepoGroup = document.getElementById('githubRepoGroup');
+    const githubRepoGroup = document.getElementById('github-repo-group');
     const repoPathInput = document.getElementById('repoPath');
-    const githubRepoUrlInput = document.getElementById('githubRepoUrl');
-    const githubRepoAutocomplete = document.getElementById('githubRepoAutocomplete');
+    const githubRepoUrlInput = document.getElementById('github-repo-input');
     
     // Config file upload elements
     const configFileInput = document.getElementById('configFile');
@@ -715,6 +714,21 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Disconnected from server');
         addChatMessage('system', 'Disconnected from SWE-agent server');
     });
+
+    const completer = document.querySelector('auto-complete')
+    const container = completer.parentElement
+    completer.addEventListener('loadstart', () => container.classList.add('is-loading'))
+    completer.addEventListener('loadend', () => container.classList.remove('is-loading'))
+    completer.addEventListener('load', () => container.classList.add('is-success'))
+    completer.addEventListener('error', () => container.classList.add('is-error'))
+    completer.fetchResult = async (url) => {
+        response = await fetch(url);
+        json = await response.json();
+        html = json.repositories.map(r => `<li role="option" data-autocomplete-value="${r.html_url}">${r.full_name} - ${r.description}</li>`).join('\n');
+        // html = json.repositories.map(r => `<li role="option" data-autocomplete-value="${r.html_url}">${r.full_name} - ${r.description}</li>`).join('\n');
+        console.log(html);
+        return html;
+    }
     
     // Initial load
     refreshRunsList();
