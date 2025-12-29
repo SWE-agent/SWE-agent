@@ -173,7 +173,7 @@ class GithubRepoConfig(BaseModel):
                             f"mkdir /{self.repo_name}",
                             f"cd /{self.repo_name}",
                             "git init",
-                            f"git remote add origin {url}",
+                            f"git remote add origin {shlex.quote(url)}",
                             f"git fetch --depth 1 origin {shlex.quote(base_commit)}",
                             "git checkout FETCH_HEAD",
                             "cd ..",
