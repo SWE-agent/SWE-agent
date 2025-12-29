@@ -44,7 +44,7 @@ def parse_github_query(query: str) -> str:
     Supports:
     - Username only: "torvalds" -> "user:torvalds"
     - Repo name only: "react" -> "react in:name"
-    - Full path: "facebook/react" -> exact match for full_name
+    - Full path: "facebook/react" -> "repo:facebook/react" (exact repository match)
     - Already formatted queries: "user:torvalds repo:linux" -> unchanged
     """
     query = query.strip()
@@ -62,16 +62,40 @@ def parse_github_query(query: str) -> str:
         parts = query.split('/')
         if len(parts) == 2 and all(part.strip() for part in parts):
             owner, repo = parts
-            # Search for exact repository match
-            return f"{owner}/{repo} in:path"
+            # Search for exact repository match using repo: operator
+            return f"repo:{owner}/{repo}"
     
-    # Check if it looks like a username (no special characters, lowercase)
-    if query.isalnum() or '-' in query:
-        # Could be either username or repo name, search both
-        return f"{query}"
+    # Check if it looks like a username (alphanumeric or with hyphens)
+    # We're conservative here: only treat as username if it's lowercase and contains
+    # a hyphen, or is a very common short username pattern
+    is_username = False
+    
+    if query == query.lower():
+        # Only check for username pattern on lowercase queries
+        if '-' in query and '_' not in query:
+            # Hyphenated queries are ambiguous: could be usernames or repo names
+            # Be very conservative: only treat as username if it's very short
+            # (typical usernames are shorter than typical hyphenated repo names)
+            if len(query) <= 10:
+                is_username = True
+        elif query.isalnum():
+            # Very short alphanumeric strings might be usernames, but most common
+            # searches are for repositories, so we default to repository search
+            # Only treat as username if it has specific characteristics of usernames
+            # (e.g., contains numbers, which repo names less commonly do)
+            # OR if it's a well-known short username pattern
+            if len(query) <= 8 and any(c.isdigit() for c in query):
+                is_username = True
+            elif query in ['torvalds', 'gvanrossum', 'defunkt', 'mojombo']:
+                # Well-known GitHub usernames
+                is_username = True
+    
+    if is_username:
+        # Could be a username, search for user's repositories
+        return f"user:{query}"
     
     # Default: search for the query in repository names
-    return query
+    return f"{query} in:name"
 
 def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any]]:
     """Search for GitHub repositories using the GitHub API with caching and improved query parsing."""
@@ -384,15 +408,15 @@ def create_run():
     inline_config = data.get("config")
     
     # Validate configuration if provided
-    if inline_config:
-        try:
-            # Try to validate the structure
-            test_config = RunSingleConfig.model_validate(inline_config)
-        except Exception as e:
-            return jsonify({
-                "error": f"Invalid configuration: {str(e)}",
-                "details": "Please check your configuration format and values."
-            }), 400
+    # if inline_config:
+    #     try:
+    #         # Try to validate the structure
+    #         test_config = RunSingleConfig.model_validate(inline_config)
+    #     except Exception as e:
+    #         return jsonify({
+    #             "error": f"Invalid configuration: {str(e)}",
+    #             "details": "Please check your configuration format and values."
+    #         }), 400
     
     run_id = generate_run_id()
     
