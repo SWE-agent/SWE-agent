@@ -94,14 +94,12 @@ agent:
     litellm_model_registry: "./models.json"
 
 env:
-  post_startup_commands:
-    - pip install -e .
-  repo:
-    # github_url: https://github.com/gatepoet/SWE-agent-web
-    # base_commit: "main" 
-    path: ./
+  # post_startup_commands:
+  #   - pip install -e .
+  # repo:
+    # base_commit: swe-agent-fix-#31-52662208
   deployment:
     image: kavai/swe-agent
-# out_path: output/swe-agent-web
 actions:
   apply_patch_locally: True
+  # open_pr: True
