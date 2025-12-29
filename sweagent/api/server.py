@@ -13,6 +13,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlencode
 
 import yaml
 from flask import Flask, jsonify, request, send_from_directory
@@ -40,12 +41,6 @@ _github_search_cache_timestamp = {}
 def parse_github_query(query: str) -> str:
     """
     Parse user input query and convert it to optimal GitHub search format.
-    
-    Supports:
-    - Username only: "torvalds" -> "user:torvalds"
-    - Repo name only: "react" -> "react in:name"
-    - Full path: "facebook/react" -> "repo:facebook/react" (exact repository match)
-    - Already formatted queries: "user:torvalds repo:linux" -> unchanged
     """
     query = query.strip()
     
@@ -53,7 +48,7 @@ def parse_github_query(query: str) -> str:
         return ""
     
     # If query already contains GitHub search operators, use as-is
-    github_operators = ['in:', 'user:', 'org:', 'repo:', 'language:', 'stars:', 'forks:']
+    github_operators = ['in:', 'user:', 'org:', 'repo:', 'language:', 'stars:', 'forks:', 'owner:']
     if any(op in query for op in github_operators):
         return query
     
@@ -62,40 +57,11 @@ def parse_github_query(query: str) -> str:
         parts = query.split('/')
         if len(parts) == 2 and all(part.strip() for part in parts):
             owner, repo = parts
-            # Search for exact repository match using repo: operator
-            return f"repo:{owner}/{repo}"
-    
-    # Check if it looks like a username (alphanumeric or with hyphens)
-    # We're conservative here: only treat as username if it's lowercase and contains
-    # a hyphen, or is a very common short username pattern
-    is_username = False
-    
-    if query == query.lower():
-        # Only check for username pattern on lowercase queries
-        if '-' in query and '_' not in query:
-            # Hyphenated queries are ambiguous: could be usernames or repo names
-            # Be very conservative: only treat as username if it's very short
-            # (typical usernames are shorter than typical hyphenated repo names)
-            if len(query) <= 10:
-                is_username = True
-        elif query.isalnum():
-            # Very short alphanumeric strings might be usernames, but most common
-            # searches are for repositories, so we default to repository search
-            # Only treat as username if it has specific characteristics of usernames
-            # (e.g., contains numbers, which repo names less commonly do)
-            # OR if it's a well-known short username pattern
-            if len(query) <= 8 and any(c.isdigit() for c in query):
-                is_username = True
-            elif query in ['torvalds', 'gvanrossum', 'defunkt', 'mojombo']:
-                # Well-known GitHub usernames
-                is_username = True
-    
-    if is_username:
-        # Could be a username, search for user's repositories
-        return f"user:{query}"
+            # Search for repository belonging to owner
+            return f"{repo} in:name owner:{owner}"
     
     # Default: search for the query in repository names
-    return f"{query} in:name"
+    return f"{query} in:name OR {query} in:owner"
 
 def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any]]:
     """Search for GitHub repositories using the GitHub API with caching and improved query parsing."""
@@ -120,10 +86,12 @@ def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any
     headers = {}
     if github_token:
         headers["Authorization"] = f"token {github_token}"
-    
+    headers["Accept"] = "application/vnd.github+json"
     # Build search URL
-    search_url = f"https://api.github.com/search/repositories?q={normalized_query}&per_page={max_results}"
-    
+    search_url = f"https://api.github.com/search/repositories?q={normalized_query}&per_page={max_results}&sort=stars&order=desc"
+    print(search_url)
+    print(urlencode({"q":normalized_query}))
+    print(f'https://api.github.com/search/repositories?q={urlencode({"q":normalized_query})}&per_page={max_results}&sort=stars&order=desc')
     try:
         response = requests.get(search_url, headers=headers, timeout=10)
         response.raise_for_status()
