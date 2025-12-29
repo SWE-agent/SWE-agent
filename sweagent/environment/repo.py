@@ -12,6 +12,7 @@ from typing_extensions import Self
 
 from sweagent.utils.github import _parse_gh_repo_url
 from sweagent.utils.log import get_logger
+import shlex
 
 logger = get_logger("swea-config", emoji="🔧")
 
@@ -33,7 +34,7 @@ def _get_git_reset_commands(base_commit: str) -> list[str]:
         "git status",
         "git restore .",
         "git reset --hard",
-        f"git checkout {base_commit}",
+        f"git checkout {shlex.quote(base_commit)}",
         "git clean -fdq",
     ]
 
@@ -173,7 +174,7 @@ class GithubRepoConfig(BaseModel):
                             f"cd /{self.repo_name}",
                             "git init",
                             f"git remote add origin {url}",
-                            f"git fetch --depth 1 origin {base_commit}",
+                            f"git fetch --depth 1 origin {shlex.quote(base_commit)}",
                             "git checkout FETCH_HEAD",
                             "cd ..",
                         )
