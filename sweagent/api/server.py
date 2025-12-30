@@ -13,6 +13,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlencode
 
 import yaml
 from flask import Flask, jsonify, request, send_from_directory
@@ -40,12 +41,6 @@ _github_search_cache_timestamp = {}
 def parse_github_query(query: str) -> str:
     """
     Parse user input query and convert it to optimal GitHub search format.
-    
-    Supports:
-    - Username only: "torvalds" -> "user:torvalds"
-    - Repo name only: "react" -> "react in:name"
-    - Full path: "facebook/react" -> exact match for full_name
-    - Already formatted queries: "user:torvalds repo:linux" -> unchanged
     """
     query = query.strip()
     
@@ -53,7 +48,7 @@ def parse_github_query(query: str) -> str:
         return ""
     
     # If query already contains GitHub search operators, use as-is
-    github_operators = ['in:', 'user:', 'org:', 'repo:', 'language:', 'stars:', 'forks:']
+    github_operators = ['in:', 'user:', 'org:', 'repo:', 'language:', 'stars:', 'forks:', 'owner:']
     if any(op in query for op in github_operators):
         return query
     
@@ -62,16 +57,11 @@ def parse_github_query(query: str) -> str:
         parts = query.split('/')
         if len(parts) == 2 and all(part.strip() for part in parts):
             owner, repo = parts
-            # Search for exact repository match
-            return f"{owner}/{repo} in:path"
-    
-    # Check if it looks like a username (no special characters, lowercase)
-    if query.isalnum() or '-' in query:
-        # Could be either username or repo name, search both
-        return f"{query}"
+            # Search for repository belonging to owner
+            return f"{repo} in:name owner:{owner}"
     
     # Default: search for the query in repository names
-    return query
+    return f"{query} in:name OR {query} in:owner"
 
 def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any]]:
     """Search for GitHub repositories using the GitHub API with caching and improved query parsing."""
@@ -96,10 +86,12 @@ def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any
     headers = {}
     if github_token:
         headers["Authorization"] = f"token {github_token}"
-    
+    headers["Accept"] = "application/vnd.github+json"
     # Build search URL
-    search_url = f"https://api.github.com/search/repositories?q={normalized_query}&per_page={max_results}"
-    
+    search_url = f"https://api.github.com/search/repositories?q={normalized_query}&per_page={max_results}&sort=stars&order=desc"
+    print(search_url)
+    print(urlencode({"q":normalized_query}))
+    print(f'https://api.github.com/search/repositories?q={urlencode({"q":normalized_query})}&per_page={max_results}&sort=stars&order=desc')
     try:
         response = requests.get(search_url, headers=headers, timeout=10)
         response.raise_for_status()
@@ -384,15 +376,15 @@ def create_run():
     inline_config = data.get("config")
     
     # Validate configuration if provided
-    if inline_config:
-        try:
-            # Try to validate the structure
-            test_config = RunSingleConfig.model_validate(inline_config)
-        except Exception as e:
-            return jsonify({
-                "error": f"Invalid configuration: {str(e)}",
-                "details": "Please check your configuration format and values."
-            }), 400
+    # if inline_config:
+    #     try:
+    #         # Try to validate the structure
+    #         test_config = RunSingleConfig.model_validate(inline_config)
+    #     except Exception as e:
+    #         return jsonify({
+    #             "error": f"Invalid configuration: {str(e)}",
+    #             "details": "Please check your configuration format and values."
+    #         }), 400
     
     run_id = generate_run_id()
     
