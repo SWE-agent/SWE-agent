@@ -724,9 +724,22 @@ document.addEventListener('DOMContentLoaded', function() {
     completer.fetchResult = async (url) => {
         response = await fetch(url);
         json = await response.json();
-        html = json.repositories.map(r => `<li role="option" data-autocomplete-value="${r.html_url}">${r.full_name} - ${r.description}</li>`).join('\n');
-        // html = json.repositories.map(r => `<li role="option" data-autocomplete-value="${r.html_url}">${r.full_name} - ${r.description}</li>`).join('\n');
-        console.log(html);
+        
+        // Enhanced HTML with professional GitHub-like styling
+        html = json.repositories.map(r => `
+            <li role="option" data-autocomplete-value="${r.html_url}" class="autocomplete-item">
+                <span class="autocomplete-repo-icon">🐙</span>
+                <div class="autocomplete-repo-info">
+                    <div class="autocomplete-repo-name">${r.full_name}</div>
+                    ${r.description ? `<div class="autocomplete-repo-description">${r.description}</div>` : ''}
+                    <div class="autocomplete-repo-stats">
+                        <span class="autocomplete-repo-stat autocomplete-star-icon">⭐ ${r.stargazers_count || 0}</span>
+                        <span class="autocomplete-repo-stat autocomplete-fork-icon">🍴 ${r.forks_count || 0}</span>
+                    </div>
+                </div>
+            </li>
+        `).join('');
+        
         return html;
     }
     
