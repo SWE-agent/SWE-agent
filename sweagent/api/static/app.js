@@ -30,6 +30,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const repoPathInput = document.getElementById('repoPath');
     const githubRepoUrlInput = document.getElementById('github-repo-input');
     
+    // GitHub issues selection elements
+    const githubIssuesSection = document.getElementById('githubIssuesSection');
+    const githubIssueInput = document.getElementById('githubIssueInput');
+    
     // Config file upload elements
     const configFileInput = document.getElementById('configFile');
     const fileNameDisplay = document.getElementById('fileName');
@@ -52,6 +56,9 @@ document.addEventListener('DOMContentLoaded', function() {
             repoPathGroup.style.display = 'none';
             githubRepoGroup.style.display = 'none';
         }
+        
+        // Update GitHub issues section visibility based on new selection
+        updateGitHubIssuesSectionVisibility();
     });
 
     // GitHub repository autocomplete functionality
@@ -64,6 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
             inputHint.classList.remove('hidden');
             githubHint.classList.add('hidden');
             problemStatementInput.placeholder = "Enter your problem statement here...";
+            
+            // Hide GitHub issues section when switching to text
+            githubIssuesSection.classList.add('hidden');
         }
     });
     
@@ -72,13 +82,41 @@ document.addEventListener('DOMContentLoaded', function() {
             inputHint.classList.add('hidden');
             githubHint.classList.remove('hidden');
             problemStatementInput.placeholder = "Enter GitHub issue URL: https://github.com/owner/repo/issues/123";
+            
+            // Show GitHub issues section if a GitHub repo is selected
+            updateGitHubIssuesSectionVisibility();
         }
     });
 
     // Add event listeners for GitHub repository autocomplete
 // GitHub repository URL input is now handled by the auto-complete element
 // No custom event listeners needed
-    
+
+    // Handle GitHub issue input changes - fetch issues from API
+    let githubIssueDebounceTimer;
+    githubIssueInput.addEventListener('input', function() {
+        clearTimeout(githubIssueDebounceTimer);
+        githubIssueDebounceTimer = setTimeout(() => {
+            fetchGitHubIssues();
+        }, 300);
+    });
+
+    // Handle GitHub issue selection from dropdown
+    githubIssueInput.addEventListener('change', function() {
+        if (this.value) {
+            problemStatementInput.value = this.value;
+        }
+    });
+
+    // Update the data-repo-url attribute when GitHub repo input changes
+    let githubRepoDebounceTimer;
+    githubRepoUrlInput.addEventListener('input', function() {
+        clearTimeout(githubRepoDebounceTimer);
+        githubRepoDebounceTimer = setTimeout(() => {
+            updateGitHubIssueSource();
+        }, 500);
+    });
+
     // Handle config file upload
     configFileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
@@ -743,6 +781,117 @@ document.addEventListener('DOMContentLoaded', function() {
         return html;
     }
     
+    // Update GitHub issues section visibility based on current selections
+    function updateGitHubIssuesSectionVisibility() {
+        const isGithubProblemType = githubProblemTypeRadio.checked;
+        const isGithubRepoSelected = repoTypeSelect.value === 'github' && githubRepoUrlInput.value.trim();
+        
+        if (isGithubProblemType && isGithubRepoSelected) {
+            githubIssuesSection.classList.remove('hidden');
+            updateGitHubIssueSource();
+        } else {
+            githubIssuesSection.classList.add('hidden');
+        }
+    }
+
+    // Update the GitHub issue source URL based on current repository selection
+    function updateGitHubIssueSource() {
+        const repoUrl = githubRepoUrlInput.value.trim();
+        
+        if (!repoUrl) {
+            return;
+        }
+        
+        // Extract owner/repo from GitHub URL
+        // Handle formats like: https://github.com/owner/repo or owner/repo
+        let repoName = repoUrl;
+        
+        if (repoUrl.startsWith('https://github.com/')) {
+            const parts = repoUrl.split('/');
+            if (parts.length >= 5) {
+                repoName = `${parts[3]}/${parts[4]}`;
+            }
+        } else if (repoUrl.includes('/')) {
+            // Already in owner/repo format
+            repoName = repoUrl;
+        }
+        
+        // Update the data attribute for the auto-complete element
+        githubIssueInput.dataset.repoUrl = repoName;
+    }
+
+    // Fetch GitHub issues from API based on current repository and search query
+    async function fetchGitHubIssues() {
+        const repoUrl = githubIssueInput.dataset.repoUrl;
+        const searchQuery = githubIssueInput.value.trim();
+        
+        if (!repoUrl) {
+            // Clear results if no repository is selected
+            document.getElementById('github-issue-results').innerHTML = '';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/github/issues?repo=${encodeURIComponent(repoUrl)}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            displayGitHubIssues(data.issues || []);
+        } catch (error) {
+            console.error('Error fetching GitHub issues:', error);
+            // Clear results on error
+            document.getElementById('github-issue-results').innerHTML = '';
+        }
+    }
+
+    // Display GitHub issues in the dropdown
+    function displayGitHubIssues(issues) {
+        const resultsContainer = document.getElementById('github-issue-results');
+        if (!resultsContainer) return;
+        
+        if (issues.length === 0) {
+            resultsContainer.innerHTML = '<li class="no-results">No open issues found</li>';
+            return;
+        }
+        
+        const html = issues.map(issue => `
+            <li class="github-issue-result" data-url="${issue.url}">
+                <div class="github-issue-number">#${issue.number}</div>
+                <div class="github-issue-title">${escapeHtml(issue.title)}</div>
+                ${issue.body ? `<div class="github-issue-body">${truncateText(escapeHtml(issue.body), 100)}</div>` : ''}
+            </li>
+        `).join('');
+        
+        resultsContainer.innerHTML = html;
+        
+        // Add click handlers to issue items
+        document.querySelectorAll('.github-issue-result').forEach(item => {
+            item.addEventListener('click', function() {
+                const url = this.dataset.url;
+                if (url) {
+                    problemStatementInput.value = url;
+                    githubIssueInput.value = ''; // Clear the search input
+                    resultsContainer.innerHTML = ''; // Hide results
+                }
+            });
+        });
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Helper function to truncate text
+    function truncateText(text, maxLength) {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
+
     // Initial load
     refreshRunsList();
     

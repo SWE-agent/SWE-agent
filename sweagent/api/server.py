@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
+import requests
 import yaml
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -474,6 +475,73 @@ def search_github_repositories():
         return jsonify({
             "error": str(e),
             "repositories": []
+        }), 500
+
+
+@app.route("/api/github/issues", methods=["GET"])
+def get_github_issues():
+    """Get open issues for a specific GitHub repository."""
+    try:
+        # Get repository parameter from query string
+        repo = request.args.get('repo', '')
+        
+        if not repo:
+            return jsonify({
+                "error": "Repository parameter 'repo' is required (format: owner/repo)",
+                "issues": []
+            }), 400
+        
+        # Check if we have a GitHub token in environment variables
+        github_token = os.getenv("GITHUB_TOKEN", "")
+        headers = {}
+        if github_token:
+            headers["Authorization"] = f"token {github_token}"
+        headers["Accept"] = "application/vnd.github+json"
+        
+        # Build GitHub API URL for repository issues
+        # Format: https://api.github.com/repos/owner/repo/issues
+        api_url = f"https://api.github.com/repos/{repo}/issues"
+        
+        try:
+            response = requests.get(api_url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            data = response.json()
+            issues = []
+            
+            for issue in data:
+                # Only include open issues
+                if issue.get('state') == 'open':
+                    issue_info = {
+                        "number": issue.get("number", 0),
+                        "title": issue.get("title", ""),
+                        "url": issue.get("html_url", ""),
+                        "body": issue.get("body", ""),
+                        "created_at": issue.get("created_at", ""),
+                        "updated_at": issue.get("updated_at", ""),
+                        "comments": issue.get("comments", 0),
+                    }
+                    issues.append(issue_info)
+            
+            return jsonify({
+                "repository": repo,
+                "issues": issues
+            })
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"GitHub API request failed: {e}")
+            # Return empty results on error
+            return jsonify({
+                "error": f"Failed to fetch issues from GitHub: {str(e)}",
+                "repository": repo,
+                "issues": []
+            }), 500
+    
+    except Exception as e:
+        logger.error(f"Error getting GitHub issues: {e}")
+        return jsonify({
+            "error": str(e),
+            "issues": []
         }), 500
 
 

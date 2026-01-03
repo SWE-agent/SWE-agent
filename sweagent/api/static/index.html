@@ -35,6 +35,16 @@
              
             <!-- GitHub-specific hint (shown when GitHub radio is selected) -->
             <small id="githubHint" class="hidden">💡 Enter GitHub issue URL: https://github.com/owner/repo/issues/123</small>
+             
+            <!-- GitHub Issues Selection (shown when GitHub repo is selected and problem type is GitHub) -->
+            <div id="githubIssuesSection" class="hidden">
+                <label for="githubIssueSelection">🔍 Select from Open Issues:</label>
+                <input type="text" id="githubIssueInput" name="githubIssueSelection" 
+                       placeholder="Search open issues from selected repository..." 
+                       data-repo-url="">
+                <ul id="github-issue-results"></ul>
+                <small id="githubIssuesHint">💡 Select an issue from the dropdown or enter a GitHub issue URL manually</small>
+            </div>
             
             <!-- Repository Configuration -->
             <div class="config-section">
