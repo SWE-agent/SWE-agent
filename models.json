@@ -8,7 +8,7 @@
     "supports_function_calling": true,
     "supports_prompt_caching": false,
     "supports_reasoning": true
-  }, 
+  },
   "openai/mistralai/devstral-small-2-2512": {
     "max_input_tokens": 78000,
     "max_output_tokens": 2000,
@@ -22,7 +22,7 @@
     "supports_response_schema": true,
     "supports_system_messages": true,
     "supports_vision": true
-  }, 
+  },
   "openai/mistralai/ministral-3-3b": {
     "max_input_tokens": 128000,
     "input_cost_per_token": 0.0001,
@@ -32,7 +32,7 @@
     "supports_function_calling": true,
     "supports_prompt_caching": false,
     "supports_reasoning": true
-  }, 
+  },
   "openai/m3-agent-control-i1": {
     "max_input_tokens": 40960,
     "input_cost_per_token": 0.0001,
@@ -42,7 +42,7 @@
     "supports_function_calling": true,
     "supports_prompt_caching": false,
     "supports_reasoning": true
-  }, 
+  },
   "openai/open-thoughts_openthinker-agent-v1": {
     "max_input_tokens": 40960,
     "input_cost_per_token": 0.0001,

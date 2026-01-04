@@ -7,12 +7,10 @@ import asyncio
 import json
 import logging
 import os
-import signal
-import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from urllib.parse import urlencode
 
 import requests
@@ -26,7 +24,6 @@ from sweagent.api.websocket_hook import WebSocketHook
 from sweagent.run.run_single import RunSingleConfig
 from sweagent.types import AgentRunResult
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -39,49 +36,51 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 _github_search_cache = {}
 _github_search_cache_timestamp = {}
 
+
 def parse_github_query(query: str) -> str:
     """
     Parse user input query and convert it to optimal GitHub search format.
     """
     query = query.strip()
-    
+
     if not query:
         return ""
-    
+
     # If query already contains GitHub search operators, use as-is
-    github_operators = ['in:', 'user:', 'org:', 'repo:', 'language:', 'stars:', 'forks:', 'owner:']
+    github_operators = ["in:", "user:", "org:", "repo:", "language:", "stars:", "forks:", "owner:"]
     if any(op in query for op in github_operators):
         return query
-    
+
     # Check if it looks like a full repository path (owner/repo)
-    if '/' in query:
-        parts = query.split('/')
+    if "/" in query:
+        parts = query.split("/")
         if len(parts) == 2 and all(part.strip() for part in parts):
             owner, repo = parts
             # Search for repository belonging to owner
             return f"{repo} in:name owner:{owner}"
-    
+
     # Default: search for the query in repository names
     return f"{query} in:name OR {query} in:owner"
 
-def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any]]:
+
+def search_github_repos(query: str, max_results: int = 10) -> list[dict[str, Any]]:
     """Search for GitHub repositories using the GitHub API with caching and improved query parsing."""
     import requests
-    
+
     # Normalize query
     normalized_query = parse_github_query(query)
     if not normalized_query:
         return []
-    
+
     # Check cache first (cache for 30 seconds to avoid duplicate API calls)
     current_time = time.time()
     cache_key = f"{normalized_query}:{max_results}"
-    
+
     if cache_key in _github_search_cache:
         if current_time - _github_search_cache_timestamp.get(cache_key, 0) < 30:
             logger.debug(f"Using cached results for query: {query}")
             return _github_search_cache[cache_key].copy()
-    
+
     # Check if we have a GitHub token in environment variables
     github_token = os.getenv("GITHUB_TOKEN", "")
     headers = {}
@@ -89,17 +88,21 @@ def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any
         headers["Authorization"] = f"token {github_token}"
     headers["Accept"] = "application/vnd.github+json"
     # Build search URL
-    search_url = f"https://api.github.com/search/repositories?q={normalized_query}&per_page={max_results}&sort=stars&order=desc"
+    search_url = (
+        f"https://api.github.com/search/repositories?q={normalized_query}&per_page={max_results}&sort=stars&order=desc"
+    )
     print(search_url)
-    print(urlencode({"q":normalized_query}))
-    print(f'https://api.github.com/search/repositories?q={urlencode({"q":normalized_query})}&per_page={max_results}&sort=stars&order=desc')
+    print(urlencode({"q": normalized_query}))
+    print(
+        f"https://api.github.com/search/repositories?q={urlencode({'q': normalized_query})}&per_page={max_results}&sort=stars&order=desc"
+    )
     try:
         response = requests.get(search_url, headers=headers, timeout=10)
         response.raise_for_status()
-        
+
         data = response.json()
         repositories = []
-        
+
         for repo in data.get("items", []):
             repo_info = {
                 "full_name": repo.get("full_name", ""),
@@ -111,50 +114,63 @@ def search_github_repos(query: str, max_results: int = 10) -> List[Dict[str, Any
                 "forks_count": repo.get("forks_count", 0),
             }
             repositories.append(repo_info)
-        
+
         # Cache the results
         _github_search_cache[cache_key] = repositories.copy()
         _github_search_cache_timestamp[cache_key] = current_time
-        
+
         return repositories
-        
+
     except requests.exceptions.RequestException as e:
         logger.error(f"GitHub API request failed: {e}")
         # Return empty results on error
         return []
 
+
 # Global state for active runs
-active_runs: Dict[str, Any] = {}
+active_runs: dict[str, Any] = {}
 runs_lock = threading.Lock()
 
 
 class RunState:
     """Track the state of a running SWE-agent instance."""
-    
+
     def __init__(self, run_id: str):
         self.run_id = run_id
         self.started = False
         self.completed = False
         self.error = None
-        self.trajectory_steps: List[Dict[str, Any]] = []
+        self.trajectory_steps: list[dict[str, Any]] = []
         self.config = None
         self.problem_statement = ""
         self.exit_status = None
         self.model_stats = {}
-        self.websocket_hook: Optional[WebSocketHook] = None
-    
+        self.websocket_hook: WebSocketHook | None = None
+
     def to_dict(self):
         # Get current step info if available
         current_action = ""
         current_observation = ""
         current_thought = ""
-        
-        if self.websocket_hook and hasattr(self.websocket_hook, 'trajectory_steps') and self.websocket_hook.trajectory_steps:
+
+        if (
+            self.websocket_hook
+            and hasattr(self.websocket_hook, "trajectory_steps")
+            and self.websocket_hook.trajectory_steps
+        ):
             last_step = self.websocket_hook.trajectory_steps[-1]
             current_action = last_step.get("action", "")
-            current_observation = last_step.get("observation", "")[:200] + "..." if last_step.get("observation") and len(last_step.get("observation")) > 200 else last_step.get("observation", "")
-            current_thought = last_step.get("thought", "")[:150] + "..." if last_step.get("thought") and len(last_step.get("thought")) > 150 else last_step.get("thought", "")
-        
+            current_observation = (
+                last_step.get("observation", "")[:200] + "..."
+                if last_step.get("observation") and len(last_step.get("observation")) > 200
+                else last_step.get("observation", "")
+            )
+            current_thought = (
+                last_step.get("thought", "")[:150] + "..."
+                if last_step.get("thought") and len(last_step.get("thought")) > 150
+                else last_step.get("thought", "")
+            )
+
         return {
             "run_id": self.run_id,
             "started": self.started,
@@ -163,22 +179,29 @@ class RunState:
             "steps": len(self.trajectory_steps),
             "exit_status": self.exit_status,
             "model_stats": self.model_stats,
-            "problem_statement": (self.problem_statement[:100] + "..." if self.problem_statement and len(self.problem_statement) > 100 else self.problem_statement) or "",
+            "problem_statement": (
+                self.problem_statement[:100] + "..."
+                if self.problem_statement and len(self.problem_statement) > 100
+                else self.problem_statement
+            )
+            or "",
             "current_action": current_action,
             "current_observation": current_observation,
             "current_thought": current_thought,
         }
 
 
-def get_run_state(run_id: str) -> Optional[RunState]:
+def get_run_state(run_id: str) -> RunState | None:
     """Get run state by ID."""
     with runs_lock:
         return active_runs.get(run_id)
+
 
 def set_run_state(run_id: str, state: RunState):
     """Set run state by ID."""
     with runs_lock:
         active_runs[run_id] = state
+
 
 def remove_run_state(run_id: str):
     """Remove run state by ID."""
@@ -186,28 +209,28 @@ def remove_run_state(run_id: str):
         if run_id in active_runs:
             del active_runs[run_id]
 
+
 def generate_run_id() -> str:
     """Generate a unique run ID."""
     return f"run_{int(time.time() * 1000)}"
 
 
-def _run_single_with_result(config: RunSingleConfig, websocket_hook: Optional[WebSocketHook] = None) -> AgentRunResult:
+def _run_single_with_result(config: RunSingleConfig, websocket_hook: WebSocketHook | None = None) -> AgentRunResult:
     """Wrapper around run_from_config that returns the result."""
     from sweagent.run.run_single import RunSingle
-    
+
     # Create RunSingle instance from config
     run_single_instance = RunSingle.from_config(config)
-    
+
     # Add WebSocket hook if provided
     if websocket_hook:
         run_single_instance.agent.add_hook(websocket_hook)
-    
+
     # Run and return the result
     run_single_instance.run()
 
     data = run_single_instance.agent.get_trajectory_data()
     return AgentRunResult(info=data["info"], trajectory=data["trajectory"])
-
 
 
 @app.route("/api/runs", methods=["GET"])
@@ -224,7 +247,7 @@ def get_run(run_id: str):
     state = get_run_state(run_id)
     if not state:
         return jsonify({"error": f"Run {run_id} not found"}), 404
-    
+
     return jsonify(state.to_dict())
 
 
@@ -234,14 +257,14 @@ def get_trajectory(run_id: str):
     state = get_run_state(run_id)
     if not state:
         return jsonify({"error": f"Run {run_id} not found"}), 404
-    
+
     # Get trajectory from WebSocket hook if available, otherwise use stored steps
     trajectory_steps = []
     if state.websocket_hook and state.websocket_hook.trajectory_steps:
         trajectory_steps = state.websocket_hook.trajectory_steps
     elif state.trajectory_steps:
         trajectory_steps = state.trajectory_steps
-    
+
     # Return the full trajectory with history
     result = {
         "trajectory": trajectory_steps,
@@ -258,7 +281,7 @@ def emit_update(run_id: str, event: str, data: Any):
     socketio.emit("update", {"run_id": run_id, **data})
 
 
-def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+def deep_merge(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
     """Deep merge two dictionaries. Values from dict2 take precedence."""
     result = dict1.copy()
     for key, value in dict2.items():
@@ -271,13 +294,13 @@ def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def create_agent_config(problem_statement: str, config_path: Optional[str] = None, inline_config: Optional[Dict[str, Any]] = None) -> RunSingleConfig:
+def create_agent_config(
+    problem_statement: str, config_path: str | None = None, inline_config: dict[str, Any] | None = None
+) -> RunSingleConfig:
     """Create a configuration for the SWE-agent."""
     # Load default config
-    config_dict = {
-        "problem_statement": {}
-    }
-    
+    config_dict = {"problem_statement": {}}
+
     # Handle different problem statement formats
     if isinstance(problem_statement, dict):
         # Problem statement is already a structured config (e.g., GitHub issue)
@@ -285,81 +308,88 @@ def create_agent_config(problem_statement: str, config_path: Optional[str] = Non
     elif isinstance(problem_statement, str):
         # Simple text problem statement
         config_dict["problem_statement"]["text"] = problem_statement
-    
+
     # Determine which config file to use
     if not config_path:
         config_path = "./config/api_default.yaml"
-    
+
     # Load from file and merge
     with open(config_path) as f:
         file_config = yaml.safe_load(f)
-    
+
     # Merge configurations (file config takes precedence over our minimal config)
     config_dict = deep_merge(config_dict, file_config)
-    
+
     # Apply inline configuration overrides if provided
     if inline_config:
         config_dict = deep_merge(config_dict, inline_config)
-    
+
     return RunSingleConfig.model_validate(config_dict)
 
 
-async def run_agent_async(run_id: str, problem_statement: str, config_path: Optional[str] = None, inline_config: Optional[Dict[str, Any]] = None):
+async def run_agent_async(
+    run_id: str, problem_statement: str, config_path: str | None = None, inline_config: dict[str, Any] | None = None
+):
     """Run SWE-agent asynchronously and emit updates via Socket.IO."""
     state = RunState(run_id)
     state.problem_statement = problem_statement
     set_run_state(run_id, state)
-    
+
     try:
         # Emit start event
-        emit_update(run_id, "start", {
-            "run_id": run_id,
-            "status": "started"
-        })
-        
+        emit_update(run_id, "start", {"run_id": run_id, "status": "started"})
+
         # Create config
         config = create_agent_config(problem_statement, config_path, inline_config)
         state.config = config
-        
+
         # Create WebSocket hook and attach it to the state
         websocket_hook = WebSocketHook(run_id)
         websocket_hook._emit_function = emit_update
         state.websocket_hook = websocket_hook
-        
+
         # Run the agent with the WebSocket hook in a separate thread
         result = await asyncio.to_thread(
             _run_single_with_result,
             config,
             websocket_hook,
         )
-        
+
         # Update state with results from the hook if available
         if state.websocket_hook and state.websocket_hook.trajectory_steps:
             state.trajectory_steps = state.websocket_hook.trajectory_steps
         else:
             state.trajectory_steps = result.trajectory
-            
+
         state.exit_status = result.info.get("exit_status")
         state.model_stats = result.info.get("model_stats", {})
-        
+
         # Emit completion event
-        emit_update(run_id, "complete", {
-            "run_id": run_id,
-            "status": "completed",
-            "exit_status": state.exit_status,
-            "steps": len(state.trajectory_steps),
-            "model_stats": state.model_stats,
-        })
-        
+        emit_update(
+            run_id,
+            "complete",
+            {
+                "run_id": run_id,
+                "status": "completed",
+                "exit_status": state.exit_status,
+                "steps": len(state.trajectory_steps),
+                "model_stats": state.model_stats,
+            },
+        )
+
     except Exception as e:
         logger.error(f"Error in run {run_id}: {e}")
         state.error = str(e)
-        emit_update(run_id, "error", {
-            "run_id": run_id,
-            "status": "error",
-            "error": str(e),
-        })
-    
+        emit_update(
+            run_id,
+            "error",
+            {
+                "run_id": run_id,
+                "status": "error",
+                "error": str(e),
+            },
+        )
+
     # Mark as completed but keep the state for retrieval
     state.completed = True
 
@@ -368,14 +398,14 @@ async def run_agent_async(run_id: str, problem_statement: str, config_path: Opti
 def create_run():
     """Create a new SWE-agent run."""
     data = request.get_json()
-    
+
     if not data or "problem_statement" not in data:
         return jsonify({"error": "problem_statement is required"}), 400
-    
+
     problem_statement = data["problem_statement"]
     config_path = data.get("config_path", "./config/api_default.yaml")
     inline_config = data.get("config")
-    
+
     # Validate configuration if provided
     # if inline_config:
     #     try:
@@ -386,9 +416,9 @@ def create_run():
     #             "error": f"Invalid configuration: {str(e)}",
     #             "details": "Please check your configuration format and values."
     #         }), 400
-    
+
     run_id = generate_run_id()
-    
+
     # Start the agent in a background thread
     # Use threading to avoid async issues with Flask
     def start_agent_task():
@@ -398,15 +428,11 @@ def create_run():
             loop.run_until_complete(run_agent_async(run_id, problem_statement, config_path, inline_config))
         finally:
             loop.close()
-    
+
     thread = threading.Thread(target=start_agent_task, daemon=True)
     thread.start()
-    
-    return jsonify({
-        "run_id": run_id,
-        "status": "started",
-        "message": f"Run {run_id} started"
-    }), 202
+
+    return jsonify({"run_id": run_id, "status": "started", "message": f"Run {run_id} started"}), 202
 
 
 @app.route("/api/models", methods=["GET"])
@@ -415,29 +441,20 @@ def get_models():
     try:
         # Look for models.json in the root directory
         models_path = Path(__file__).parent.parent.parent / "models.json"
-        
+
         if not models_path.exists():
-            return jsonify({
-                "error": "models.json not found",
-                "available_models": []
-            }), 404
-        
-        with open(models_path, 'r') as f:
+            return jsonify({"error": "models.json not found", "available_models": []}), 404
+
+        with open(models_path) as f:
             models_data = json.load(f)
-        
+
         # Extract just the model names for the dropdown
         model_names = list(models_data.keys())
-        
-        return jsonify({
-            "models": models_data,
-            "model_names": model_names
-        })
+
+        return jsonify({"models": models_data, "model_names": model_names})
     except Exception as e:
         logger.error(f"Error loading models: {e}")
-        return jsonify({
-            "error": str(e),
-            "available_models": []
-        }), 500
+        return jsonify({"error": str(e), "available_models": []}), 500
 
 
 @app.route("/api/github/search", methods=["GET", "POST"])
@@ -446,36 +463,27 @@ def search_github_repositories():
     try:
         # Get search query from either GET params or POST body
         if request.method == "GET":
-            query = request.args.get('q', '')
+            query = request.args.get("q", "")
         else:  # POST
             # Try JSON first, then form data
             json_data = request.get_json(silent=True)
-            if json_data and 'q' in json_data:
-                query = json_data['q']
-            elif request.form and 'q' in request.form:
-                query = request.form['q']
+            if json_data and "q" in json_data:
+                query = json_data["q"]
+            elif request.form and "q" in request.form:
+                query = request.form["q"]
             else:
-                query = ''
-        
+                query = ""
+
         if not query:
-            return jsonify({
-                "error": "Search query 'q' is required",
-                "repositories": []
-            }), 400
-        
+            return jsonify({"error": "Search query 'q' is required", "repositories": []}), 400
+
         # Use GitHub API to search for repositories
         results = search_github_repos(query)
-        
-        return jsonify({
-            "query": query,
-            "repositories": results
-        })
+
+        return jsonify({"query": query, "repositories": results})
     except Exception as e:
         logger.error(f"Error searching GitHub repositories: {e}")
-        return jsonify({
-            "error": str(e),
-            "repositories": []
-        }), 500
+        return jsonify({"error": str(e), "repositories": []}), 500
 
 
 @app.route("/api/github/issues", methods=["GET"])
@@ -483,35 +491,32 @@ def get_github_issues():
     """Get open issues for a specific GitHub repository."""
     try:
         # Get repository parameter from query string
-        repo = request.args.get('repo', '')
-        
+        repo = request.args.get("repo", "")
+
         if not repo:
-            return jsonify({
-                "error": "Repository parameter 'repo' is required (format: owner/repo)",
-                "issues": []
-            }), 400
-        
+            return jsonify({"error": "Repository parameter 'repo' is required (format: owner/repo)", "issues": []}), 400
+
         # Check if we have a GitHub token in environment variables
         github_token = os.getenv("GITHUB_TOKEN", "")
         headers = {}
         if github_token:
             headers["Authorization"] = f"token {github_token}"
         headers["Accept"] = "application/vnd.github+json"
-        
+
         # Build GitHub API URL for repository issues
         # Format: https://api.github.com/repos/owner/repo/issues
         api_url = f"https://api.github.com/repos/{repo}/issues"
-        
+
         try:
             response = requests.get(api_url, headers=headers, timeout=10)
             response.raise_for_status()
-            
+
             data = response.json()
             issues = []
-            
+
             for issue in data:
                 # Only include open issues
-                if issue.get('state') == 'open':
+                if issue.get("state") == "open":
                     issue_info = {
                         "number": issue.get("number", 0),
                         "title": issue.get("title", ""),
@@ -522,37 +527,31 @@ def get_github_issues():
                         "comments": issue.get("comments", 0),
                     }
                     issues.append(issue_info)
-            
-            return jsonify({
-                "repository": repo,
-                "issues": issues
-            })
-            
+
+            return jsonify({"repository": repo, "issues": issues})
+
         except requests.exceptions.RequestException as e:
             logger.error(f"GitHub API request failed: {e}")
             # Return empty results on error
-            return jsonify({
-                "error": f"Failed to fetch issues from GitHub: {str(e)}",
-                "repository": repo,
-                "issues": []
-            }), 500
-    
+            return jsonify(
+                {"error": f"Failed to fetch issues from GitHub: {str(e)}", "repository": repo, "issues": []}
+            ), 500
+
     except Exception as e:
         logger.error(f"Error getting GitHub issues: {e}")
-        return jsonify({
-            "error": str(e),
-            "issues": []
-        }), 500
+        return jsonify({"error": str(e), "issues": []}), 500
 
 
 @app.route("/api/status", methods=["GET"])
 def get_status():
     """Get server status."""
-    return jsonify({
-        "status": "running",
-        "active_runs": len(active_runs),
-        "timestamp": time.time(),
-    })
+    return jsonify(
+        {
+            "status": "running",
+            "active_runs": len(active_runs),
+            "timestamp": time.time(),
+        }
+    )
 
 
 @app.route("/api/config/schema", methods=["GET"])
@@ -561,29 +560,25 @@ def get_config_schema():
     try:
         # Get JSON schema from RunSingleConfig
         schema = RunSingleConfig.model_json_schema()
-        
-        return jsonify({
-            "schema": schema,
-            "description": "Configuration schema for SWE-agent runs. Use this to understand available options.",
-            "example_configs": {
-                "simple_text": {
-                    "problem_statement": "Fix the bug in login.py",
-                    "config": {
-                        "agent": {
-                            "model": {
-                                "temperature": 0.7
-                            }
+
+        return jsonify(
+            {
+                "schema": schema,
+                "description": "Configuration schema for SWE-agent runs. Use this to understand available options.",
+                "example_configs": {
+                    "simple_text": {
+                        "problem_statement": "Fix the bug in login.py",
+                        "config": {"agent": {"model": {"temperature": 0.7}}},
+                    },
+                    "github_issue": {
+                        "problem_statement": {
+                            "type": "github",
+                            "github_url": "https://github.com/owner/repo/issues/123",
                         }
-                    }
+                    },
                 },
-                "github_issue": {
-                    "problem_statement": {
-                        "type": "github",
-                        "github_url": "https://github.com/owner/repo/issues/123"
-                    }
-                }
             }
-        })
+        )
     except Exception as e:
         logger.error(f"Error generating config schema: {e}")
         return jsonify({"error": "Unable to generate configuration schema"}), 500
@@ -616,17 +611,17 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-async def main(args: Optional[List[str]] = None):
+async def main(args: list[str] | None = None):
     """Main entry point for the API server."""
     parser = get_parser()
     args_parsed = parser.parse_args(args)
-    
+
     logger.info(f"Starting SWE-agent API server on {args_parsed.host}:{args_parsed.port}")
-    
+
     # Create static directory if it doesn't exist
     static_dir = Path(app.static_folder)
     static_dir.mkdir(exist_ok=True)
-    
+
     try:
         socketio.run(
             app,

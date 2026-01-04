@@ -55,11 +55,11 @@ def _load_models_json() -> dict[str, Any]:
     """Load models from models.json file."""
     if not _MODELS_JSON_PATH.exists():
         return {}
-    
+
     try:
-        with open(_MODELS_JSON_PATH, 'r') as f:
+        with open(_MODELS_JSON_PATH) as f:
             return json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         logger = get_logger("swea-models", emoji="📋")
         logger.warning(f"Could not load models.json: {e}")
         return {}
@@ -80,7 +80,7 @@ def _get_available_models_cache() -> dict[str, Any]:
 
 def get_available_models() -> dict[str, Any]:
     """Get all available models listed in models.json.
-    
+
     Returns:
         Dictionary of model names to their properties.
     """
@@ -89,10 +89,10 @@ def get_available_models() -> dict[str, Any]:
 
 def is_model_available(model_name: str) -> bool:
     """Check if a model is available in models.json.
-    
+
     Args:
         model_name: Name of the model to check.
-        
+
     Returns:
         True if the model is listed in models.json, False otherwise.
     """
@@ -102,10 +102,10 @@ def is_model_available(model_name: str) -> bool:
 
 def get_model_properties(model_name: str) -> dict[str, Any] | None:
     """Get properties for a specific model from models.json.
-    
+
     Args:
         model_name: Name of the model to get properties for.
-        
+
     Returns:
         Dictionary of model properties if found, None otherwise.
     """
@@ -654,20 +654,20 @@ class LiteLLMModel(AbstractModel):
         if available_models:
             if self.config.name in available_models:
                 model_info = available_models[self.config.name]
-                
+
                 # Set default values from models.json if not explicitly set
                 if self.config.max_input_tokens is None and "max_input_tokens" in model_info:
                     self.logger.info(
                         f"Using max_input_tokens={model_info['max_input_tokens']} from models.json for {self.config.name}"
                     )
                     self.config.max_input_tokens = model_info["max_input_tokens"]
-                
+
                 if self.config.max_output_tokens is None and "max_output_tokens" in model_info:
                     self.logger.info(
                         f"Using max_output_tokens={model_info['max_output_tokens']} from models.json for {self.config.name}"
                     )
                     self.config.max_output_tokens = model_info["max_output_tokens"]
-                
+
                 # Warn if function calling is not supported but tools require it
                 if tools.use_function_calling and not model_info.get("supports_function_calling", True):
                     msg = (
@@ -682,7 +682,7 @@ class LiteLLMModel(AbstractModel):
                     f"Model {self.config.name} not found in models.json. "
                     f"Available models: {list(available_models.keys())[:5]}{'...' if len(available_models) > 5 else ''}"
                 )
-        
+
         if tools.use_function_calling:
             if not litellm.utils.supports_function_calling(model=self.config.name):
                 msg = (

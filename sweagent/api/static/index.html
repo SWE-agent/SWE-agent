@@ -13,7 +13,7 @@
             <h1>🤖 SWE-agent Chatbot Interface</h1>
             <p class="subtitle">Run software engineering tasks with AI-powered automation</p>
         </header>
-        
+
         <div class="problem-input">
             <!-- Problem Statement Type Selection -->
             <div class="problem-type-selection">
@@ -28,24 +28,24 @@
                     <span class="radio-text">🐙 GitHub Issue URL</span>
                 </label>
             </div>
-            
+
             <!-- Problem Statement Input - can be text or GitHub issue URL -->
             <textarea id="problemStatement" placeholder="Enter your problem statement here..." rows="6"></textarea>
             <small id="inputHint">💡 Enter a text description of the problem you want to solve</small>
-             
+
             <!-- GitHub-specific hint (shown when GitHub radio is selected) -->
             <small id="githubHint" class="hidden">💡 Enter GitHub issue URL: https://github.com/owner/repo/issues/123</small>
-             
+
             <!-- GitHub Issues Selection (shown when GitHub repo is selected and problem type is GitHub) -->
             <div id="githubIssuesSection" class="hidden">
                 <label for="githubIssueSelection">🔍 Select from Open Issues:</label>
-                <input type="text" id="githubIssueInput" name="githubIssueSelection" 
-                       placeholder="Search open issues from selected repository..." 
+                <input type="text" id="githubIssueInput" name="githubIssueSelection"
+                       placeholder="Search open issues from selected repository..."
                        data-repo-url="">
                 <ul id="github-issue-results"></ul>
                 <small id="githubIssuesHint">💡 Select an issue from the dropdown or enter a GitHub issue URL manually</small>
             </div>
-            
+
             <!-- Repository Configuration -->
             <div class="config-section">
                 <summary>📁 Repository Configuration (Optional)</summary>
@@ -73,7 +73,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Advanced Configuration -->
             <details id="configSection" class="config-section">
                 <summary>🔧 Advanced Agent Configuration (Optional)</summary>
@@ -107,7 +107,7 @@
                     </div>
                 </div>
             </details>
-            
+
             <!-- Config File Upload -->
             <div class="config-section">
                 <label for="configFile" class="file-upload-label">
@@ -117,15 +117,15 @@
                 </label>
                 <small>Or <a href="/api/config/schema" target="_blank">view configuration schema</a> for available options</small>
             </div>
-            
+
             <button id="startRun" class="btn-primary">Start SWE-agent</button>
         </div>
-        
+
         <div class="runs-list">
             <h2>Active Runs</h2>
             <div id="activeRuns" class="runs-container"></div>
         </div>
-        
+
         <!-- Cost Display Sidebar - Fixed Placement -->
         <div id="costDisplay" class="cost-display hidden">
             <div class="cost-header">
@@ -150,7 +150,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
     <script type="module" src="https://unpkg.com/@github/auto-complete-element@latest/dist/bundle.js"></script>
     <script src="/static/app.js"></script>
