@@ -36,7 +36,7 @@ body:
     description: >
       Please paste or describe the expected results.
       Use [triple backticks](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#quoting-code) around log/error messages.
-      You should fine the full log in your `trajectory` folder (look for `*.log` files).
+      You should find the full log in your `trajectory` folder (look for `*.log` files).
     placeholder: >
       ```
       Full log file here
