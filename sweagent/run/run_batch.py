@@ -380,33 +380,53 @@ class RunBatch:
         if self._redo_existing:
             return False
 
+        instance_id = instance.problem_statement.id
         # Check if there's an existing trajectory for this instance
-        log_path = self.output_dir / instance.problem_statement.id / (instance.problem_statement.id + ".traj")
-        if not log_path.exists():
-            return False
+        log_path = self.output_dir / instance_id / (instance_id + ".traj")
 
-        content = log_path.read_text()
-        if not content.strip():
-            self.logger.warning("Found empty trajectory: %s. Removing.", log_path)
-            log_path.unlink()
-            return False
-
-        try:
-            data = json.loads(content)
-            # If the trajectory has no exit status, it's incomplete and we will redo it
-            exit_status = data["info"].get("exit_status", None)
-            if exit_status == "early_exit" or exit_status is None:
-                self.logger.warning(f"Found existing trajectory with no exit status: {log_path}. Removing.")
+        if log_path.exists():
+            content = log_path.read_text()
+            if not content.strip():
+                self.logger.warning("Found empty trajectory: %s. Removing.", log_path)
                 log_path.unlink()
-                return False
-        except Exception as e:
-            self.logger.error(f"Failed to check existing trajectory: {log_path}: {e}. Removing.")
-            # If we can't check the trajectory, we will redo it
-            log_path.unlink()
-            return False
-        # otherwise, we will skip it
-        self.logger.info(f"⏭️ Skipping existing trajectory: {log_path}")
-        return exit_status
+            else:
+                try:
+                    data = json.loads(content)
+                    # If the trajectory has no exit status, it's incomplete and we will redo it
+                    exit_status = data["info"].get("exit_status", None)
+                    if exit_status == "early_exit" or exit_status is None:
+                        self.logger.warning(f"Found existing trajectory with no exit status: {log_path}. Removing.")
+                        log_path.unlink()
+                    else:
+                        # Valid trajectory found, skip it
+                        self.logger.info(f"⏭️ Skipping existing trajectory: {log_path}")
+                        return exit_status
+                except Exception as e:
+                    self.logger.error(f"Failed to check existing trajectory: {log_path}: {e}. Removing.")
+                    # If we can't check the trajectory, we will redo it
+                    log_path.unlink()
+
+        # Check if there's an uncaught exception recorded for this instance in the yaml report
+        # This handles cases where the instance failed before creating a trajectory file
+        # (e.g., DockerPullError when the image doesn't exist for the current platform)
+        yaml_report_path = self.output_dir / "run_batch_exit_statuses.yaml"
+        if yaml_report_path.exists():
+            try:
+                report_data = yaml.safe_load(yaml_report_path.read_text())
+                if report_data and "instances_by_exit_status" in report_data:
+                    for exit_status, instances in report_data["instances_by_exit_status"].items():
+                        if instance_id in instances:
+                            # Skip instances with uncaught exceptions (like DockerPullError)
+                            # These are infrastructure/platform errors that won't be resolved by retrying
+                            if "DockerPullError" in exit_status:
+                                self.logger.info(
+                                    f"⏭️ Skipping instance {instance_id} due to previous uncaught exception: {exit_status}"
+                                )
+                                return "Uncaught DockerPullError"
+            except Exception as e:
+                self.logger.warning(f"Failed to read yaml report {yaml_report_path}: {e}")
+
+        return False
 
     def _add_instance_log_file_handlers(self, instance_id: str, multi_worker: bool = False) -> None:
         filename_template = f"{instance_id}.{{level}}.log"
