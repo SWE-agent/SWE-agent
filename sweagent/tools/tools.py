@@ -355,7 +355,7 @@ class ToolHandler:
         action = action.strip()
         if not action:
             return False
-        if any(f.startswith(action) for f in self.config.filter.blocklist):
+        if any(action.startswith(f) for f in self.config.filter.blocklist):
             return True
         if action in self.config.filter.blocklist_standalone:
             return True
