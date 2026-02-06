@@ -1,12 +1,14 @@
 import asyncio
 import logging
 import shlex
+import shutil
 from pathlib import PurePath
 from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field
 from swerex.deployment.abstract import AbstractDeployment
 from swerex.deployment.config import DeploymentConfig, DockerDeploymentConfig, get_deployment
+from swerex.deployment.docker import DockerDeployment
 from swerex.runtime.abstract import (
     BashAction,
     BashInterruptAction,
@@ -179,8 +181,22 @@ class SWEEnv:
         """Handles container initialization. Defines container name and creates it.
         If cached_image is provided, it will use that image name instead of the default.
         """
+        self._check_container_runtime()
         self._chook.on_start_deployment()
         asyncio.run(self.deployment.start())
+
+    def _check_container_runtime(self) -> None:
+        """Check if the container runtime (docker/podman) is available."""
+        if not isinstance(self.deployment, DockerDeployment):
+            return
+        runtime = getattr(self.deployment._config, "container_runtime", "docker")
+        if shutil.which(runtime) is None:
+            msg = (
+                f"Container runtime '{runtime}' not found. "
+                f"Please install {runtime} and ensure it is in your PATH. "
+                "See https://docs.docker.com/get-docker/ for installation instructions."
+            )
+            raise FileNotFoundError(msg)
         asyncio.run(
             self.deployment.runtime.create_session(
                 CreateBashSessionRequest(startup_source=["/root/.bashrc"], startup_timeout=10)
