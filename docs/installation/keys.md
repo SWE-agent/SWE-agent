@@ -38,7 +38,7 @@ We support all models supported by [litellm](https://github.com/BerriAI/litellm)
 
 !!! tip "Custom model registries"
 
-    If you're using a model that's not in the default litellm model registry (e.g., custom local models or new models), you can provide a custom model registry file using the `litellm_model_registry` configuration option. This allows proper cost tracking for any model. See the [custom model registry section](#custom-model-registry-for-cost-tracking) below for details.
+    If you're using a model that's not in the default litellm model registry (e.g., custom local models or new models), you can provide a custom model registry file using the `litellm_model_registry` configuration option. This allows proper cost tracking for any model. See the [custom cost tracking section](../config/models.md#custom-cost-tracking) for details.
 
 Here are a few options for `--agent.model.name`:
 
