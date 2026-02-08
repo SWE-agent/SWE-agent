@@ -25,7 +25,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from sweagent import REPO_ROOT
+from sweagent import REPO_ROOT, __version__
 from sweagent.exceptions import (
     ContentPolicyViolationError,
     ContextWindowExceededError,
@@ -708,9 +708,16 @@ class LiteLLMModel(AbstractModel):
         if self.tools.use_function_calling:
             extra_args["tools"] = self.tools.tools
         # We need to always set max_tokens for anthropic models
-        completion_kwargs = self.config.completion_kwargs
+        completion_kwargs = copy.deepcopy(self.config.completion_kwargs)
         if self.lm_provider == "anthropic":
             completion_kwargs["max_tokens"] = self.model_max_output_tokens
+
+        # Add User-Agent header (don't override user-provided headers)
+        if "extra_headers" not in completion_kwargs:
+            completion_kwargs["extra_headers"] = {}
+        if "User-Agent" not in completion_kwargs["extra_headers"]:
+            completion_kwargs["extra_headers"]["User-Agent"] = f"swe-agent/{__version__}"
+
         try:
             response: litellm.types.utils.ModelResponse = litellm.completion(  # type: ignore
                 model=self.config.name,
