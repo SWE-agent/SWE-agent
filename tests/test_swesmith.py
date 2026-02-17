@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import base64
 import json
-import os
 import urllib.error
 from pathlib import Path
 from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
-from pydantic import SecretStr
 
 from sweagent.environment.repo import SWESmithRepoConfig
 from sweagent.run.batch_instances import BatchInstance, SWESmithInstances
@@ -18,49 +15,54 @@ from sweagent.run.batch_instances import BatchInstance, SWESmithInstances
 
 
 class TestSWESmithRepoConfigGetResetCommands:
-    def test_no_mirror_no_key(self):
+    def test_no_mirror(self):
         """Falls back to standard git reset commands."""
         repo = SWESmithRepoConfig(repo_name="testbed", base_commit="abc123")
         cmds = repo.get_reset_commands()
         assert any("git checkout" in c and "abc123" in c for c in cmds)
         assert any("git fetch" in c for c in cmds)
 
-    def test_with_mirror_and_key(self):
-        """Injects SSH key and fetches from mirror URL."""
+    def test_with_mirror_and_token(self):
+        """Fetches from mirror URL with token embedded."""
         repo = SWESmithRepoConfig(
             repo_name="testbed",
             base_commit="branch-id",
-            mirror_url="git@github.com:org/repo.git",
-            ssh_key_b64=SecretStr("c29tZWtleQ=="),
+            mirror_url="https://github.com/org/repo.git",
         )
-        cmds = repo.get_reset_commands()
-        assert any("base64 -d" in c for c in cmds)
-        assert any("chmod 600" in c for c in cmds)
-        assert any("GIT_SSH_COMMAND" in c for c in cmds)
-        assert any("git fetch" in c and "git@github.com:org/repo.git" in c for c in cmds)
+        with mock.patch.dict("os.environ", {"GITHUB_TOKEN": "ghp_test123"}):
+            cmds = repo.get_reset_commands()
+        assert any("git fetch" in c and "ghp_test123@github.com/org/repo.git" in c for c in cmds)
         assert any("git checkout FETCH_HEAD" in c for c in cmds)
         assert not any(c == "git fetch" for c in cmds)
 
-    def test_with_mirror_no_key(self):
-        """Mirror URL but empty key — still fetches, no SSH setup."""
+    def test_with_mirror_no_token(self):
+        """Mirror URL but no token — fetches with bare URL."""
         repo = SWESmithRepoConfig(
             repo_name="testbed",
             base_commit="branch-id",
-            mirror_url="git@github.com:org/repo.git",
-            ssh_key_b64=SecretStr(""),
+            mirror_url="https://github.com/org/repo.git",
         )
-        cmds = repo.get_reset_commands()
-        assert not any("base64 -d" in c for c in cmds)
-        assert any("git fetch" in c and "git@github.com:org/repo.git" in c for c in cmds)
+        with mock.patch.dict("os.environ", {}, clear=True):
+            cmds = repo.get_reset_commands()
+        assert any("git fetch" in c and "https://github.com/org/repo.git" in c for c in cmds)
+        assert not any("@" in c for c in cmds if "git fetch" in c)
 
-    def test_secret_not_leaked_in_repr(self):
-        """SecretStr should mask the value in repr/str."""
-        repo = SWESmithRepoConfig(
-            repo_name="testbed",
-            ssh_key_b64=SecretStr("supersecret"),
-        )
-        assert "supersecret" not in repr(repo)
-        assert "supersecret" not in str(repo.model_dump())
+
+# ── SWESmithRepoConfig._get_url_with_token ──
+
+
+class TestGetUrlWithToken:
+    def test_prepends_token(self):
+        url = SWESmithRepoConfig._get_url_with_token("https://github.com/org/repo.git", "ghp_abc")
+        assert url == "https://ghp_abc@github.com/org/repo.git"
+
+    def test_empty_token(self):
+        url = SWESmithRepoConfig._get_url_with_token("https://github.com/org/repo.git", "")
+        assert url == "https://github.com/org/repo.git"
+
+    def test_empty_url(self):
+        url = SWESmithRepoConfig._get_url_with_token("", "ghp_abc")
+        assert url == ""
 
 
 # ── _is_repo_private ──
@@ -140,46 +142,6 @@ class TestIsRepoPrivate:
         assert mock_urlopen.call_count == 1
 
 
-# ── _find_and_encode_ssh_key ──
-
-
-class TestFindAndEncodeSshKey:
-    def test_env_var_key(self, tmp_path):
-        key_file = tmp_path / "my_key"
-        key_file.write_text("my-ssh-key-content")
-        expected = base64.b64encode(b"my-ssh-key-content").decode()
-
-        with mock.patch.dict("os.environ", {"GITHUB_USER_SSH_KEY": str(key_file)}):
-            from sweagent.utils.github import _find_and_encode_ssh_key
-
-            assert _find_and_encode_ssh_key() == expected
-
-    def test_default_ssh_key(self, tmp_path):
-        ssh_dir = tmp_path / ".ssh"
-        ssh_dir.mkdir()
-        key_file = ssh_dir / "id_ed25519"
-        key_file.write_text("ed25519-key")
-        expected = base64.b64encode(b"ed25519-key").decode()
-
-        env = {k: v for k, v in os.environ.items() if k != "GITHUB_USER_SSH_KEY"}
-        with (
-            mock.patch.dict("os.environ", env, clear=True),
-            mock.patch("pathlib.Path.home", return_value=tmp_path),
-        ):
-            from sweagent.utils.github import _find_and_encode_ssh_key
-
-            assert _find_and_encode_ssh_key() == expected
-
-    def test_no_key_found(self, tmp_path):
-        with (
-            mock.patch.dict("os.environ", {}, clear=True),
-            mock.patch("pathlib.Path.home", return_value=tmp_path),
-        ):
-            from sweagent.utils.github import _find_and_encode_ssh_key
-
-            assert _find_and_encode_ssh_key() == ""
-
-
 # ── SWESmithInstances.get_instance_configs ──
 
 
@@ -200,9 +162,8 @@ class TestSWESmithInstancesGetInstanceConfigs:
             "FAIL_TO_PASS": ["test_foo.py::test_bar"],
         }
 
-    @patch("sweagent.run.batch_instances._find_and_encode_ssh_key", return_value="")
     @patch("sweagent.run.batch_instances._is_repo_private", return_value=False)
-    def test_public_repo(self, mock_private, mock_ssh, tmp_path):
+    def test_public_repo(self, mock_private, tmp_path):
         path = self._make_instance_file(tmp_path, [self._sample_instance()])
         config = SWESmithInstances(path=path)
         instances = config.get_instance_configs()
@@ -214,30 +175,29 @@ class TestSWESmithInstancesGetInstanceConfigs:
         assert inst.env.repo.mirror_url == ""
         assert inst.env.deployment.image == "swebench/swesmith.x86_64.org_1776_repo.abc123"
 
-    @patch("sweagent.run.batch_instances._find_and_encode_ssh_key", return_value="c29tZWtleQ==")
     @patch("sweagent.run.batch_instances._is_repo_private", return_value=True)
-    def test_private_repo(self, mock_private, mock_ssh, tmp_path):
+    def test_private_repo(self, mock_private, tmp_path):
         path = self._make_instance_file(tmp_path, [self._sample_instance()])
         config = SWESmithInstances(path=path)
-        instances = config.get_instance_configs()
+
+        with mock.patch.dict("os.environ", {"GITHUB_TOKEN": "ghp_fake"}):
+            instances = config.get_instance_configs()
 
         assert len(instances) == 1
         inst = instances[0]
-        assert inst.env.repo.mirror_url == "git@github.com:org/repo.git"
-        assert inst.env.repo.ssh_key_b64.get_secret_value() == "c29tZWtleQ=="
+        assert inst.env.repo.mirror_url == "https://github.com/org/repo.git"
 
-    @patch("sweagent.run.batch_instances._find_and_encode_ssh_key", return_value="")
     @patch("sweagent.run.batch_instances._is_repo_private", return_value=True)
-    def test_private_repo_no_key_raises(self, mock_private, mock_ssh, tmp_path):
+    def test_private_repo_no_token_raises(self, mock_private, tmp_path):
         path = self._make_instance_file(tmp_path, [self._sample_instance()])
         config = SWESmithInstances(path=path)
 
-        with pytest.raises(ValueError, match="no SSH key found"):
-            config.get_instance_configs()
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with pytest.raises(ValueError, match="GITHUB_TOKEN is not set"):
+                config.get_instance_configs()
 
-    @patch("sweagent.run.batch_instances._find_and_encode_ssh_key", return_value="")
     @patch("sweagent.run.batch_instances._is_repo_private", return_value=False)
-    def test_filter_and_slice(self, mock_private, mock_ssh, tmp_path):
+    def test_filter_and_slice(self, mock_private, tmp_path):
         instances_data = [
             self._sample_instance(instance_id="org__repo.abc__test_1"),
             self._sample_instance(instance_id="org__repo.abc__test_2"),

@@ -6,7 +6,7 @@ from typing import Any, Literal, Protocol
 
 from git import InvalidGitRepositoryError
 from git import Repo as GitRepo
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field
 from swerex.deployment.abstract import AbstractDeployment
 from swerex.runtime.abstract import Command, UploadRequest
 from typing_extensions import Self
@@ -192,16 +192,14 @@ class GithubRepoConfig(BaseModel):
 
 
 class SWESmithRepoConfig(BaseModel):
-    """Repository config for SWE-Smith instances that handles SSH key injection
-    and targeted fetch from a GitHub mirror.
+    """Repository config for SWE-Smith instances that handles targeted fetch
+    from a GitHub mirror, authenticating via GITHUB_TOKEN when needed.
     """
 
     repo_name: str
     base_commit: str = Field(default="HEAD")
     mirror_url: str = ""
-    """SSH URL of the GitHub mirror to fetch the bug branch from."""
-    ssh_key_b64: SecretStr = Field(default=SecretStr(""))
-    """Base64-encoded SSH private key for authenticating with the mirror."""
+    """HTTPS URL of the GitHub mirror to fetch the bug branch from."""
 
     type: Literal["swesmith_preexisting"] = "swesmith_preexisting"
     """Discriminator for (de)serialization/CLI. Do not change."""
@@ -211,33 +209,25 @@ class SWESmithRepoConfig(BaseModel):
     def copy(self, deployment: AbstractDeployment):
         pass
 
+    @staticmethod
+    def _get_url_with_token(url: str, token: str) -> str:
+        if not token or not url:
+            return url
+        _, _, url_no_protocol = url.partition("://")
+        return f"https://{token}@{url_no_protocol}"
+
     def get_reset_commands(self) -> list[str]:
-        commands: list[str] = []
-        key = self.ssh_key_b64.get_secret_value()
-
-        if key:
-            commands.extend(
-                [
-                    f"echo '{key}' | base64 -d > /tmp/github_key",
-                    "chmod 600 /tmp/github_key",
-                    "export GIT_SSH_COMMAND='ssh -i /tmp/github_key -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes'",
-                ]
-            )
-
         if self.mirror_url:
-            commands.extend(
-                [
-                    "git restore .",
-                    "git reset --hard",
-                    f"git fetch {shlex.quote(self.mirror_url)} {shlex.quote(self.base_commit)}",
-                    "git checkout FETCH_HEAD",
-                    "git clean -fdq",
-                ]
-            )
-        else:
-            commands.extend(_get_git_reset_commands(self.base_commit))
-
-        return commands
+            github_token = os.getenv("GITHUB_TOKEN", "")
+            url = self._get_url_with_token(self.mirror_url, github_token)
+            return [
+                "git restore .",
+                "git reset --hard",
+                f"git fetch {shlex.quote(url)} {shlex.quote(self.base_commit)}",
+                "git checkout FETCH_HEAD",
+                "git clean -fdq",
+            ]
+        return _get_git_reset_commands(self.base_commit)
 
 
 RepoConfig = LocalRepoConfig | GithubRepoConfig | PreExistingRepoConfig | SWESmithRepoConfig

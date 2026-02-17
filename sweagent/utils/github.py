@@ -1,9 +1,7 @@
-import base64
 import json
 import re
 import urllib.error
 import urllib.request
-from pathlib import Path
 
 from ghapi.all import GhApi
 
@@ -155,36 +153,3 @@ def _is_repo_private(owner_repo: str, token: str) -> bool:
             raise
     _repo_privacy_cache[owner_repo] = private
     return private
-
-
-def _find_and_encode_ssh_key() -> str:
-    """Find an SSH key from ``GITHUB_USER_SSH_KEY`` env var or default paths
-    and return its content as a base64-encoded string.
-
-    Lookup order:
-      1. Path specified by ``GITHUB_USER_SSH_KEY`` environment variable
-      2. ``~/.ssh/id_rsa``
-      3. ``~/.ssh/id_ecdsa``
-      4. ``~/.ssh/id_ecdsa_sk``
-      5. ``~/.ssh/id_ed25519``
-      6. ``~/.ssh/id_ed25519_sk``
-
-    Returns an empty string if no key is found.
-    """
-    import os
-
-    key_path_str = os.environ.get("GITHUB_USER_SSH_KEY")
-    if key_path_str:
-        key_path = Path(key_path_str)
-        if key_path.exists():
-            _logger.info("Using SSH key from GITHUB_USER_SSH_KEY: %s", key_path)
-            return base64.b64encode(key_path.read_bytes()).decode()
-
-    ssh_dir = Path.home() / ".ssh"
-    for key_name in ["id_rsa", "id_ecdsa", "id_ecdsa_sk", "id_ed25519", "id_ed25519_sk"]:
-        key_file = ssh_dir / key_name
-        if key_file.exists():
-            _logger.info("Using SSH key from %s", key_file)
-            return base64.b64encode(key_file.read_bytes()).decode()
-
-    return ""

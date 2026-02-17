@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from swerex.deployment.config import (
     DeploymentConfig,
     DockerDeploymentConfig,
@@ -23,7 +23,7 @@ from sweagent.agent.problem_statement import (
 from sweagent.environment.repo import GithubRepoConfig, LocalRepoConfig, PreExistingRepoConfig, SWESmithRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.utils.files import load_file
-from sweagent.utils.github import _find_and_encode_ssh_key, _is_repo_private
+from sweagent.utils.github import _is_repo_private
 from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
@@ -393,7 +393,6 @@ class SWESmithInstances(BaseModel, AbstractInstanceSource):
     """Discriminator for (de)serialization/CLI. Do not change."""
 
     def get_instance_configs(self) -> list[BatchInstance]:
-        ssh_key_b64 = _find_and_encode_ssh_key()
         github_token = os.getenv("GITHUB_TOKEN", "")
 
         instance_dicts = load_file(self.path)
@@ -411,19 +410,18 @@ class SWESmithInstances(BaseModel, AbstractInstanceSource):
 
             mirror_url = ""
             if repo_field and _is_repo_private(repo_field, github_token):
-                if not ssh_key_b64:
+                if not github_token:
                     msg = (
-                        f"Repo '{repo_field}' is private but no SSH key found. "
-                        "Set GITHUB_USER_SSH_KEY or add a key to ~/.ssh/"
+                        f"Repo '{repo_field}' appears to be private but GITHUB_TOKEN is not set. "
+                        "Set GITHUB_TOKEN with 'repo' scope to access private repositories."
                     )
                     raise ValueError(msg)
-                mirror_url = f"git@github.com:{repo_field}.git"
+                mirror_url = f"https://github.com/{repo_field}.git"
 
             repo = SWESmithRepoConfig(
                 repo_name="testbed",
                 base_commit=instance_id,
                 mirror_url=mirror_url,
-                ssh_key_b64=SecretStr(ssh_key_b64) if mirror_url else SecretStr(""),
             )
 
             problem_statement = TextProblemStatement(
