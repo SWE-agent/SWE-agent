@@ -191,7 +191,46 @@ class GithubRepoConfig(BaseModel):
         return _get_git_reset_commands(self.base_commit)
 
 
-RepoConfig = LocalRepoConfig | GithubRepoConfig | PreExistingRepoConfig
+class SWESmithRepoConfig(BaseModel):
+    """Repository config for SWE-Smith instances that handles targeted fetch
+    from a GitHub mirror, authenticating via GITHUB_TOKEN when needed.
+    """
+
+    repo_name: str
+    base_commit: str = Field(default="HEAD")
+    mirror_url: str = ""
+    """HTTPS URL of the GitHub mirror to fetch the bug branch from."""
+
+    type: Literal["swesmith_preexisting"] = "swesmith_preexisting"
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    def copy(self, deployment: AbstractDeployment):
+        pass
+
+    @staticmethod
+    def _get_url_with_token(url: str, token: str) -> str:
+        if not token or not url:
+            return url
+        _, _, url_no_protocol = url.partition("://")
+        return f"https://{token}@{url_no_protocol}"
+
+    def get_reset_commands(self) -> list[str]:
+        if self.mirror_url:
+            github_token = os.getenv("GITHUB_TOKEN", "")
+            url = self._get_url_with_token(self.mirror_url, github_token)
+            return [
+                "git restore .",
+                "git reset --hard",
+                f"git fetch {shlex.quote(url)} {shlex.quote(self.base_commit)}",
+                "git checkout FETCH_HEAD",
+                "git clean -fdq",
+            ]
+        return _get_git_reset_commands(self.base_commit)
+
+
+RepoConfig = LocalRepoConfig | GithubRepoConfig | PreExistingRepoConfig | SWESmithRepoConfig
 
 
 def repo_from_simplified_input(

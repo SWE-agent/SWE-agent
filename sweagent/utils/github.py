@@ -1,6 +1,15 @@
+import json
 import re
+import urllib.error
+import urllib.request
 
 from ghapi.all import GhApi
+
+from sweagent.utils.log import get_logger
+
+_logger = get_logger("swea-github", emoji="🔧")
+
+_repo_privacy_cache: dict[str, bool] = {}
 
 GITHUB_ISSUE_URL_PATTERN = re.compile(r"github\.com\/(.*?)\/(.*?)\/issues\/(\d+)")
 
@@ -116,3 +125,31 @@ def _get_associated_commit_urls(org: str, repo: str, issue_number: str, *, token
         if f"fixes #{issue_number}" in message.lower() or f"closes #{issue_number}" in message.lower():
             commit_urls.append(commit.html_url)
     return commit_urls
+
+
+def _is_repo_private(owner_repo: str, token: str) -> bool:
+    """Check if a GitHub repository is private via the GitHub API.
+
+    Returns True if the repo is private or if a 404 is returned (GitHub returns
+    404 for private repos when the token lacks access).  Any other HTTP or
+    network error is raised so callers can handle it explicitly.
+    """
+    if owner_repo in _repo_privacy_cache:
+        return _repo_privacy_cache[owner_repo]
+    url = f"https://api.github.com/repos/{owner_repo}"
+    headers = {"User-Agent": "sweagent"}
+    if token:
+        headers["Authorization"] = f"token {token}"
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read())
+            private = data.get("private", False)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            _logger.warning("Repo '%s' returned 404 — assuming private", owner_repo)
+            private = True
+        else:
+            raise
+    _repo_privacy_cache[owner_repo] = private
+    return private
