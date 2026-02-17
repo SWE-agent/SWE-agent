@@ -1,11 +1,12 @@
 import json
+import os
 import random
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 from swerex.deployment.config import (
     DeploymentConfig,
     DockerDeploymentConfig,
@@ -19,9 +20,10 @@ from sweagent.agent.problem_statement import (
     SWEBenchMultimodalProblemStatement,
     TextProblemStatement,
 )
-from sweagent.environment.repo import GithubRepoConfig, LocalRepoConfig, PreExistingRepoConfig
+from sweagent.environment.repo import GithubRepoConfig, LocalRepoConfig, PreExistingRepoConfig, SWESmithRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.utils.files import load_file
+from sweagent.utils.github import _find_and_encode_ssh_key, _is_repo_private
 from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
@@ -391,22 +393,52 @@ class SWESmithInstances(BaseModel, AbstractInstanceSource):
     """Discriminator for (de)serialization/CLI. Do not change."""
 
     def get_instance_configs(self) -> list[BatchInstance]:
-        def convert_instance_dict(instance_dict: dict[str, Any]) -> dict[str, Any]:
-            instance_dict["id"] = instance_dict["instance_id"]
-            # todo: The base_commit is currently incorrect
-            instance_dict["base_commit"] = instance_dict["id"]
-            instance_dict["problem_statement"] = instance_dict.get("problem_statement", "")
-            instance_dict["repo_name"] = "testbed"
-            instance_dict["extra_fields"] = {"fail_to_pass": instance_dict["FAIL_TO_PASS"]}
-            return instance_dict
+        ssh_key_b64 = _find_and_encode_ssh_key()
+        github_token = os.getenv("GITHUB_TOKEN", "")
 
         instance_dicts = load_file(self.path)
-        instances = [
-            SimpleBatchInstance.model_validate(convert_instance_dict(instance_dict)).to_full_batch_instance(
-                self.deployment
+        instances = []
+
+        for instance_dict in instance_dicts:
+            deployment = self.deployment.model_copy(deep=True)
+            deployment.image = instance_dict["image_name"]  # type: ignore
+
+            if isinstance(deployment, DockerDeploymentConfig) and deployment.python_standalone_dir is None:
+                deployment.python_standalone_dir = "/root"  # type: ignore
+
+            instance_id = instance_dict["instance_id"]
+            repo_field = instance_dict.get("repo", "")
+
+            mirror_url = ""
+            if repo_field and _is_repo_private(repo_field, github_token):
+                if not ssh_key_b64:
+                    msg = (
+                        f"Repo '{repo_field}' is private but no SSH key found. "
+                        "Set GITHUB_USER_SSH_KEY or add a key to ~/.ssh/"
+                    )
+                    raise ValueError(msg)
+                mirror_url = f"git@github.com:{repo_field}.git"
+
+            repo = SWESmithRepoConfig(
+                repo_name="testbed",
+                base_commit=instance_id,
+                mirror_url=mirror_url,
+                ssh_key_b64=SecretStr(ssh_key_b64) if mirror_url else SecretStr(""),
             )
-            for instance_dict in instance_dicts
-        ]
+
+            problem_statement = TextProblemStatement(
+                text=instance_dict.get("problem_statement", ""),
+                id=instance_id,
+                extra_fields={"fail_to_pass": instance_dict.get("FAIL_TO_PASS", [])},
+            )
+
+            instances.append(
+                BatchInstance(
+                    env=EnvironmentConfig(deployment=deployment, repo=repo),
+                    problem_statement=problem_statement,
+                )
+            )
+
         return _filter_batch_items(instances, filter_=self.filter, slice_=self.slice, shuffle=self.shuffle)
 
     @property

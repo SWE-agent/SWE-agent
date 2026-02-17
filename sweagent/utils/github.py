@@ -1,6 +1,17 @@
+import base64
+import json
 import re
+import urllib.error
+import urllib.request
+from pathlib import Path
 
 from ghapi.all import GhApi
+
+from sweagent.utils.log import get_logger
+
+_logger = get_logger("swea-github", emoji="🔧")
+
+_repo_privacy_cache: dict[str, bool] = {}
 
 GITHUB_ISSUE_URL_PATTERN = re.compile(r"github\.com\/(.*?)\/(.*?)\/issues\/(\d+)")
 
@@ -116,3 +127,64 @@ def _get_associated_commit_urls(org: str, repo: str, issue_number: str, *, token
         if f"fixes #{issue_number}" in message.lower() or f"closes #{issue_number}" in message.lower():
             commit_urls.append(commit.html_url)
     return commit_urls
+
+
+def _is_repo_private(owner_repo: str, token: str) -> bool:
+    """Check if a GitHub repository is private via the GitHub API.
+
+    Returns True if the repo is private or if a 404 is returned (GitHub returns
+    404 for private repos when the token lacks access).  Any other HTTP or
+    network error is raised so callers can handle it explicitly.
+    """
+    if owner_repo in _repo_privacy_cache:
+        return _repo_privacy_cache[owner_repo]
+    url = f"https://api.github.com/repos/{owner_repo}"
+    headers = {"User-Agent": "sweagent"}
+    if token:
+        headers["Authorization"] = f"token {token}"
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read())
+            private = data.get("private", False)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            _logger.warning("Repo '%s' returned 404 — assuming private", owner_repo)
+            private = True
+        else:
+            raise
+    _repo_privacy_cache[owner_repo] = private
+    return private
+
+
+def _find_and_encode_ssh_key() -> str:
+    """Find an SSH key from ``GITHUB_USER_SSH_KEY`` env var or default paths
+    and return its content as a base64-encoded string.
+
+    Lookup order:
+      1. Path specified by ``GITHUB_USER_SSH_KEY`` environment variable
+      2. ``~/.ssh/id_rsa``
+      3. ``~/.ssh/id_ecdsa``
+      4. ``~/.ssh/id_ecdsa_sk``
+      5. ``~/.ssh/id_ed25519``
+      6. ``~/.ssh/id_ed25519_sk``
+
+    Returns an empty string if no key is found.
+    """
+    import os
+
+    key_path_str = os.environ.get("GITHUB_USER_SSH_KEY")
+    if key_path_str:
+        key_path = Path(key_path_str)
+        if key_path.exists():
+            _logger.info("Using SSH key from GITHUB_USER_SSH_KEY: %s", key_path)
+            return base64.b64encode(key_path.read_bytes()).decode()
+
+    ssh_dir = Path.home() / ".ssh"
+    for key_name in ["id_rsa", "id_ecdsa", "id_ecdsa_sk", "id_ed25519", "id_ed25519_sk"]:
+        key_file = ssh_dir / key_name
+        if key_file.exists():
+            _logger.info("Using SSH key from %s", key_file)
+            return base64.b64encode(key_file.read_bytes()).decode()
+
+    return ""
