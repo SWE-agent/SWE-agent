@@ -4,6 +4,7 @@
 
 # ruff: noqa: UP007 UP006 UP035
 
+import shlex
 import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -138,7 +139,9 @@ def flake8(file_path: str) -> str:
     """Run flake8 on a given file and return the output as a string"""
     if Path(file_path).suffix != ".py":
         return ""
-    cmd = registry.get("LINT_COMMAND", "flake8 --isolated --select=F821,F822,F831,E111,E112,E113,E999,E902 {file_path}")
+    cmd_template = registry.get("LINT_COMMAND", "flake8 --isolated --select=F821,F822,F831,E111,E112,E113,E999,E902 {file_path}")
+    # Use shlex.split to properly handle the command, then replace {file_path} placeholder
+    cmd_list = shlex.split(cmd_template.replace("{file_path}", "{}").format(file_path))
     # don't use capture_output because it's not compatible with python3.6
-    out = subprocess.run(cmd.format(file_path=file_path), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out = subprocess.run(cmd_list, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return out.stdout.decode()
