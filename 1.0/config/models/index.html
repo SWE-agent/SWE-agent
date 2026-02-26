@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
     
     
       
@@ -129,7 +129,7 @@
               </button>
             
             
-📣 Check out <a href="https://mini-swe-agent.com">Mini-SWE-Agent</a>, an AI agent implemented in 100 lines that achieves 65% on SWE-bench verified!
+📣 We now recommend <a href="https://mini-swe-agent.com">mini-swe-agent</a> instead of SWE-agent: Same performance, much more simple &amp; flexible
 
           </div>
           
@@ -2929,6 +2929,81 @@ Every thread (i.e., every parallel running agent that is working on one task ins
                 
 
 
+<div id="maintenance-popup-overlay" style="
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: var(--md-default-bg-color, #fff);
+    color: var(--md-default-fg-color, #333);
+    border-radius: 12px;
+    padding: 2.5rem 2rem 2rem;
+    max-width: 800px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    text-align: center;
+    font-family: var(--md-text-font-family);
+  ">
+    <div style="font-size: 0.92rem; line-height: 1.6; margin: 0 0 1.8rem;">
+      <p style="margin: 0 0 0.4rem;">SWE-agent has been superseded by <strong>mini-swe-agent</strong>.</p>
+      <p style="margin: 0 0 0.4rem;">mini-swe-agent is simpler &amp; more flexible while still being as performant.</p>
+      <p style="margin: 0;">See the <a href="https://mini-swe-agent.com/latest/faq/">FAQ</a> for more details about why you should switch.
+      <br>SWE-agent is now in maintenance-only mode.</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+      <a href="https://mini-swe-agent.com" style="
+        display: inline-block;
+        padding: 0.6rem 1.4rem;
+        border-radius: 6px;
+        background: #0099ff;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.88rem;
+        transition: background 0.2s;
+      " onmouseover="this.style.background='#007acc'" onmouseout="this.style.background='#0099ff'">
+        Check out mini-swe-agent
+      </a>
+      <button onclick="dismissMaintenancePopup()" style="
+        padding: 0.6rem 1.4rem;
+        border-radius: 6px;
+        background: transparent;
+        border: 1px solid var(--md-default-fg-color--lighter, #ccc);
+        color: var(--md-default-fg-color, #333);
+        cursor: pointer;
+        font-size: 0.88rem;
+        transition: background 0.2s;
+      " onmouseover="this.style.background='var(--md-code-bg-color, #eee)'" onmouseout="this.style.background='transparent'">
+        Continue to SWE-agent
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function dismissMaintenancePopup() {
+  document.getElementById('maintenance-popup-overlay').style.display = 'none';
+  sessionStorage.setItem('maintenance-popup-dismissed', '1');
+}
+
+(function() {
+  if (!sessionStorage.getItem('maintenance-popup-dismissed')) {
+    var overlay = document.getElementById('maintenance-popup-overlay');
+    overlay.style.display = 'flex';
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) dismissMaintenancePopup();
+    });
+  }
+})();
+</script>
+
+<!-- Floating Bubbles -->
 <div class="floating-bubbles">
 <div class="floating-bubbles-title">Our projects</div>
   <a href="https://mini-swe-agent.com/" class="bubble" title="Mini-SWE-Agent">
@@ -3046,4 +3121,4 @@ Every thread (i.e., every parallel running agent that is working on one task ins
   
 <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
 document$.subscribe(()=>{ lightbox.reload(); });
-</script></body></html><!-- Floating Bubbles -->
+</script></body></html><!-- Maintenance mode popup -->
