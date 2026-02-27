@@ -10,6 +10,12 @@
 <a href="https://arxiv.org/abs/2405.15793"><img src="https://img.shields.io/badge/arxiv-2405.15793-red?style=for-the-badge&logo=arxiv&logoColor=white&labelColor=black" alt="arxiv 2405.15793"></a>
 </p>
 
+<p align="center">
+  <a href="https://mini-swe-agent.com/latest/">
+    <img src="assets/warning.png" alt="mini-swe-agent.com" style="height: 7em" />
+  </a>
+</p>
+
 > [!warning]
 > Most of our current development effort is on [mini-swe-agent](https://github.com/SWE-agent/mini-swe-agent/),
 > which has superseded SWE-agent. It matches the performance performance of SWE-agent, while being
