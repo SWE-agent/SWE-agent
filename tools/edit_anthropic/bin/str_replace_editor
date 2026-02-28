@@ -23,15 +23,16 @@ from registry import registry as REGISTRY
 # (note that python3.6 doesn't have the reconfigure method)
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-TRUNCATED_MESSAGE: str = "<response clipped><NOTE>To save on context only part of this file has been shown to you. You should retry this tool after you have searched inside the file with `grep -n` in order to find the line numbers of what you are looking for.</NOTE>"
-MAX_RESPONSE_LEN: int = 16000
+# Type annotation comments for Python 3.5 compatibility
+TRUNCATED_MESSAGE = "<response clipped><NOTE>To save on context only part of this file has been shown to you. You should retry this tool after you have searched inside the file with `grep -n` in order to find the line numbers of what you are looking for.</NOTE>"  # type: str
+MAX_RESPONSE_LEN = 16000  # type: int
 
 MAX_WINDOW_EXPANSION_VIEW = int(REGISTRY.get("MAX_WINDOW_EXPANSION_VIEW", 0))
 MAX_WINDOW_EXPANSION_EDIT_CONFIRM = int(REGISTRY.get("MAX_WINDOW_EXPANSION_EDIT_CONFIRM", 0))
 USE_FILEMAP = REGISTRY.get("USE_FILEMAP", "false").lower() == "true"
 USE_LINTER = REGISTRY.get("USE_LINTER", "false").lower() == "true"
 Command = str
-SNIPPET_LINES: int = 4
+SNIPPET_LINES = 4  # type: int
 LINT_WARNING_TEMPLATE = """
 
 <NOTE>Your edits have been applied, but the linter has found syntax errors.</NOTE>
@@ -77,7 +78,7 @@ class Flake8Error:
             prefix, _sep, problem = line.partition(": ")
             filename, line_number, col_number = prefix.split(":")
         except (ValueError, IndexError) as e:
-            msg = f"Invalid flake8 error line: {line}"
+            msg = "Invalid flake8 error line: {}".format(line)
             raise ValueError(msg) from e
         return cls(filename, int(line_number), int(col_number), problem)
 
@@ -92,7 +93,8 @@ class Flake8Error:
         )
 
     def __repr__(self):
-        return f"Flake8Error(filename={self.filename}, line_number={self.line_number}, col_number={self.col_number}, problem={self.problem})"
+        return "Flake8Error(filename={}, line_number={}, col_number={}, problem={})".format(
+            self.filename, self.line_number, self.col_number, self.problem)
 
 
 def _update_previous_errors(
@@ -148,12 +150,12 @@ def format_flake8_output(
     Returns:
         The filtered flake8 output as a string
     """
-    # print(f"Replacement window: {replacement_window}")
+    # print("Replacement window: {}".format(replacement_window))
     # print("Replacement n lines:", replacement_n_lines)
     # print("Previous errors string:", previous_errors_string)
     # print("Input string:", input_string)
     errors = [Flake8Error.from_line(line.strip()) for line in input_string.split("\n") if line.strip()]
-    # print(f"New errors before filtering: {errors=}")
+    # print("New errors before filtering: {}".format(errors=))
     lines = []
     if previous_errors_string:
         assert replacement_window is not None
@@ -161,19 +163,19 @@ def format_flake8_output(
         previous_errors = [
             Flake8Error.from_line(line.strip()) for line in previous_errors_string.split("\n") if line.strip()
         ]
-        # print(f"Previous errors before updating: {previous_errors=}")
+        # print("Previous errors before updating: {}".format(previous_errors=))
         previous_errors = _update_previous_errors(previous_errors, replacement_window, replacement_n_lines)
-        # print(f"Previous errors after updating: {previous_errors=}")
+        # print("Previous errors after updating: {}".format(previous_errors=))
         errors = [error for error in errors if error not in previous_errors]
         # Sometimes new errors appear above the replacement window that were 'shadowed' by the previous errors
         # they still clearly aren't caused by the edit.
         errors = [error for error in errors if error.line_number >= replacement_window[0]]
-        # print(f"New errors after filtering: {errors=}")
+        # print("New errors after filtering: {}".format(errors=))
     for error in errors:
         if not show_line_numbers:
-            lines.append(f"- {error.problem}")
+            lines.append("- {}".format(error.problem))
         else:
-            lines.append(f"- line {error.line_number} col {error.col_number}: {error.problem}")
+            lines.append("- line {} col {}: {}".format(error.line_number, error.col_number, error.problem))
     return "\n".join(lines)
 
 
@@ -216,12 +218,12 @@ class Filemap:
         ]
         # Note that tree-sitter line numbers are 0-indexed, but we display 1-indexed.
         elide_lines = {line for start, end in elide_line_ranges for line in range(start, end + 1)}
-        elide_messages = [(start, f"... eliding lines {start+1}-{end+1} ...") for start, end in elide_line_ranges]
+        elide_messages = [(start, "... eliding lines {}-{} ...".format(start+1, end+1)) for start, end in elide_line_ranges]
         out = []
         for i, line in sorted(
             elide_messages + [(i, line) for i, line in enumerate(file_contents.splitlines()) if i not in elide_lines]
         ):
-            out.append(f"{i+1:6d} {line}")
+            out.append("{:6d} {}".format(i+1, line))
         return "\n".join(out)
 
 
@@ -267,7 +269,7 @@ class WindowExpander:
                 return current_line
             iter_lines = range(current_line, -1 + max(current_line - max_added_lines, 1), -1)
         else:
-            msg = f"Invalid direction {direction}"
+            msg = "Invalid direction {}".format(direction)
             raise ValueError(msg)
 
         # 2. Find the best breakpoint in the line range
@@ -301,9 +303,9 @@ class WindowExpander:
                 if score > best_score:
                     best_score = score
                     best_breakpoint = i_line
-            # print(f"Score {score} for line {i_line} ({line})")
+            # print("Score {} for line {} ({})".format(score, i_line, line))
 
-        # print(f"Best score {best_score} for line {best_breakpoint} ({lines[best_breakpoint-1]})")
+        # print("Best score {} for line {} ({})".format(best_score, best_breakpoint, lines[best_breakpoint-1]))
         if direction == 1 and best_breakpoint < current_line or direction == -1 and best_breakpoint > current_line:
             # We don't want to shrink the view port, so we return the current line
             return current_line
@@ -330,7 +332,7 @@ class WindowExpander:
             return start, stop
         new_start = self._find_breakpoints(lines, start, direction=-1, max_added_lines=max_added_lines)
         new_stop = self._find_breakpoints(lines, stop, direction=1, max_added_lines=max_added_lines)
-        # print(f"Expanded window is {new_start} to {new_stop}")
+        # print("Expanded window is {} to {}".format(new_start, new_stop))
         assert new_start <= new_stop, (new_start, new_stop)
         assert new_start <= start, (new_start, start)
         assert start - new_start <= max_added_lines, (start, new_start)
@@ -397,7 +399,7 @@ class EditTool:
         elif command == "undo_edit":
             return self.undo_edit(_path)
         print(
-            f'Unrecognized command {command}. The allowed commands for the {self.name} tool are: "view", "create", "str_replace", "insert", "undo_edit"'
+            'Unrecognized command {}. The allowed commands for the {} tool are: "view", "create", "str_replace", "insert", "undo_edit"'.format(command, self.name)
         )
         sys.exit(5)
 
@@ -409,29 +411,29 @@ class EditTool:
         if not path.is_absolute():
             suggested_path = Path.cwd() / path
             print(
-                f"The path {path} is not an absolute path, it should start with `/`. Maybe you meant {suggested_path}?"
+                "The path {} is not an absolute path, it should start with `/`. Maybe you meant {}?".format(path, suggested_path)
             )
             sys.exit(6)
         # Check if path exists
         if not path.exists() and command != "create":
-            print(f"The path {path} does not exist. Please provide a valid path.")
+            print("The path {} does not exist. Please provide a valid path.".format(path))
             sys.exit(7)
         if path.exists() and command == "create":
-            print(f"File already exists at: {path}. Cannot overwrite files using command `create`.")
+            print("File already exists at: {}. Cannot overwrite files using command `create`.".format(path))
             sys.exit(8)
         # Check if the path points to a directory
         if path.is_dir():
             if command != "view":
-                print(f"The path {path} is a directory and only the `view` command can be used on directories")
+                print("The path {} is a directory and only the `view` command can be used on directories".format(path))
                 sys.exit(9)
 
     def create_file(self, path: Path, file_text: str):
         if not path.parent.exists():
-            print(f"The parent directory {path.parent} does not exist. Please create it first.")
+            print("The parent directory {} does not exist. Please create it first.".format(path.parent))
             sys.exit(21)
         self.write_file(path, file_text)
         self._file_history[path].append(file_text)
-        print(f"File created successfully at: {path}")
+        print("File created successfully at: {}".format(path))
 
     def view(self, path: Path, view_range: Optional[List[int]] = None):
         """Implement the view command"""
@@ -441,7 +443,7 @@ class EditTool:
                 sys.exit(10)
 
             out = subprocess.run(
-                rf"find {path} -maxdepth 2 -not -path '*/\.*'",
+                r"find {} -maxdepth 2 -not -path '*/\.*'".format(path),
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -450,7 +452,7 @@ class EditTool:
             stderr = out.stderr.decode()
 
             if not stderr:
-                stdout = f"Here's the files and directories up to 2 levels deep in {path}, excluding hidden items:\n{stdout}\n"
+                stdout = "Here's the files and directories up to 2 levels deep in {}, excluding hidden items:\n{}\n".format(path, stdout)
                 print(stdout)
             return
 
@@ -464,17 +466,17 @@ class EditTool:
             init_line, final_line = view_range
             if init_line < 1 or init_line > n_lines_file:
                 print(
-                    f"Invalid `view_range`: {view_range}. Its first element `{init_line}` should be within the range of lines of the file: {[1, n_lines_file]}"
+                    "Invalid `view_range`: {}. Its first element `{}` should be within the range of lines of the file: {}".format(view_range, init_line, [1, n_lines_file])
                 )
                 sys.exit(12)
             if final_line > n_lines_file:
                 print(
-                    f"Invalid `view_range`: {view_range}. Its second element `{final_line}` should be smaller than the number of lines in the file: `{n_lines_file}`"
+                    "Invalid `view_range`: {}. Its second element `{}` should be smaller than the number of lines in the file: `{}`".format(view_range, final_line, n_lines_file)
                 )
                 sys.exit(13)
             if final_line != -1 and final_line < init_line:
                 print(
-                    f"Invalid `view_range`: {view_range}. Its second element `{final_line}` should be larger or equal than its first `{init_line}`"
+                    "Invalid `view_range`: {}. Its second element `{}` should be larger or equal than its first `{}`".format(view_range, final_line, init_line)
                 )
                 sys.exit(14)
 
@@ -521,18 +523,18 @@ class EditTool:
         # Check if old_str is unique in the file
         occurrences = file_content.count(old_str)
         if occurrences == 0:
-            print(f"No replacement was performed, old_str `{old_str}` did not appear verbatim in {path}.")
+            print("No replacement was performed, old_str `{}` did not appear verbatim in {}.".format(old_str, path))
             sys.exit(15)
         elif occurrences > 1:
             file_content_lines = file_content.split("\n")
             lines = [idx + 1 for idx, line in enumerate(file_content_lines) if old_str in line]
             print(
-                f"No replacement was performed. Multiple occurrences of old_str `{old_str}` in lines {lines}. Please ensure it is unique"
+                "No replacement was performed. Multiple occurrences of old_str `{}` in lines {}. Please ensure it is unique".format(old_str, lines)
             )
             sys.exit(16)
 
         if new_str == old_str:
-            print(f"No replacement was performed, old_str `{old_str}` is the same as new_str `{new_str}`.")
+            print("No replacement was performed, old_str `{}` is the same as new_str `{}`.".format(old_str, new_str))
             sys.exit(161)
 
         pre_edit_lint = ""
@@ -540,7 +542,7 @@ class EditTool:
             try:
                 pre_edit_lint = flake8(str(path))
             except Exception as e:
-                print(f"Warning: Failed to run pre-edit linter on {path}: {e}")
+                print("Warning: Failed to run pre-edit linter on {}: {}".format(path, e))
 
         # Replace old_str with new_str
         new_file_content = file_content.replace(old_str, new_str)
@@ -553,7 +555,7 @@ class EditTool:
             try:
                 post_edit_lint = flake8(str(path))
             except Exception as e:
-                print(f"Warning: Failed to run post-edit linter on {path}: {e}")
+                print("Warning: Failed to run post-edit linter on {}: {}".format(path, e))
 
         epilogue = ""
         if post_edit_lint:
@@ -584,8 +586,8 @@ class EditTool:
         snippet = "\n".join(new_file_content.split("\n")[start_line - 1 : end_line])
 
         # Prepare the success message
-        success_msg = f"The file {path} has been edited. "
-        success_msg += self._make_output(snippet, f"a snippet of {path}", start_line)
+        success_msg = "The file {} has been edited. ".format(path)
+        success_msg += self._make_output(snippet, "a snippet of {}".format(path), start_line)
         success_msg += "Review the changes and make sure they are as expected. Edit the file again if necessary."
         success_msg += epilogue
 
@@ -600,7 +602,7 @@ class EditTool:
 
         if insert_line < 0 or insert_line > n_lines_file:
             print(
-                f"Invalid `insert_line` parameter: {insert_line}. It should be within the range of lines of the file: {[0, n_lines_file]}"
+                "Invalid `insert_line` parameter: {}. It should be within the range of lines of the file: {}".format(insert_line, [0, n_lines_file])
             )
             sys.exit(17)
 
@@ -620,7 +622,7 @@ class EditTool:
 
         # todo: Also expand these windows
 
-        success_msg = f"The file {path} has been edited. "
+        success_msg = "The file {} has been edited. ".format(path)
         success_msg += self._make_output(
             snippet,
             "a snippet of the edited file",
@@ -632,13 +634,13 @@ class EditTool:
     def undo_edit(self, path: Path):
         """Implement the undo_edit command."""
         if not self._file_history[path]:
-            print(f"No edit history found for {path}.")
+            print("No edit history found for {}.".format(path))
             sys.exit(18)
 
         old_text = self._file_history[path].pop()
         self.write_file(path, old_text)
 
-        print(f"Last edit to {path} undone successfully. {self._make_output(old_text, str(path))}")
+        print("Last edit to {} undone successfully. {}".format(path, self._make_output(old_text, str(path))))
 
     def read_file(self, path: Path):
         """Read the content of a file from a given path; raise a ToolError if an error occurs."""
@@ -657,7 +659,7 @@ class EditTool:
             else:
                 break
         else:
-            print(f"Ran into UnicodeDecodeError {exception} while trying to read {path}")
+            print("Ran into UnicodeDecodeError {} while trying to read {}".format(exception, path))
             sys.exit(19)
         return text
 
@@ -666,7 +668,7 @@ class EditTool:
         try:
             path.write_text(file, encoding=self._encoding or "utf-8")
         except Exception as e:
-            print(f"Ran into {e} while trying to write to {path}")
+            print("Ran into {} while trying to write to {}".format(e, path))
             sys.exit(20)
 
     def _make_output(
@@ -680,8 +682,8 @@ class EditTool:
         file_content = maybe_truncate(file_content)
         if expand_tabs:
             file_content = file_content.expandtabs()
-        file_content = "\n".join([f"{i + init_line:6}\t{line}" for i, line in enumerate(file_content.split("\n"))])
-        return f"Here's the result of running `cat -n` on {file_descriptor}:\n" + file_content + "\n"
+        file_content = "\n".join(["{:6}\t{}".format(i + init_line, line) for i, line in enumerate(file_content.split("\n"))])
+        return "Here's the result of running `cat -n` on {}:\n".format(file_descriptor) + file_content + "\n"
 
 
 def main():
