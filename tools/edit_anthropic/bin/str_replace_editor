@@ -155,7 +155,7 @@ def format_flake8_output(
     # print("Previous errors string:", previous_errors_string)
     # print("Input string:", input_string)
     errors = [Flake8Error.from_line(line.strip()) for line in input_string.split("\n") if line.strip()]
-    # print("New errors before filtering: {}".format(errors=))
+    # print("New errors before filtering: errors={}".format(errors))
     lines = []
     if previous_errors_string:
         assert replacement_window is not None
@@ -163,14 +163,14 @@ def format_flake8_output(
         previous_errors = [
             Flake8Error.from_line(line.strip()) for line in previous_errors_string.split("\n") if line.strip()
         ]
-        # print("Previous errors before updating: {}".format(previous_errors=))
+        # print("Previous errors before updating: previous_errors={}".format(previous_errors))
         previous_errors = _update_previous_errors(previous_errors, replacement_window, replacement_n_lines)
-        # print("Previous errors after updating: {}".format(previous_errors=))
+        # print("Previous errors after updating: previous_errors={}".format(previous_errors))
         errors = [error for error in errors if error not in previous_errors]
         # Sometimes new errors appear above the replacement window that were 'shadowed' by the previous errors
         # they still clearly aren't caused by the edit.
         errors = [error for error in errors if error.line_number >= replacement_window[0]]
-        # print("New errors after filtering: {}".format(errors=))
+        # print("New errors after filtering: errors={}".format(errors))
     for error in errors:
         if not show_line_numbers:
             lines.append("- {}".format(error.problem))
