@@ -773,12 +773,11 @@ class LiteLLMModel(AbstractModel):
                 # Ensure reasoning_content is preserved for DeepSeek interleaved thinking
                 if hasattr(raw, "reasoning_content"):
                     output_dict["reasoning_content"] = raw.reasoning_content
-            output_tokens += litellm.utils.token_counter(
-                text=output,
-                model=self.custom_tokenizer["identifier"] if self.custom_tokenizer is not None else self.config.name,
-                custom_tokenizer=self.custom_tokenizer,
-            )
-            if self.tools.use_function_calling:
+        output_tokens += litellm.utils.token_counter(
+                =output,
+            model=self.custom_tokenizer["identifier"] if self.custom_tokenizer is not None else self.config.name,
+                om_tokenizer=self.custom_tokenizer,
+                      if self.tools.use_function_calling:
                 if response.choices[i].message.tool_calls:  # type: ignore
                     tool_calls = [call.to_dict() for call in response.choices[i].message.tool_calls]  # type: ignore
                 else:
