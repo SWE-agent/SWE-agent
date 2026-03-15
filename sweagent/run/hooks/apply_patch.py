@@ -1,4 +1,5 @@
 import subprocess
+import threading
 from pathlib import Path
 
 import rich
@@ -21,27 +22,30 @@ class SaveApplyPatchHook(RunHook):
         self.logger = get_logger("swea-save_apply_patch", emoji="⚡️")
         self._apply_patch_locally = apply_patch_locally
         self._show_success_message = show_success_message
+        # Thread-local storage so that concurrent workers in run-batch do not
+        # overwrite each other's per-instance state (_env, _problem_statement).
+        self._local = threading.local()
 
     def on_init(self, *, run):
         self._output_dir = Path(run.output_dir)
 
     def on_instance_start(self, *, index: int, env: SWEEnv, problem_statement: ProblemStatementConfig):
-        self._env = env
-        self._problem_statement = problem_statement
+        self._local.env = env
+        self._local.problem_statement = problem_statement
 
     def on_instance_completed(self, *, result: AgentRunResult):
-        instance_id = self._problem_statement.id
+        instance_id = self._local.problem_statement.id
         patch_path = self._save_patch(instance_id, result.info)
         if patch_path:
             if not self._apply_patch_locally:
                 return
             if not _is_promising_patch(result.info):
                 return
-            if self._env.repo is None:
+            if self._local.env.repo is None:
                 return
-            if not isinstance(self._env.repo, LocalRepoConfig):
+            if not isinstance(self._local.env.repo, LocalRepoConfig):
                 return
-            local_dir = Path(self._env.repo.path)
+            local_dir = Path(self._local.env.repo.path)
             self._apply_patch(patch_path, local_dir)
 
     @staticmethod
