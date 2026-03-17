@@ -24,7 +24,6 @@ from sweagent.tools.parsing import Identity
 from sweagent.tools.tools import ToolConfig
 from sweagent.types import History
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -205,9 +204,7 @@ class TestMiniMaxModelCreation:
         mock_response = _make_mock_response("MiniMax test response")
 
         with patch("litellm.completion", return_value=mock_response):
-            result = model.query(
-                History([{"role": "user", "content": "Hello"}])
-            )
+            result = model.query(History([{"role": "user", "content": "Hello"}]))
         assert result["message"] == "MiniMax test response"
 
     def test_model_passes_correct_api_base(self):
@@ -280,9 +277,7 @@ class TestMiniMaxIntegration:
             litellm_model_registry=MINIMAX_REGISTRY_PATH,
         )
         model = get_model(config, _make_tool_config())
-        result = model.query(
-            History([{"role": "user", "content": "Say 'hello' and nothing else."}])
-        )
+        result = model.query(History([{"role": "user", "content": "Say 'hello' and nothing else."}]))
         assert "message" in result
         assert len(result["message"]) > 0
 
@@ -299,9 +294,7 @@ class TestMiniMaxIntegration:
             litellm_model_registry=MINIMAX_REGISTRY_PATH,
         )
         model = get_model(config, _make_tool_config())
-        result = model.query(
-            History([{"role": "user", "content": "What is 2 + 2? Answer with just the number."}])
-        )
+        result = model.query(History([{"role": "user", "content": "What is 2 + 2? Answer with just the number."}]))
         assert "message" in result
         assert "4" in result["message"]
 
@@ -319,10 +312,12 @@ class TestMiniMaxIntegration:
         )
         model = get_model(config, _make_tool_config())
         result = model.query(
-            History([
-                {"role": "system", "content": "You are a helpful assistant. Answer concisely."},
-                {"role": "user", "content": "What is the capital of France?"},
-            ])
+            History(
+                [
+                    {"role": "system", "content": "You are a helpful assistant. Answer concisely."},
+                    {"role": "user", "content": "What is the capital of France?"},
+                ]
+            )
         )
         assert "message" in result
         assert "Paris" in result["message"]
