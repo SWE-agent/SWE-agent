@@ -69,6 +69,51 @@ agent:
       reasoning_effort: 'high'
 ```
 
+### MiniMax
+
+[MiniMax](https://platform.minimax.io) offers high-performance models with OpenAI-compatible API endpoints.
+We provide a ready-to-use config at `config/minimax.yaml`.
+
+Available models:
+
+| Model | Description |
+| ----- | ----------- |
+| `openai/MiniMax-M2.5` | Default model. Peak performance with 204K context window. |
+| `openai/MiniMax-M2.5-highspeed` | Same performance, faster and more agile. |
+
+To use MiniMax, set your `MINIMAX_API_KEY` and specify the API base:
+
+```yaml
+agent:
+  model:
+    name: openai/MiniMax-M2.5
+    api_base: https://api.minimax.io/v1
+    api_key: $MINIMAX_API_KEY
+    temperature: 1.0  # (1)!
+    top_p: null
+    per_instance_cost_limit: 3.0
+    litellm_model_registry: config/minimax_model_registry.json  # (2)!
+  history_processors: []  # (3)!
+```
+
+1. MiniMax requires temperature in the range `(0.0, 1.0]`. A value of `0` is not supported. Use `1.0` as the default.
+2. Custom model registry for accurate cost tracking. See `config/minimax_model_registry.json`.
+3. Remove `cache_control` history processor as it is specific to Anthropic Claude.
+
+Or simply use the pre-built config:
+
+```bash
+sweagent run --config config/minimax.yaml ...
+```
+
+For users in mainland China, use the domestic API endpoint instead:
+
+```yaml
+agent:
+  model:
+    api_base: https://api.minimaxi.com/v1
+```
+
 ### o1
 
 Make sure to set

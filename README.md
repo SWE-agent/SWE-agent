@@ -24,7 +24,7 @@
 > Our general recommendation is to use mini-SWE-agent instead of SWE-agent going forward.
 
 
-SWE-agent enables your language model of choice (e.g. GPT-4o or Claude Sonnet 4) to autonomously use tools to
+SWE-agent enables your language model of choice (e.g. GPT-4o, Claude Sonnet 4, or [MiniMax-M2.5](https://platform.minimax.io)) to autonomously use tools to
 [fix issues in real GitHub repositories](https://swe-agent.com/latest/usage/hello_world),
 [find cybersecurity vulnerabilities](https://enigma-agent.com/), or
 [perform any custom task](https://swe-agent.com/latest/usage/coding_challenges).

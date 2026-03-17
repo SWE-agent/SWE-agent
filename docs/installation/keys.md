@@ -24,9 +24,10 @@ Here's an example
 # OPENAI_API_KEY='OpenAI API Key Here if using OpenAI Model'
 # ANTHROPIC_API_KEY='Anthropic API Key Here if using Anthropic Model'
 # TOGETHER_API_KEY='Together API Key Here if using Together Model'
+# MINIMAX_API_KEY='MiniMax API Key Here if using MiniMax Model'
 ```
 
-See the following links for tutorials on obtaining [Anthropic](https://docs.anthropic.com/en/api/getting-started), [OpenAI](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key), and [Github](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) tokens.
+See the following links for tutorials on obtaining [Anthropic](https://docs.anthropic.com/en/api/getting-started), [OpenAI](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key), [MiniMax](https://platform.minimax.io), and [Github](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) tokens.
 
 !!! tip "Advanced settings"
 
@@ -47,6 +48,8 @@ Here are a few options for `--agent.model.name`:
 | `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` | Our recommended model |
 | `gpt-4o` | `OPENAI_API_KEY` | |
 | `o1-preview` | `OPENAI_API_KEY` | You might need to set temperature and sampling to the supported values. |
+| `openai/MiniMax-M2.5` | `MINIMAX_API_KEY` | Requires `api_base: https://api.minimax.io/v1`. Use `config/minimax.yaml` for a ready-to-use setup. |
+| `openai/MiniMax-M2.5-highspeed` | `MINIMAX_API_KEY` | Faster variant. Same setup as MiniMax-M2.5. |
 
 !!! warning "Function calling and more: Setting the correct parser"
 

@@ -1,0 +1,22 @@
+{
+  "openai/MiniMax-M2.5": {
+    "max_tokens": 192000,
+    "max_input_tokens": 204800,
+    "max_output_tokens": 192000,
+    "input_cost_per_token": 0.0000003,
+    "output_cost_per_token": 0.0000012,
+    "cache_read_input_token_cost": 0.00000003,
+    "litellm_provider": "openai",
+    "mode": "chat"
+  },
+  "openai/MiniMax-M2.5-highspeed": {
+    "max_tokens": 192000,
+    "max_input_tokens": 204800,
+    "max_output_tokens": 192000,
+    "input_cost_per_token": 0.0000006,
+    "output_cost_per_token": 0.0000024,
+    "cache_read_input_token_cost": 0.00000003,
+    "litellm_provider": "openai",
+    "mode": "chat"
+  }
+}
