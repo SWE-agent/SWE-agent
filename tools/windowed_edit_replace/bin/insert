@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-from typing import Union
 
-from windowed_file import FileNotOpened, WindowedFile  # type: ignore
 from flake8_utils import flake8, format_flake8_output  # type: ignore
+from windowed_file import FileNotOpened, WindowedFile  # type: ignore
 
 RETRY_WITH_OUTPUT_TOKEN = "###SWE-AGENT-RETRY-WITH-OUTPUT###"
 
@@ -37,7 +36,7 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(text: str, line: Union[int, None] = None):
+def main(text: str, line: int | None = None):
     try:
         wf = WindowedFile(exit_on_exception=False)
     except FileNotOpened:

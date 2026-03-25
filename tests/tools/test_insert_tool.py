@@ -41,7 +41,7 @@ class InsertToolTest(unittest.TestCase):
                     with redirect_stdout(StringIO()):
                         insert_tool.main("inserted", 5)
 
-            self.assertEqual(target_file.read_text(), "1\n2\n3\n4\n5\ninserted\n6")
+            assert target_file.read_text() == "1\n2\n3\n4\n5\ninserted\n6"
 
 
 if __name__ == "__main__":
