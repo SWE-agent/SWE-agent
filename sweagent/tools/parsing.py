@@ -400,7 +400,9 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
         if not command:
             msg = f"Command '{name}' not found in list of available commands."
             raise FunctionCallingFormatError(msg, "invalid_command")
-        if not isinstance(tool_call["function"]["arguments"], dict):
+        if isinstance(tool_call["function"]["arguments"], dict):
+            values = tool_call["function"]["arguments"]
+        else:
             try:
                 values = json.loads(tool_call["function"]["arguments"])
             except json.JSONDecodeError:
@@ -420,13 +422,17 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             msg = f"Unexpected argument(s): {', '.join(extra_args)}"
             raise FunctionCallingFormatError(msg, "unexpected_arg")
 
-        def get_quoted_arg(value: Any) -> str:
+        def get_quoted_arg(value: Any) -> str | list:
             if isinstance(value, str):
                 return quote(value) if _should_quote(value, command) else value
             # See https://github.com/SWE-agent/SWE-agent/issues/1159
             if value is None:
                 return ""
-            return value
+            # Return lists/tuples as-is so Jinja2 filters like `join` work correctly.
+            # See https://github.com/SWE-agent/SWE-agent/issues/1182
+            if isinstance(value, (list, tuple)):
+                return value
+            return str(value)
 
         formatted_args = {
             arg.name: Template(arg.argument_format).render(value=get_quoted_arg(values[arg.name]))

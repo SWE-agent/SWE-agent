@@ -125,6 +125,64 @@ def test_function_calling_parser():
         parser(invalid_json, [command])
 
 
+def test_function_calling_parser_list_args():
+    """Test that list arguments (e.g., view_range) are handled correctly.
+
+    Regression test for https://github.com/SWE-agent/SWE-agent/issues/1182
+    """
+    from sweagent.tools.commands import Argument
+
+    parser = FunctionCallingParser()
+    command = Command(
+        name="str_replace_editor",
+        docstring="editor tool",
+        signature="str_replace_editor <command> <path> [<view_range>]",
+        arguments=[
+            Argument(name="command", type="string", description="command", required=True),
+            Argument(name="path", type="string", description="path", required=True),
+            Argument(
+                name="view_range",
+                type="array",
+                description="line range",
+                required=False,
+                argument_format="--view_range {{value|join(' ')}}",
+            ),
+        ],
+    )
+
+    # Test with view_range as a list (from JSON string arguments)
+    model_response = {
+        "message": "Let's view the file",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": '{"command": "view", "path": "/testbed/test.py", "view_range": [1, 50]}',
+                }
+            }
+        ],
+    }
+    thought, action = parser(model_response, [command])
+    assert "--view_range 1 50" in action
+    # Make sure the list wasn't stringified (which would produce "[ 1 ,   5 0 ]")
+    assert "[ 1" not in action
+
+    # Test with arguments already parsed as a dict (some providers do this)
+    model_response_dict = {
+        "message": "Let's view the file",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": {"command": "view", "path": "/testbed/test.py", "view_range": [1, 50]},
+                }
+            }
+        ],
+    }
+    thought, action = parser(model_response_dict, [command])
+    assert "--view_range 1 50" in action
+
+
 def test_function_calling_parser_error_message():
     template = Template(FunctionCallingParser().error_message)
     exc1 = FunctionCallingFormatError("test", "missing")
