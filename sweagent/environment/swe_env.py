@@ -216,7 +216,7 @@ class SWEEnv:
             output: output from container
         """
         self.logger.log(logging.TRACE, "Input:\n%s", input)  # type: ignore
-        rex_check = "silent" if check else "ignore"
+        rex_check = "silent" if check != "ignore" else "ignore"
         r = asyncio.run(
             self.deployment.runtime.run_in_session(BashAction(command=input, timeout=timeout, check=rex_check))
         )
