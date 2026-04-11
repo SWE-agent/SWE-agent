@@ -160,6 +160,7 @@ class RunBatch:
                 times the number of workers at the start of each instance. This is to avoid any
                 potential race conditions.
         """
+        self.agent_config = agent_config
         if self._model_id in ["human", "human_thought"] and num_workers > 1:
             msg = "Cannot run with human model in parallel"
             raise ValueError(msg)
@@ -171,7 +172,6 @@ class RunBatch:
             filter=lambda name: "swea-run" in name or "config" in name,
         )
         self.instances = instances
-        self.agent_config = agent_config
         self.output_dir = output_dir
         self._raise_exceptions = raise_exceptions
         self._chooks = CombinedRunHooks()
@@ -188,7 +188,7 @@ class RunBatch:
     @property
     def _model_id(self) -> str:
         try:
-            return self.agent_config.model.id  # type: ignore[attr-defined]
+            return self.agent_config.model.name  # type: ignore[attr-defined]
         except AttributeError:
             return "unknown"
 
