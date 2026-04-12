@@ -149,7 +149,7 @@ class RunSingle:
         self.agent = agent
         self.output_dir = output_dir
         self._hooks = []
-        if actions is not None:
+        if actions is None:
             actions = RunSingleActionConfig()
         self.actions = actions
         self._chooks = CombinedRunHooks()
