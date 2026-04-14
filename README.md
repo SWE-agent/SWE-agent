@@ -18,7 +18,7 @@
 
 > [!warning]
 > Most of our current development effort is on [mini-swe-agent](https://github.com/SWE-agent/mini-swe-agent/),
-> which has superseded SWE-agent. It matches the performance performance of SWE-agent, while being
+> which has superseded SWE-agent. It matches the performance of SWE-agent, while being
 > much simpler.
 > See the [FAQ](https://mini-swe-agent.com/latest/faq/) for more details about the differences.
 > Our general recommendation is to use mini-SWE-agent instead of SWE-agent going forward.
