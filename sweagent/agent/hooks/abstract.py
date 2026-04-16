@@ -46,6 +46,7 @@ class AbstractAgentHook:
         action: str = "",
         tool_calls: list[dict[str, str]] | None = None,
         tool_call_ids: list[str] | None = None,
+        thinking_blocks: list[dict[str, str]] | None = None,
     ): ...
 
     def on_setup_done(self): ...
@@ -129,6 +130,7 @@ class CombinedAgentHook(AbstractAgentHook):
                 action=action,
                 tool_calls=tool_calls,
                 tool_call_ids=tool_call_ids,
+                thinking_blocks=thinking_blocks,
             )
 
     def on_setup_done(self):
