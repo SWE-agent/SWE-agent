@@ -356,6 +356,7 @@ class Chooser:
                 self.logger.error("Preselector must have failed, ignoring it.")
         messages = self.build_messages(problem_statement, [input[i] for i in selected_indices])
         chosen_idx = None
+        response = ""
         try:
             response = self.model.query(messages)["message"]  # type: ignore
             chosen_idx = self.interpret(response)
