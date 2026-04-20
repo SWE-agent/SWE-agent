@@ -25,7 +25,7 @@ def merge_predictions(directories: list[Path], output: Path | None = None) -> No
         logger.debug("Found %d predictions in %s", len(new), directory)
     logger.info("Found %d predictions", len(preds))
     if not preds:
-        logger.warning("No predictions found in %s", directory)
+        logger.warning("No predictions found in %s", directories)
         return
     if output is None:
         output = directories[0] / "preds.json"
