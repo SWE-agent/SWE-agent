@@ -88,9 +88,9 @@ class PatchFormatter:
             else:
                 out.append("\n".join(these_lines))
             last_stop = stop
-        if last_stop < len(lines):
+        if last_stop <= len(lines):
             # Stop is not inclusive
-            omitted = len(lines) - last_stop
+            omitted = len(lines) - last_stop + 1
             assert omitted > 0
             out.append(f"[{omitted} lines below omitted]")
         return "\n".join(out)
