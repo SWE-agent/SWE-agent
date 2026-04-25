@@ -104,3 +104,75 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+def _make_reasoning_mock_response(
+    content: str = "final answer",
+    reasoning_content: str | None = None,
+    has_reasoning_attr: bool = True,
+) -> MagicMock:
+    """Mock response with controlled reasoning_content / thinking_blocks attribute presence."""
+    choice = MagicMock()
+    choice.message.content = content
+    choice.message.tool_calls = None
+    # MagicMock auto-creates attributes on access; explicitly drop the ones we want absent
+    # so the production hasattr() checks in _single_query exercise both branches.
+    del choice.message.thinking_blocks
+    if has_reasoning_attr:
+        choice.message.reasoning_content = reasoning_content
+    else:
+        del choice.message.reasoning_content
+    response = MagicMock()
+    response.choices = [choice]
+    response.usage.prompt_tokens = 10
+    response.usage.completion_tokens = 5
+    return response
+
+
+def _make_reasoning_model():
+    return get_model(
+        GenericAPIModelConfig(
+            name="deepseek/deepseek-reasoner",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+
+
+def test_reasoning_content_captured():
+    """reasoning_content from DeepSeek-style responses is preserved in the output dict."""
+    model = _make_reasoning_model()
+    mock_response = _make_reasoning_mock_response(
+        content="42",
+        reasoning_content="The user asked about the meaning of life. I considered several angles.",
+    )
+    with patch("litellm.completion", return_value=mock_response):
+        result = model.query(History([{"role": "user", "content": "What is the meaning of life?"}]))
+        assert isinstance(result, dict)
+        assert result["message"] == "42"
+        assert result["reasoning_content"] == "The user asked about the meaning of life. I considered several angles."
+
+
+def test_reasoning_content_absent_when_attribute_missing():
+    """Models that do not expose reasoning_content (e.g. GPT-4o) leave the key out of the output."""
+    model = _make_reasoning_model()
+    mock_response = _make_reasoning_mock_response(content="hello", has_reasoning_attr=False)
+    with patch("litellm.completion", return_value=mock_response):
+        result = model.query(History([{"role": "user", "content": "hi"}]))
+        assert isinstance(result, dict)
+        assert result["message"] == "hello"
+        assert "reasoning_content" not in result
+
+
+def test_reasoning_content_absent_when_empty():
+    """An empty/None reasoning_content is not propagated, mirroring the thinking_blocks guard."""
+    model = _make_reasoning_model()
+    mock_response = _make_reasoning_mock_response(content="hello", reasoning_content=None)
+    with patch("litellm.completion", return_value=mock_response):
+        result = model.query(History([{"role": "user", "content": "hi"}]))
+        assert isinstance(result, dict)
+        assert result["message"] == "hello"
+        assert "reasoning_content" not in result

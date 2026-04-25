@@ -776,6 +776,14 @@ class LiteLLMModel(AbstractModel):
                 and response.choices[i].message.thinking_blocks  # type: ignore
             ):
                 output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
+            # DeepSeek-style reasoning models expose chain-of-thought via reasoning_content.
+            # Capture it so it is preserved in the trajectory and history. We do not echo it
+            # back to the model: the DeepSeek API rejects reasoning_content sent as input.
+            if (
+                hasattr(response.choices[i].message, "reasoning_content")  # type: ignore
+                and response.choices[i].message.reasoning_content  # type: ignore
+            ):
+                output_dict["reasoning_content"] = response.choices[i].message.reasoning_content  # type: ignore
             outputs.append(output_dict)
         self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
         return outputs
