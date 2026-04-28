@@ -161,6 +161,13 @@ class DefaultAgentConfig(BaseModel):
     """
     action_sampler: ActionSamplerConfig | None = None
 
+    confirm_actions: bool = False
+    """Whether to prompt for human confirmation before executing each action.
+    Enabling this mitigates the risk of arbitrary shell execution from
+    model-controlled or prompt-injected commands. Defaults to False for
+    backward compatibility with automated benchmarking workflows.
+    """
+
     type: Literal["default"] = "default"
 
     # pydantic config
@@ -177,6 +184,13 @@ class ShellAgentConfig(BaseModel):
     max_requeries: int = 3
     """Maximum number of times to requery the model after an error, such as a
     formatting error, a blocked action, or a bash syntax error.
+    """
+
+    confirm_actions: bool = False
+    """Whether to prompt for human confirmation before executing each action.
+    Enabling this mitigates the risk of arbitrary shell execution from
+    model-controlled or prompt-injected commands. Defaults to False for
+    backward compatibility with automated benchmarking workflows.
     """
 
     type: Literal["shell"] = "shell"
@@ -453,6 +467,7 @@ class DefaultAgent(AbstractAgent):
         _catch_errors: bool = True,
         _always_require_zero_exit_code: bool = False,
         action_sampler_config: ActionSamplerConfig | None = None,
+        confirm_actions: bool = False,
     ):
         """The agent handles the behaviour of the model and how it interacts with the environment.
 
@@ -460,6 +475,7 @@ class DefaultAgent(AbstractAgent):
         """
         self._catch_errors = _catch_errors
         self._always_require_zero_exit_code = _always_require_zero_exit_code
+        self._confirm_actions = confirm_actions
         self.name = name
         self.model = model
         self.templates = templates
@@ -471,6 +487,13 @@ class DefaultAgent(AbstractAgent):
         self.history_processors = history_processors
         self.max_requeries = max_requeries
         self.logger = get_logger("swea-agent", emoji="🤠")
+        if not self._confirm_actions:
+            self.logger.warning(
+                "Agent is running with confirm_actions=False. "
+                "Model-generated commands will execute without human confirmation. "
+                "Set confirm_actions=True to enable an interactive approval gate "
+                "before each action is executed."
+            )
         # Set in run method
         self._env: SWEEnv | None = None
         self._problem_statement: ProblemStatement | ProblemStatementConfig | None = None
@@ -511,6 +534,7 @@ class DefaultAgent(AbstractAgent):
             model=model,
             max_requeries=config.max_requeries,
             action_sampler_config=config.action_sampler,
+            confirm_actions=config.confirm_actions,
         )
 
     def add_hook(self, hook: AbstractAgentHook) -> None:
@@ -956,6 +980,16 @@ class DefaultAgent(AbstractAgent):
             return step
 
         assert self._env is not None
+        if self._confirm_actions:
+            print(f"\n[CONFIRM] Action: {step.action.strip()}")
+            try:
+                confirmed = input("Execute? [Y/n]: ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                confirmed = "n"
+            if confirmed and confirmed not in ("y", "yes"):
+                step.observation = "Action cancelled by user."
+                step.state = self.tools.get_state(env=self._env)
+                return step
         self._chook.on_action_started(step=step)
         execution_t0 = time.perf_counter()
         run_action: str = self.tools.guard_multiline_input(step.action).strip()
