@@ -221,4 +221,3 @@ BASH_COMMAND = Command(
         )
     ],
 )
-
