@@ -4,7 +4,7 @@ import pytest
 from swerex.deployment.config import DockerDeploymentConfig
 
 from sweagent.agent.problem_statement import TextProblemStatement
-from sweagent.environment.repo import PreExistingRepoConfig
+from sweagent.environment.repo import GithubRepoConfig, PreExistingRepoConfig
 from sweagent.run.batch_instances import BatchInstance, SimpleBatchInstance, SWEBenchInstances, _slice_spec_to_slice
 
 
@@ -20,6 +20,31 @@ def test_simple_batch_from_swe_bench_to_full_batch_instance(test_data_sources_pa
     assert isinstance(instance.problem_statement, TextProblemStatement)
     assert instance.problem_statement.text == sb_instance["problem_statement"]
     assert instance.problem_statement.id == "pydicom__pydicom-1458"
+
+
+@pytest.mark.parametrize("repo_name", ["go-github", "github", "github-action-build-chain"])
+def test_simple_batch_treats_repo_names_containing_github_as_existing_repos(repo_name):
+    instance = SimpleBatchInstance(
+        image_name="python:3.11",
+        problem_statement="Fix the bug",
+        instance_id="repo-name-with-github",
+        repo_name=repo_name,
+    ).to_full_batch_instance(DockerDeploymentConfig(image="python:3.11"))
+
+    assert isinstance(instance.env.repo, PreExistingRepoConfig)
+    assert instance.env.repo.repo_name == repo_name
+
+
+def test_simple_batch_treats_github_urls_as_github_repos():
+    instance = SimpleBatchInstance(
+        image_name="python:3.11",
+        problem_statement="Fix the bug",
+        instance_id="github-url",
+        repo_name="https://github.com/SWE-agent/test-repo",
+    ).to_full_batch_instance(DockerDeploymentConfig(image="python:3.11"))
+
+    assert isinstance(instance.env.repo, GithubRepoConfig)
+    assert instance.env.repo.github_url == "https://github.com/SWE-agent/test-repo"
 
 
 def test_slice_spec_to_slice():

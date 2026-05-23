@@ -23,7 +23,7 @@ from sweagent.agent.problem_statement import (
 from sweagent.environment.repo import GithubRepoConfig, LocalRepoConfig, PreExistingRepoConfig, SWESmithRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.utils.files import load_file
-from sweagent.utils.github import _is_repo_private
+from sweagent.utils.github import _is_github_repo_url, _is_repo_private
 from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
@@ -98,7 +98,7 @@ class SimpleBatchInstance(BaseModel):
     repo_name: str = ""
     """Specifies the repository to use. If empty, no repository is used.
     If the string does not contain a slash, it is interpreted as an already existing repository at the root
-    of the docker container. If it contains the word "github", it is interpreted as a github repository.
+    of the docker container. If it is a GitHub URL, it is interpreted as a github repository.
     Else, it is interpreted as a local repository.
     """
     base_commit: str = "HEAD"
@@ -130,7 +130,7 @@ class SimpleBatchInstance(BaseModel):
 
         if not self.repo_name:
             repo = None
-        elif "github" in self.repo_name:
+        elif _is_github_repo_url(self.repo_name):
             repo = GithubRepoConfig(github_url=self.repo_name, base_commit=self.base_commit)
         elif "/" not in self.repo_name:
             repo = PreExistingRepoConfig(repo_name=self.repo_name, base_commit=self.base_commit)
