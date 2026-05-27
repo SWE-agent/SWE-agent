@@ -406,6 +406,8 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             except json.JSONDecodeError:
                 msg = "Tool call arguments are not valid JSON."
                 raise FunctionCallingFormatError(msg, "invalid_json")
+        else:
+            values = tool_call["function"]["arguments"]
         required_args = {arg.name for arg in command.arguments if arg.required}
         missing_args = required_args - values.keys()
         if missing_args:
@@ -419,6 +421,16 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
         if extra_args:
             msg = f"Unexpected argument(s): {', '.join(extra_args)}"
             raise FunctionCallingFormatError(msg, "unexpected_arg")
+
+        for arg in command.arguments:
+            if getattr(arg, "type", None) == "array" and arg.name in values:
+                if isinstance(values[arg.name], str):
+                    try:
+                        import ast
+
+                        values[arg.name] = ast.literal_eval(values[arg.name])
+                    except Exception:
+                        pass
 
         def get_quoted_arg(value: Any) -> str:
             if isinstance(value, str):
