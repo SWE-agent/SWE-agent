@@ -427,9 +427,11 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
                 if isinstance(values[arg.name], str):
                     try:
                         import ast
+
                         values[arg.name] = ast.literal_eval(values[arg.name])
                     except Exception:
                         pass
+
         def get_quoted_arg(value: Any) -> str:
             if isinstance(value, str):
                 return quote(value) if _should_quote(value, command) else value
