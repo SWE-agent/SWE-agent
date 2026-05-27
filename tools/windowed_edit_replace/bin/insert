@@ -46,7 +46,7 @@ def main(text: str, line: Union[int, None] = None):
         exit(1)
 
     pre_edit_lint = flake8(wf.path)
-    insert_info = wf.insert(text, line=line - 1 if line is not None else None)
+    insert_info = wf.insert(text, line=line if line is not None else None)
     post_edit_lint = flake8(wf.path)
 
     # Try to filter out pre-existing errors
