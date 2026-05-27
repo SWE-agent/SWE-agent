@@ -300,7 +300,7 @@ class ToolHandler:
                 f"chmod +x /root/tools/{bundle.path.name}/bin/*",
             ]
             if (bundle.path / "install.sh").exists():
-                cmds.append(f"cd /root/tools/{bundle.path.name} && source install.sh")
+                cmds.append(f"cd /root/tools/{bundle.path.name} && . install.sh")
             cmds.append(f"chmod +x /root/tools/{bundle.path.name}/bin/*")
             env.communicate(
                 " && ".join(cmds),
