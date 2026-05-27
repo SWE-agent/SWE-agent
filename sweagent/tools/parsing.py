@@ -423,13 +423,15 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             raise FunctionCallingFormatError(msg, "unexpected_arg")
 
         for arg in command.arguments:
-            if getattr(arg, "type", None) == "array" and arg.name in values:
+            if arg.name in values:
                 if isinstance(values[arg.name], str):
-                    try:
-                        import ast
-                        values[arg.name] = ast.literal_eval(values[arg.name])
-                    except Exception:
-                        pass
+                    val_str = values[arg.name].strip()
+                    if getattr(arg, "type", None) == "array" or val_str.startswith("[") or val_str.startswith("("):
+                        try:
+                            import ast
+                            values[arg.name] = ast.literal_eval(val_str)
+                        except Exception:
+                            pass
         def get_quoted_arg(value: Any) -> str:
             if isinstance(value, str):
                 return quote(value) if _should_quote(value, command) else value
