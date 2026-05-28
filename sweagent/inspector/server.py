@@ -238,9 +238,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps({"directory": self.traj_dir}).encode())
 
     def serve_file_content(self, file_path):
+        safe_path = (Path(self.traj_dir) / file_path).resolve()
+        if not str(safe_path).startswith(str(Path(self.traj_dir).resolve())):
+            self.send_error(403, "Access denied")
+            return
         try:
             content = load_content(
-                Path(self.traj_dir) / file_path,
+                safe_path,
                 self.gold_patches,
                 self.test_patches,
             )

@@ -153,7 +153,7 @@ class SWEEnv:
             # todo: Currently has swe-ft specific change: The original repo.copy isn't called, because the repo is already
             # present. However, reset --hard <BRANCH> also doesn't work. So modified it here to do a checkout instead.
             startup_commands = [
-                f"cd /{self.repo.repo_name}",
+                f"cd /{shlex.quote(self.repo.repo_name)}",
                 "export ROOT=$(pwd -P)",
                 *self.repo.get_reset_commands(),
             ]
