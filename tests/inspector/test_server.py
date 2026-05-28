@@ -2,11 +2,8 @@ from __future__ import annotations
 
 import io
 import json
-import socket
 from pathlib import Path
 from unittest.mock import MagicMock
-
-import pytest
 
 from sweagent.inspector.server import Handler
 
