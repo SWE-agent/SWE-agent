@@ -429,9 +429,11 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
                     if getattr(arg, "type", None) == "array" or val_str.startswith("[") or val_str.startswith("("):
                         try:
                             import ast
+
                             values[arg.name] = ast.literal_eval(val_str)
                         except Exception:
                             pass
+
         def get_quoted_arg(value: Any) -> str:
             if isinstance(value, str):
                 return quote(value) if _should_quote(value, command) else value
