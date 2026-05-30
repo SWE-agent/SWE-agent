@@ -99,6 +99,19 @@ what you want (in particular, it uses function calling and prompt caching)!
 If you're using a [litellm proxy](https://docs.litellm.ai/docs/providers/openai_compatible#usage-with-litellm-proxy-server), make sure to set your `agent.model.name` to `openai/...`
 and set `agent.model.api_key` to the key you've configured for your proxy (or a random value; it cannot be empty).
 
+For a governed OpenAI-compatible endpoint such as Tuning Engines, use the same LiteLLM/OpenAI-compatible path and set `api_base` to the Tuning Engines inference API:
+
+```yaml title="config/your_config.yaml"
+agent:
+  model:
+    name: openai/gpt-5.4-mini
+    api_key: sk-te-...
+    api_base: https://api.tuningengines.com/v1
+    per_instance_call_limit: 100
+```
+
+SWE-agent still owns the repository loop, tools, and parsers. Tuning Engines adds tenant policy, traces, approvals, and usage visibility around the model route.
+
 !!! warning "Model providers"
 
     Make sure that your model name includes a "provider", i.e., follows the form `provider/model_name`. The model name and provider might be arbitrarily chosen
