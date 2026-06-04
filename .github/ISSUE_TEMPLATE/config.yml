@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/SWE-agent/SWE-agent/issues/new
     about: None of the above? Open a blank issue
   - name: Slack server
-    url: https://join.slack.com/t/swe-bench/shared_invite/zt-36pj9bu5s-o3_yXPZbaH2wVnxnss1EkQ
+    url: https://swe-bench.slack.com
     about: Open ended discussions
