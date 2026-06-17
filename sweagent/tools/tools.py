@@ -9,6 +9,7 @@ import asyncio
 import json
 import os
 import re
+import shlex
 from functools import cached_property
 from pathlib import Path
 from typing import Any
@@ -224,6 +225,108 @@ class ToolConfig(BaseModel):
                 break
 
 
+# Shell control operators that separate one command invocation from another in a
+# compound command line. Used to make the blocklist see every individual command,
+# not just the first token of the whole line.
+_COMMAND_SEPARATOR_TOKENS = frozenset({";", "&", "&&", "|", "||", "\n", "(", ")", "{", "}"})
+# Tokens produced by quote-aware tokenization of ``$(...)`` that are not real commands.
+_SUBSTITUTION_NOISE_TOKENS = frozenset({"$", "(", ")"})
+# Inner commands of command substitutions ``$(...)`` and back-ticked ``...``.
+_COMMAND_SUBSTITUTION_RE = re.compile(r"\$\((.*?)\)|`(.*?)`", re.DOTALL)
+# Wrapper programs that run another command passed as their (trailing) argument.
+# e.g. ``env vim``, ``sudo nano`` -- the wrapped command must also be checked.
+_COMMAND_WRAPPERS = frozenset(
+    {"env", "command", "builtin", "exec", "nohup", "sudo", "time", "nice", "stdbuf", "setsid"}
+)
+_ENV_ASSIGNMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+
+
+def _iter_command_invocations(action: str) -> list[str]:
+    """Break a (possibly compound) command line into its individual command invocations.
+
+    Splits on shell control operators (``;`` ``&&`` ``||`` ``|`` ``&`` newlines) and
+    additionally extracts the inner commands of command substitutions (``$(...)`` and
+    back-ticks) so that e.g. ``true; vim``, ``echo x | less`` and ``$(vim)`` each surface
+    the ``vim``/``less`` invocation. Tokenization is quote-aware so operators inside a
+    quoted argument (``echo "a && vim"``) do not spuriously split the line.
+
+    Best-effort, lexical-only: this is used to harden a reliability filter (the
+    interactive-command blocklist), not as a security sandbox.
+    """
+    invocations: list[str] = []
+    # Recurse into command substitutions first; their inner commands are real
+    # invocations that the shell will run.
+    for match in _COMMAND_SUBSTITUTION_RE.finditer(action):
+        inner = match.group(1) if match.group(1) is not None else match.group(2)
+        if inner and inner.strip():
+            invocations.extend(_iter_command_invocations(inner))
+
+    # Quote-aware tokenization: operators become their own tokens, but operators that
+    # appear inside quotes stay part of the argument they belong to.
+    lexer = shlex.shlex(action, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    try:
+        tokens = list(lexer)
+    except ValueError:
+        # Unbalanced quotes etc. -- fall back to the raw, naive operator split so we
+        # still surface the obvious invocations.
+        tokens = None
+    if tokens is None:
+        for segment in re.split(r"\|\||&&|\||;|&|\n", action):
+            segment = segment.strip()
+            if segment:
+                invocations.append(segment)
+        return invocations
+
+    current: list[str] = []
+    for token in tokens:
+        if token in _COMMAND_SEPARATOR_TOKENS:
+            if current:
+                invocations.append(" ".join(current))
+                current = []
+            continue
+        if token in _SUBSTITUTION_NOISE_TOKENS:
+            # Leftover ``$`` / ``(`` / ``)`` from a substitution we already handled above.
+            continue
+        current.append(token)
+    if current:
+        invocations.append(" ".join(current))
+    return invocations
+
+
+def _normalize_invocation(segment: str) -> str:
+    """Return ``segment`` with leading env-var assignments / wrapper programs removed and
+    the executable reduced to its basename.
+
+    e.g. ``/usr/bin/vim file`` -> ``vim file``, ``env FOO=bar vim`` -> ``vim``,
+    ``sudo nano /etc/hosts`` -> ``nano /etc/hosts``. Whitespace-normalized so that
+    prefix checks (``startswith``) and exact checks behave the same as on a plain
+    invocation. Returns the original (stripped) segment if it cannot be tokenized.
+    """
+    try:
+        tokens = shlex.split(segment)
+    except ValueError:
+        # Unbalanced quotes etc. -- fall back to a naive split so we still try to match.
+        tokens = segment.split()
+    index = 0
+    # Skip leading ``VAR=value`` environment assignments.
+    while index < len(tokens) and _ENV_ASSIGNMENT_RE.match(tokens[index]):
+        index += 1
+    # Skip wrapper programs (and their options / inline env assignments) so the wrapped
+    # command becomes the head, e.g. ``env -i FOO=bar vim`` -> ``vim``.
+    while index < len(tokens) and tokens[index] in _COMMAND_WRAPPERS:
+        index += 1
+        while index < len(tokens) and (tokens[index].startswith("-") or _ENV_ASSIGNMENT_RE.match(tokens[index])):
+            index += 1
+    if index >= len(tokens):
+        return segment.strip()
+    # Reduce the executable to its basename so path-qualified forms (``/usr/bin/vim``)
+    # match the same way bare names do.
+    tokens = tokens[index:]
+    tokens[0] = tokens[0].rsplit("/", 1)[-1]
+    return " ".join(tokens)
+
+
 class ToolHandler:
     def __init__(self, tools: ToolConfig):
         """This class handles most of the tool usage. It has the following responsibilities:
@@ -351,17 +454,46 @@ class ToolHandler:
     # --------
 
     def should_block_action(self, action: str) -> bool:
-        """Check if the command should be blocked."""
+        """Check if the command should be blocked.
+
+        The blocklist is a reliability filter that keeps the agent from launching
+        interactive/long-running programs (``vim``, ``less``, ``tail -f``, a bare
+        ``python`` REPL, ...) that would otherwise hang the run loop. To make the
+        decision consistent with what the shell actually executes, every individual
+        command in a compound command line is examined -- not just the first token --
+        and each is checked both as written and in a normalized form (path prefix and
+        ``env``/``sudo``-style wrappers stripped, executable reduced to its basename).
+        This closes lexical bypasses such as ``/usr/bin/vim``, ``env vim`` and
+        ``true; vim`` that the previous first-token-only check missed.
+        """
         action = action.strip()
         if not action:
             return False
-        if any(action.startswith(f) for f in self.config.filter.blocklist):
+        # The whole, original action is still checked first for backward compatibility
+        # with multi-word blocklist entries (e.g. "tail -f", "python -m venv").
+        candidates = [action]
+        for invocation in _iter_command_invocations(action):
+            candidates.append(invocation)
+            normalized = _normalize_invocation(invocation)
+            if normalized and normalized != invocation:
+                candidates.append(normalized)
+        for candidate in candidates:
+            if self._is_blocked_invocation(candidate):
+                return True
+        return False
+
+    def _is_blocked_invocation(self, candidate: str) -> bool:
+        """Apply the configured blocklist rules to a single command string."""
+        candidate = candidate.strip()
+        if not candidate:
+            return False
+        if any(candidate.startswith(f) for f in self.config.filter.blocklist):
             return True
-        if action in self.config.filter.blocklist_standalone:
+        if candidate in self.config.filter.blocklist_standalone:
             return True
-        name = action.split()[0]
+        name = candidate.split()[0]
         if name in self.config.filter.block_unless_regex and not re.search(
-            self.config.filter.block_unless_regex[name], action
+            self.config.filter.block_unless_regex[name], candidate
         ):
             return True
         return False
