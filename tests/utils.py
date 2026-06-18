@@ -18,12 +18,20 @@ def make_python_tool_importable(file_path: str | Path, module_name: str | None =
     if module_name in sys.modules:
         return  # Module already imported
 
+    if not Path(abs_path).exists():
+        msg = f"Could not load module spec for {file_path}"
+        raise ImportError(msg)
+
     loader = importlib.machinery.SourceFileLoader(module_name, abs_path)
     spec = importlib.util.spec_from_file_location(module_name, abs_path, loader=loader)
-    if spec is None or spec.loader is None:
+    if spec is None:
+        msg = f"Could not load module spec for {file_path}"
+        raise ImportError(msg)
+    spec_loader = spec.loader
+    if spec_loader is None:
         msg = f"Could not load module spec for {file_path}"
         raise ImportError(msg)
 
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
-    spec.loader.exec_module(module)
+    spec_loader.exec_module(module)
