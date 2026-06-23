@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 /* ==========================================
    THEMES DEFINITIONS (Apple Dark & Light)
@@ -16,17 +16,19 @@ body.apple-dark {
   --accent: #0a84ff;
   --bg-code: #0c0c0f;
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-  
+
   --badge-bg: rgba(255, 255, 255, 0.05);
   --badge-border: rgba(255, 255, 255, 0.12);
   --badge-text: #f5f5f7;
-  
+
   --glass-bg: rgba(30, 30, 35, 0.4);
   --glass-bg-hover: rgba(45, 45, 55, 0.6);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.20), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-  --glass-shadow-hover: 0 10px 40px rgba(0, 0, 0, 0.40), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  
+  --glass-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  --glass-shadow-hover:
+    0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+
   --status-blue-bg: rgba(10, 132, 255, 0.08);
   --status-blue-txt: #409cff;
   --status-green-bg: rgba(48, 209, 88, 0.08);
@@ -59,11 +61,13 @@ body.apple-light {
   --badge-border: rgba(0, 0, 0, 0.08);
   --badge-text: #1d1d1f;
 
-  --glass-bg: rgba(255, 255, 255, 0.50);
-  --glass-bg-hover: rgba(255, 255, 255, 0.70);
+  --glass-bg: rgba(255, 255, 255, 0.5);
+  --glass-bg-hover: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.8);
-  --glass-shadow-hover: 0 10px 40px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  --glass-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  --glass-shadow-hover:
+    0 10px 40px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
 
   --status-blue-bg: rgba(0, 113, 227, 0.06);
   --status-blue-txt: #0071e3;
@@ -87,7 +91,15 @@ body.apple-light {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
   margin: 0;
   padding: 0;
   background-color: var(--bg-app);
@@ -95,7 +107,9 @@ body {
   height: 100vh;
   overflow: hidden;
   letter-spacing: -0.011em;
-  transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition:
+    background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+    color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .app-container {
@@ -131,7 +145,9 @@ body {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .sidebar-header {
@@ -174,7 +190,9 @@ body {
   color: var(--text-primary);
   font-family: inherit;
   font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 #fileSearch:focus {
@@ -358,7 +376,7 @@ body {
   font-size: 11.5px;
   color: var(--text-muted);
   word-break: break-all;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   line-height: 1.45;
 }
 
@@ -618,7 +636,7 @@ input:checked + .slider:before {
 .step-number {
   font-size: 13.5px;
   color: var(--text-muted);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-weight: 500;
 }
 
@@ -679,7 +697,7 @@ input:checked + .slider:before {
 }
 
 .content-wrapper pre code {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 14.5px;
   line-height: 1.6;
   font-weight: 400;
@@ -718,8 +736,14 @@ input:checked + .slider:before {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Syntax highlight overrides */
@@ -728,15 +752,33 @@ input:checked + .slider:before {
   color: var(--text-primary) !important;
 }
 
-body.apple-dark .hljs-keyword { color: #ff375f !important; font-weight: 600; }
-body.apple-dark .hljs-string { color: #30d158 !important; }
-body.apple-dark .hljs-title { color: #64d2ff !important; }
-body.apple-dark .hljs-comment { color: #86868b !important; }
+body.apple-dark .hljs-keyword {
+  color: #ff375f !important;
+  font-weight: 600;
+}
+body.apple-dark .hljs-string {
+  color: #30d158 !important;
+}
+body.apple-dark .hljs-title {
+  color: #64d2ff !important;
+}
+body.apple-dark .hljs-comment {
+  color: #86868b !important;
+}
 
-body.apple-light .hljs-keyword { color: #d70015 !important; font-weight: 600; }
-body.apple-light .hljs-string { color: #248a3d !important; }
-body.apple-light .hljs-title { color: #0071e3 !important; }
-body.apple-light .hljs-comment { color: #86868b !important; }
+body.apple-light .hljs-keyword {
+  color: #d70015 !important;
+  font-weight: 600;
+}
+body.apple-light .hljs-string {
+  color: #248a3d !important;
+}
+body.apple-light .hljs-title {
+  color: #0071e3 !important;
+}
+body.apple-light .hljs-comment {
+  color: #86868b !important;
+}
 
 /* Image gallery zoom */
 .observation-images {

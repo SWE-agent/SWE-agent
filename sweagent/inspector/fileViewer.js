@@ -15,7 +15,7 @@ function initTheme() {
   document.body.className = savedTheme;
   const toggle = document.getElementById("themeToggle");
   if (toggle) {
-    toggle.checked = (savedTheme === "apple-dark");
+    toggle.checked = savedTheme === "apple-dark";
   }
 }
 
@@ -43,13 +43,14 @@ function fetchFiles() {
         const fileParts = file.split("    "); // Separator from server.py (4 spaces)
         const relativePath = fileParts[0];
         const statusStr = fileParts[1] || "";
-        
+
         const fileElement = document.createElement("li");
-        
+
         // Minimalist status badges (no emojis)
         let statusBadge = "";
         if (statusStr.includes("✅")) {
-          statusBadge = '<span class="list-status status-success">Resolved</span>';
+          statusBadge =
+            '<span class="list-status status-success">Resolved</span>';
         } else if (statusStr.includes("❌")) {
           let stepsText = "";
           const match = statusStr.match(/\((.*?)\)/);
@@ -75,11 +76,11 @@ function fetchFiles() {
             </div>
           </div>
         `;
-        
+
         fileElement.onclick = () => viewFile(relativePath);
         fileList.appendChild(fileElement);
       });
-      
+
       if (currentFileName) {
         highlightSelectedFile();
       }
@@ -89,7 +90,9 @@ function fetchFiles() {
 function highlightSelectedFile() {
   document.querySelectorAll("#fileList li").forEach((li) => {
     li.classList.remove("selected");
-    const titleText = li.querySelector(".list-item-title").getAttribute("title");
+    const titleText = li
+      .querySelector(".list-item-title")
+      .getAttribute("title");
     if (titleText === currentFileName) {
       li.classList.add("selected");
     }
@@ -100,7 +103,10 @@ function filterFiles() {
   const query = document.getElementById("fileSearch").value.toLowerCase();
   const listItems = document.querySelectorAll("#fileList li");
   listItems.forEach((li) => {
-    const text = li.querySelector(".list-item-title").textContent.toLowerCase() + " " + li.querySelector(".list-item-path").textContent.toLowerCase();
+    const text =
+      li.querySelector(".list-item-title").textContent.toLowerCase() +
+      " " +
+      li.querySelector(".list-item-path").textContent.toLowerCase();
     if (text.includes(query)) {
       li.style.display = "";
     } else {
@@ -165,15 +171,34 @@ function viewFile(fileName) {
       if (content.info) {
         const info = content.info;
         const stats = info.model_stats || {};
-        const cost = stats.instance_cost !== undefined ? `$${Number(stats.instance_cost).toFixed(4)}` : 'N/A';
-        const sent = stats.tokens_sent !== undefined ? stats.tokens_sent.toLocaleString() : 'N/A';
-        const received = stats.tokens_received !== undefined ? stats.tokens_received.toLocaleString() : 'N/A';
-        const calls = stats.api_calls !== undefined ? stats.api_calls.toLocaleString() : 'N/A';
-        const status = info.exit_status || 'N/A';
-        
-        let statusClass = 'status-unknown';
-        if (status.includes('submitted') || status.includes('success')) statusClass = 'status-success';
-        else if (status.includes('fail') || status.includes('error') || status.includes('limit') || status.includes('timeout')) statusClass = 'status-danger';
+        const cost =
+          stats.instance_cost !== undefined
+            ? `$${Number(stats.instance_cost).toFixed(4)}`
+            : "N/A";
+        const sent =
+          stats.tokens_sent !== undefined
+            ? stats.tokens_sent.toLocaleString()
+            : "N/A";
+        const received =
+          stats.tokens_received !== undefined
+            ? stats.tokens_received.toLocaleString()
+            : "N/A";
+        const calls =
+          stats.api_calls !== undefined
+            ? stats.api_calls.toLocaleString()
+            : "N/A";
+        const status = info.exit_status || "N/A";
+
+        let statusClass = "status-unknown";
+        if (status.includes("submitted") || status.includes("success"))
+          statusClass = "status-success";
+        else if (
+          status.includes("fail") ||
+          status.includes("error") ||
+          status.includes("limit") ||
+          status.includes("timeout")
+        )
+          statusClass = "status-danger";
 
         const statsHtml = `
           <div class="stats-panel">
@@ -262,7 +287,10 @@ function createTrajectoryItem(item, index) {
         id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       };
       images.push(imageObj);
-      processedText = processedText.replace(fullMatch, `[IMAGE: ${imageObj.altText}]`);
+      processedText = processedText.replace(
+        fullMatch,
+        `[IMAGE: ${imageObj.altText}]`,
+      );
     }
     return { processedText, images };
   };
@@ -291,8 +319,12 @@ function createTrajectoryItem(item, index) {
 
   let badgeText = "Step " + (index + 1);
   let stepClass = "default";
-  
-  if (item.messages && item.messages.length > 0 && item.messages[0].content === "Problem Statement placeholder") {
+
+  if (
+    item.messages &&
+    item.messages.length > 0 &&
+    item.messages[0].content === "Problem Statement placeholder"
+  ) {
     badgeText = "Problem Statement";
     stepClass = "problem";
   } else if (item.action === "Model Submission" || item.action === "submit") {
@@ -312,31 +344,43 @@ function createTrajectoryItem(item, index) {
         <header class="step-header">
             <span class="step-badge">${escapeHtml(badgeText)}</span>
             <span class="step-number">Step ${index + 1}</span>
-            ${item.execution_time ? `<span class="step-time">${Number(item.execution_time).toFixed(2)}s</span>` : ''}
+            ${item.execution_time ? `<span class="step-time">${Number(item.execution_time).toFixed(2)}s</span>` : ""}
         </header>
-        
+
         <div class="step-body">
-            ${item.thought ? `
+            ${
+              item.thought
+                ? `
             <div class="step-section" data-title="Reasoning">
                 <div class="step-thought-text">${escapeHtml(item.thought.trim())}</div>
             </div>
-            ` : ''}
-            
-            ${item.action && item.action !== "Model Submission" ? `
+            `
+                : ""
+            }
+
+            ${
+              item.action && item.action !== "Model Submission"
+                ? `
             <div class="step-section" data-title="Action Command">
                 <div class="content-wrapper">
                     <pre><code class="language-bash">${escapeHtml(item.action.trim())}</code></pre>
                 </div>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
 
-            ${processedObservation ? `
+            ${
+              processedObservation
+                ? `
             <div class="step-section" data-title="Environment Output">
                 <div class="content-wrapper">
                     <pre><code class="language-plaintext">${escapeHtml(processedObservation.trim())}</code></pre>
                 </div>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
 
             ${observationImagesPane}
         </div>
@@ -363,9 +407,11 @@ function initializeImageHandlers() {
         this.classList.remove("expanded");
         overlay.classList.remove("active");
       } else {
-        document.querySelectorAll(".observation-image.expanded").forEach((otherImg) => {
-          otherImg.classList.remove("expanded");
-        });
+        document
+          .querySelectorAll(".observation-image.expanded")
+          .forEach((otherImg) => {
+            otherImg.classList.remove("expanded");
+          });
         this.classList.add("expanded");
         overlay.classList.add("active");
       }
@@ -381,9 +427,11 @@ function initializeImageHandlers() {
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
-      document.querySelectorAll(".observation-image.expanded").forEach((img) => {
-        img.classList.remove("expanded");
-      });
+      document
+        .querySelectorAll(".observation-image.expanded")
+        .forEach((img) => {
+          img.classList.remove("expanded");
+        });
       overlay.classList.remove("active");
     }
   });
