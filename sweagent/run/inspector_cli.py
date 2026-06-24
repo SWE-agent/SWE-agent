@@ -485,7 +485,7 @@ def main(args: list[str] | None = None):
     parser.add_argument("-d", "--data_path", type=Path, help="Path to the data file to load gold patches from")
     parsed_args = parser.parse_args(args)
 
-    app = TrajectoryInspectorApp(parsed_args.trajectory_path)
+    app = TrajectoryInspectorApp(parsed_args.trajectory_path, data_path=parsed_args.data_path)
     app.run()
 
 

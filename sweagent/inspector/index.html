@@ -1,25 +1,80 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Trajectory Viewer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWE-Agent Inspector</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
     <script src="fileViewer.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Trajectory File Viewer</h1>
-        <h3 id="directoryInfo"></h3>
-        <ul id="fileList"></ul>
-        <label style="margin-right: 20px;">
-            <input type="checkbox" id="showDemos" onchange="refreshCurrentFile()"> Show demonstrations
-        </label>
-        <h2>Conversation History</h2>
-        <div id="fileContent" class="trajectory-container">No file selected.</div>
-        <div class="button-container">
-            <button id="refreshButton" onclick="refreshCurrentFile()">Refresh Current File</button>
-        </div>
+    <div class="app-container">
+        <!-- Colonne 1: Explorateur de Trajectoires -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-details">
+                    <h2>SWE-Agent</h2>
+                    <span>Inspector</span>
+                </div>
+            </div>
+
+            <div class="sidebar-search">
+                <input type="text" id="fileSearch" placeholder="Filter trajectories..." oninput="filterFiles()">
+            </div>
+
+            <div class="sidebar-controls">
+                <label class="toggle-control">
+                    <input type="checkbox" id="showDemos" onchange="refreshCurrentFile()">
+                    <span class="control-label">Show demonstrations</span>
+                </label>
+                <label class="toggle-control">
+                    <input type="checkbox" id="autoReload" onchange="toggleAutoReload()">
+                    <span class="control-label">Live Auto-Reload</span>
+                </label>
+            </div>
+
+            <div class="sidebar-title">Trajectories</div>
+            <ul id="fileList"></ul>
+
+            <!-- Barre de configuration en bas de la Sidebar -->
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-row">
+                    <div class="theme-switch-container">
+                        <span class="theme-label">Dark Mode</span>
+                        <label class="theme-switch" title="Toggle Dark Mode">
+                            <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Colonne 2: Flux principal de la Trajectoire -->
+        <main class="main-content">
+            <!-- Bouton Refresh Flottant Liquid Glass -->
+            <button id="refreshButton" class="btn-refresh-floating" onclick="refreshCurrentFile()" title="Refresh trajectory">
+                <svg class="icon-refresh" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+            </button>
+
+            <!-- Flux vertical des étapes -->
+            <section id="fileContent" class="trajectory-container">
+                <div class="empty-state">
+                    <h3>No trajectory selected</h3>
+                    <p>Select a run from the sidebar to view its step-by-step actions and observations.</p>
+                </div>
+            </section>
+        </main>
     </div>
 </body>
 </html>
+
+
+
+
