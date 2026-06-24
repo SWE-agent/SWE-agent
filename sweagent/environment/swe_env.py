@@ -18,7 +18,10 @@ from swerex.runtime.abstract import Command as RexCommand
 
 from sweagent.environment.hooks.abstract import CombinedEnvHooks, EnvHook
 from sweagent.environment.repo import Repo, RepoConfig
+from sweagent.environment.swerex_compat import apply_swerex_compat_patches
 from sweagent.utils.log import get_logger
+
+apply_swerex_compat_patches()
 
 
 class EnvironmentConfig(BaseModel):
