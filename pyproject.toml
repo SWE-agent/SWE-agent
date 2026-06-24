@@ -54,7 +54,7 @@ dependencies = [
     "pydantic",
     "python-dotenv",
     "pydantic_settings",
-    "litellm!=1.82.7,!=1.82.8",
+    "litellm>=1.44.12,!=1.82.7,!=1.82.8",
     "GitPython",
     "ghapi",
     "swe-rex>=1.4.0",
