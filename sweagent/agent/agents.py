@@ -4,6 +4,7 @@ import asyncio
 import copy
 import json
 import logging
+import shlex
 import time
 from pathlib import Path, PurePosixPath
 from typing import Annotated, Any, Literal
@@ -55,6 +56,7 @@ from sweagent.utils.config import _convert_paths_to_abspath, _strip_abspath_from
 from sweagent.utils.jinja_warnings import _warn_probably_wrong_jinja_syntax
 from sweagent.utils.log import get_logger
 from sweagent.utils.patch_formatter import PatchFormatter
+from sweagent.tools.validation import validate_path
 
 
 class TemplateConfig(BaseModel):
@@ -1003,6 +1005,71 @@ class DefaultAgent(AbstractAgent):
 
         return self.handle_submission(step)
 
+    def _validate_step_action(self, step: StepOutput, output: dict) -> None:
+        """Validates file paths in step actions before they are executed to avoid querying/running invalid actions.
+        Raises FormatError if validation fails.
+        """
+        workspace_dir = "/"
+        if self._env is not None and self._env.repo is not None:
+            workspace_dir = f"/{self._env.repo.repo_name}"
+
+        tool_calls = output.get("tool_calls")
+        if tool_calls is not None:
+            for call in tool_calls:
+                func = call.get("function", {})
+                name = func.get("name")
+                if not name:
+                    continue
+                
+                args = func.get("arguments", {})
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except Exception:
+                        args = {}
+
+                if name == "str_replace_editor":
+                    path_val = args.get("path")
+                    if path_val:
+                        is_create = (args.get("command") == "create")
+                        validate_path(path_val, workspace_dir, is_create=is_create, env=self._env)
+                elif name in ("open", "view_file", "open_file", "view_file_outline"):
+                    path_val = args.get("path") or args.get("filename") or args.get("file") or args.get("filepath")
+                    if path_val:
+                        validate_path(path_val, workspace_dir, is_create=False, env=self._env)
+                elif name in ("create", "create_file", "write_to_file"):
+                    path_val = args.get("path") or args.get("filename") or args.get("file") or args.get("filepath")
+                    if path_val:
+                        validate_path(path_val, workspace_dir, is_create=True, env=self._env)
+        else:
+            action = step.action.strip()
+            if not action:
+                return
+            
+            try:
+                parts = shlex.split(action)
+            except Exception:
+                parts = action.split()
+            
+            if not parts:
+                return
+            
+            cmd = parts[0]
+            if cmd == "str_replace_editor":
+                if len(parts) > 2:
+                    subcmd = parts[1]
+                    path_val = parts[2]
+                    is_create = (subcmd == "create")
+                    validate_path(path_val, workspace_dir, is_create=is_create, env=self._env)
+            elif cmd in ("open", "view_file", "open_file", "view_file_outline"):
+                if len(parts) > 1:
+                    path_val = parts[1]
+                    validate_path(path_val, workspace_dir, is_create=False, env=self._env)
+            elif cmd in ("create", "create_file", "write_to_file"):
+                if len(parts) > 1:
+                    path_val = parts[1]
+                    validate_path(path_val, workspace_dir, is_create=True, env=self._env)
+
     def forward(self, history: list[dict[str, str]]) -> StepOutput:
         """Forward the model without handling errors.
 
@@ -1047,6 +1114,7 @@ class DefaultAgent(AbstractAgent):
             if output.get("tool_calls") is not None:
                 step.tool_call_ids = [call["id"] for call in output["tool_calls"]]
                 step.tool_calls = output["tool_calls"]
+            self._validate_step_action(step, output)
             self.logger.info(f"💭 THOUGHT\n{step.thought}\n\n🎬 ACTION\n{step.action.strip()}")
             self._chook.on_actions_generated(step=step)
             return self.handle_action(step)
