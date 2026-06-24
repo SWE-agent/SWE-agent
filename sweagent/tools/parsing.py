@@ -406,6 +406,8 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             except json.JSONDecodeError:
                 msg = "Tool call arguments are not valid JSON."
                 raise FunctionCallingFormatError(msg, "invalid_json")
+        else:
+            values = tool_call["function"]["arguments"]
         required_args = {arg.name for arg in command.arguments if arg.required}
         missing_args = required_args - values.keys()
         if missing_args:
