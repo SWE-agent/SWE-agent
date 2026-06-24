@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock
-
 from sweagent.environment.swerex_compat import apply_swerex_compat_patches
 
 

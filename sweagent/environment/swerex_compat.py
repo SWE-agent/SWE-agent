@@ -13,15 +13,9 @@ def apply_swerex_compat_patches() -> None:
 
     def _get_swerex_start_cmd(self, token: str) -> list[str]:
         rex_args = f"--auth-token {token}"
-        pip_fallback = (
-            f"python3 -m pip install -q {PACKAGE_NAME} && "
-            f"{REMOTE_EXECUTABLE_NAME} {rex_args}"
-        )
+        pip_fallback = f"python3 -m pip install -q {PACKAGE_NAME} && {REMOTE_EXECUTABLE_NAME} {rex_args}"
         if self._config.python_standalone_dir:
-            cmd = (
-                f"{self._config.python_standalone_dir}/python3.11/bin/"
-                f"{REMOTE_EXECUTABLE_NAME} {rex_args}"
-            )
+            cmd = f"{self._config.python_standalone_dir}/python3.11/bin/{REMOTE_EXECUTABLE_NAME} {rex_args}"
         else:
             cmd = f"{REMOTE_EXECUTABLE_NAME} {rex_args} || ({pip_fallback})"
         return ["/bin/sh", "-c", cmd]
