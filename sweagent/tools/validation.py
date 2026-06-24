@@ -1,8 +1,10 @@
 import shlex
 from pathlib import Path
+
 from sweagent.exceptions import FormatError
 
-def validate_path(path_str: str, workspace_dir: str | Path, is_create: bool = False, env = None) -> Path:
+
+def validate_path(path_str: str, workspace_dir: str | Path, is_create: bool = False, env=None) -> Path:
     """Validates local or container path arguments for agent core.
 
     Rules:
@@ -13,7 +15,7 @@ def validate_path(path_str: str, workspace_dir: str | Path, is_create: bool = Fa
     - Valid paths inside the workspace are allowed.
     """
     workspace = Path(workspace_dir).resolve()
-    
+
     # Resolve the path relative to the workspace if it's relative, or resolve directly if it's absolute
     try:
         raw_path = Path(path_str)
@@ -23,13 +25,13 @@ def validate_path(path_str: str, workspace_dir: str | Path, is_create: bool = Fa
             resolved_path = (workspace / raw_path).resolve()
     except Exception as e:
         raise FormatError(f"Failed to resolve path '{path_str}': {e}")
-        
+
     # Check that resolved_path is strictly within the workspace
     try:
         resolved_path.relative_to(workspace)
     except ValueError:
         raise FormatError(f"Access denied: path '{path_str}' escapes the workspace directory '{workspace}'.")
-        
+
     if is_create:
         # Parent directory must exist
         parent_dir = resolved_path.parent
@@ -37,8 +39,10 @@ def validate_path(path_str: str, workspace_dir: str | Path, is_create: bool = Fa
         try:
             parent_dir.relative_to(workspace)
         except ValueError:
-            raise FormatError(f"Access denied: parent directory '{parent_dir}' escapes the workspace directory '{workspace}'.")
-            
+            raise FormatError(
+                f"Access denied: parent directory '{parent_dir}' escapes the workspace directory '{workspace}'."
+            )
+
         if env is not None:
             container_parent = parent_dir.as_posix()
             exists = env.communicate(f"test -d {shlex.quote(container_parent)} && echo 'yes'").strip()
@@ -64,5 +68,5 @@ def validate_path(path_str: str, workspace_dir: str | Path, is_create: bool = Fa
                 raise FormatError(f"File '{path_str}' does not exist.")
             if not resolved_path.is_file():
                 raise FormatError(f"Path '{path_str}' is not a file.")
-            
+
     return resolved_path
