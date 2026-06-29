@@ -5426,7 +5426,7 @@ This can also be very useful to create your first <a href="../../config/demonstr
   </span>
 
 </h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">multi_line_command_endings</span> <span class="o">=</span> <span class="p">{(</span><span class="n"><span title="command.name">name</span></span><span class="p">):</span> <span class="p">(</span><span class="n"><span title="command.end_name">end_name</span></span><span class="p">)</span> <span class="k">for</span> <span class="n"><span title="command">command</span></span> <span class="ow">in</span> <span class="p">(</span><span class="n"><span title="sweagent.agent.models.HumanModel(tools).commands">commands</span></span><span class="p">)</span> <span class="k">if</span> <span class="n"><span title="command.end_name">end_name</span></span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">multi_line_command_endings</span> <span class="o">=</span> <span class="p">{(</span><span class="n"><span title="command">command</span></span><span class="o">.</span><span class="n"><span title="command.name">name</span></span><span class="p">):</span> <span class="p">(</span><span class="n"><span title="command">command</span></span><span class="o">.</span><span class="n"><span title="command.end_name">end_name</span></span><span class="p">)</span> <span class="k">for</span> <span class="n"><span title="command">command</span></span> <span class="ow">in</span> <span class="p">(</span><span class="n"><span title="sweagent.agent.models.HumanModel(tools)">tools</span></span><span class="o">.</span><span class="n"><span title="sweagent.agent.models.HumanModel(tools).commands">commands</span></span><span class="p">)</span> <span class="k">if</span> <span class="n"><span title="command">command</span></span><span class="o">.</span><span class="n"><span title="command.end_name">end_name</span></span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6524,7 +6524,7 @@ and re-issuing them.</p>
   </span>
 
 </h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">use_function_calling</span> <span class="o">=</span> <span class="n"><span title="sweagent.agent.models.ReplayModel(tools).use_function_calling">use_function_calling</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">use_function_calling</span> <span class="o">=</span> <span class="n"><span title="sweagent.agent.models.ReplayModel(tools)">tools</span></span><span class="o">.</span><span class="n"><span title="sweagent.agent.models.ReplayModel(tools).use_function_calling">use_function_calling</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6546,7 +6546,7 @@ and re-issuing them.</p>
   </span>
 
 </h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">submit_command</span> <span class="o">=</span> <span class="n"><span title="sweagent.agent.models.ReplayModel(tools).submit_command">submit_command</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">submit_command</span> <span class="o">=</span> <span class="n"><span title="sweagent.agent.models.ReplayModel(tools)">tools</span></span><span class="o">.</span><span class="n"><span title="sweagent.agent.models.ReplayModel(tools).submit_command">submit_command</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
