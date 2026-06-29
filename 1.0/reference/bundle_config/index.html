@@ -3637,7 +3637,10 @@ or a default format of "command arg1 arg2 ...".</p>
 <span class="normal">159</span>
 <span class="normal">160</span>
 <span class="normal">161</span>
-<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_function_calling_tool</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_function_calling_tool</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Converts this command into an OpenAI function calling tool definition.</span>
 
 <span class="sd">    Returns:</span>
@@ -3665,7 +3668,10 @@ or a default format of "command arg1 arg2 ...".</p>
             <span class="c1"># Handle enum if present</span>
             <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">enum</span><span class="p">:</span>
                 <span class="n">properties</span><span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="s2">"enum"</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">enum</span>
-    <span class="n">tool</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="n">properties</span><span class="p">,</span> <span class="s2">"required"</span><span class="p">:</span> <span class="n">required</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">properties</span><span class="p">:</span>
+        <span class="n">tool</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="n">properties</span><span class="p">,</span> <span class="s2">"required"</span><span class="p">:</span> <span class="n">required</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tool</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">tool</span>
 </code></pre></div></td></tr></tbody></table></div>
             </details>
@@ -3756,10 +3762,7 @@ or a default format of "command arg1 arg2 ...".</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>sweagent/tools/commands.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
+              <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">167</span>
 <span class="normal">168</span>
 <span class="normal">169</span>
 <span class="normal">170</span>
@@ -3794,7 +3797,10 @@ or a default format of "command arg1 arg2 ...".</p>
 <span class="normal">199</span>
 <span class="normal">200</span>
 <span class="normal">201</span>
-<span class="normal">202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Command</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Validates command argument configuration.</span>
 
