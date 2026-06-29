@@ -82,9 +82,8 @@ def _parse_gh_repo_url(repo_url: str) -> tuple[str, str]:
     if not match:
         msg = f"Invalid GitHub issue URL: {repo_url}"
         raise InvalidGithubURL(msg)
-    res = match.groups()
-    assert len(res) == 2
-    return tuple(res)  # type: ignore
+    owner, repo = match.groups()
+    return owner, repo.removesuffix(".git")
 
 
 def _get_gh_issue_data(issue_url: str, *, token: str = ""):
