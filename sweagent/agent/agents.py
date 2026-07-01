@@ -840,7 +840,7 @@ class DefaultAgent(AbstractAgent):
             if "diff" not in last_trajectory_step["state"]:
                 self.logger.info("No diff in last trajectory step state, cannot autosubmit")
                 return step
-            diff = last_trajectory_step["state"]["diff"]
+            diff = last_trajectory_step["state"]["diff"].replace("\r\n", "\n").replace("\r", "\n")
             self.logger.info("Using diff from last trajectory step to autosubmit")
             step.submission = diff
             if step.submission:
@@ -891,6 +891,10 @@ class DefaultAgent(AbstractAgent):
             except Exception as e:
                 self.logger.exception("Failed to read submission file, got %s", e)
                 return step
+            # The patch is read from a pexpect/SWE-ReX terminal session that can introduce
+            # CR/CRLF line endings. Normalize to LF so the submission written to the graded
+            # SWE-bench prediction, the saved patch, and the trajectory is not CR-polluted (#702).
+            submission = submission.replace("\r\n", "\n").replace("\r", "\n")
             if submission.strip() != "":
                 step.submission = submission
             else:

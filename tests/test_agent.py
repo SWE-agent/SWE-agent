@@ -11,6 +11,7 @@ from sweagent.agent.problem_statement import EmptyProblemStatement, TextProblemS
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.tools.parsing import FunctionCallingParser, Identity, ThoughtActionParser
 from sweagent.tools.tools import ToolConfig
+from sweagent.types import StepOutput
 
 
 def test_dummy_env(dummy_env):
@@ -231,6 +232,26 @@ def test_successful_submission(dummy_env: SWEEnv, default_agent: DefaultAgent, t
     assert a.info["exit_status"] == "submitted"  # type: ignore
     assert a.info["submission"] == "test"  # type: ignore
     assert a.trajectory[-1]["observation"] == "test"
+
+
+def test_submission_strips_crlf(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
+    """A patch read from the pexpect/SWE-ReX session may contain CR/CRLF. The submission
+    that ends up in the SWE-bench prediction, saved patch, and trajectory must be LF-only (#702)."""
+    a = default_agent
+    a.setup(dummy_env, EmptyProblemStatement())
+    a._env.read_file = lambda *args, **kwargs: "diff --git a/f b/f\r\n+line\rmore\n"  # type: ignore
+    step = a.handle_submission(StepOutput(), force_submission=True)
+    assert step.submission == "diff --git a/f b/f\n+line\nmore\n"
+    assert "\r" not in step.observation
+
+
+def test_submission_lf_unchanged(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
+    a = default_agent
+    a.setup(dummy_env, EmptyProblemStatement())
+    patch = "diff --git a/f b/f\n+line\n"
+    a._env.read_file = lambda *args, **kwargs: patch  # type: ignore
+    step = a.handle_submission(StepOutput(), force_submission=True)
+    assert step.submission == patch
 
 
 def test_human_exit(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
