@@ -17,7 +17,10 @@ from sweagent.utils.log import get_logger
 
 
 class SweBenchEvaluate(RunHook):
-    _SUBSET_MAP = {"lite": "swe-bench_lite", "verified": "swe-bench_verified", "multimodal": "swe-bench_multimodal"}
+    # Maps SWEBenchInstances.subset values to the subset identifiers accepted by
+    # sb-cli. sb-cli only supports these three; "full" and "multilingual" have no
+    # sb-cli equivalent and therefore cannot be evaluated this way.
+    _SUBSET_MAP = {"lite": "swe-bench_lite", "verified": "swe-bench_verified", "multimodal": "swe-bench-m"}
 
     def __init__(self, output_dir: Path, subset: str, split: str, continuous_submission_every: int = 0) -> None:
         super().__init__()
@@ -38,6 +41,12 @@ class SweBenchEvaluate(RunHook):
         return f"{self.output_dir.name}_{self._time_suffix}"
 
     def _get_sb_call(self, preds_path: Path, submit_only: bool = False) -> list[str]:
+        if self.subset not in self._SUBSET_MAP:
+            msg = (
+                f"Cannot evaluate subset {self.subset!r} with sb-cli. "
+                f"Supported subsets are: {', '.join(self._SUBSET_MAP)}."
+            )
+            raise ValueError(msg)
         args = [
             "sb-cli",
             "submit",

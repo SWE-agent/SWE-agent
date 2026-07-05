@@ -8,6 +8,7 @@ import pytest
 from sweagent.agent.problem_statement import GithubIssue, TextProblemStatement
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
 from sweagent.run.hooks.open_pr import OpenPRConfig, OpenPRHook
+from sweagent.run.hooks.swe_bench_evaluate import SweBenchEvaluate
 from sweagent.types import AgentRunResult
 
 
@@ -127,3 +128,38 @@ def test_save_apply_patch_hook_concurrent_workers_save_to_correct_dirs(tmp_path)
     assert patch_b.exists(), "Patch for instance-B was not saved to its own directory"
     assert patch_a.read_text() == "patch A content"
     assert patch_b.read_text() == "patch B content"
+
+
+@pytest.mark.parametrize(
+    ("subset", "expected"),
+    [
+        ("lite", "swe-bench_lite"),
+        ("verified", "swe-bench_verified"),
+        ("multimodal", "swe-bench-m"),
+    ],
+)
+def test_swe_bench_evaluate_subset_matches_sb_cli(tmp_path, subset, expected):
+    """The subset passed to sb-cli must be one of its accepted values.
+
+    sb-cli's ``Subset`` enum only accepts ``swe-bench_lite``, ``swe-bench_verified``
+    and ``swe-bench-m``. In particular the multimodal dataset is ``swe-bench-m``,
+    not ``swe-bench_multimodal``, so submitting the latter is rejected at the CLI
+    boundary and ``--evaluate=True`` fails on a multimodal run.
+    """
+    hook = SweBenchEvaluate(output_dir=tmp_path, subset=subset, split="dev")
+    call = hook._get_sb_call(tmp_path / "preds.json")
+    # ["sb-cli", "submit", <subset>, <split>, ...]
+    assert call[2] == expected
+
+
+@pytest.mark.parametrize("subset", ["full", "multilingual"])
+def test_swe_bench_evaluate_unsupported_subset_raises_value_error(tmp_path, subset):
+    """Subsets with no sb-cli equivalent must fail with a clear error.
+
+    ``full`` and ``multilingual`` are valid ``SWEBenchInstances.subset`` values for
+    loading instances, but sb-cli cannot evaluate them. Building the call must raise
+    a descriptive ValueError instead of a bare KeyError.
+    """
+    hook = SweBenchEvaluate(output_dir=tmp_path, subset=subset, split="dev")
+    with pytest.raises(ValueError, match=subset):
+        hook._get_sb_call(tmp_path / "preds.json")
