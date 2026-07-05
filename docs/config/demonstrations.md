@@ -31,7 +31,7 @@ Here's how you can make a demo from an existing trajectory file (like the one cr
 1. Find a basic trajectory that you already like and want to use as the basis for your demo.
    For instance, consider the `.traj` files in the [`trajectories/demonstrations/` folder](https://github.com/SWE-agent/SWE-agent/tree/main/trajectories/demonstrations)
    or find the trajectory from the previous step (the path will be printed at the bottom).
-2. Run `sweagent traj-to-demo --traj_path<path to trajectory file.traj>` to convert the trajectory to a demo.
+2. Run `sweagent traj-to-demo <path to trajectory file.traj>` to convert the trajectory to a demo.
    This demo will be saved as a readable yaml file in the `demos/` directory.
 3. Edit the demo by hand to make it work for your particular use case and configuration.
 4. (Optional) Run `sweagent run-replay --traj_path <path to demo>` to execute the actions of the demo, have the system generate the execution output, and ensure that it works as expected.
