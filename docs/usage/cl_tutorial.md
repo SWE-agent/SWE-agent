@@ -146,8 +146,8 @@ in addition to all the other `--config` options for the two examples above.
 We've already seen a few examples of how to specify the problem to solve, namely
 
 ```bash
---problem_statement.data_path /path/to/problem.md
---problem_statement.repo_path /path/to/repo
+--problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
+--problem_statement.path=/path/to/problem.md
 --problem_statement.text="..."
 ```
 
