@@ -237,7 +237,8 @@ class SWEBenchMultimodalProblemStatement(_BuiltinProblemStatementBase):
             }
             response = requests.get(url, headers=headers, timeout=30, stream=True)
             response.raise_for_status()
-            content_type = response.headers.get("content-type", "").lower()
+            # strip any media type parameters (e.g. "image/png; charset=utf-8") before validation
+            content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
             if content_type == "image/jpg":
                 content_type = "image/jpeg"
             if content_type not in VALID_IMAGE_MIME_TYPES:

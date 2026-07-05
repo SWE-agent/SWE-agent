@@ -44,6 +44,23 @@ class TestSWEBenchMultimodalProblemStatement:
         assert f"![{self.example_image_url}](data:image/png;base64," in result
 
     @patch("requests.get")
+    def test_get_problem_statement_with_content_type_parameters(self, mock_get):
+        """Test that a Content-Type header with media type parameters is still accepted."""
+        # servers may append parameters like charset, which is legal per RFC 9110
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.headers = {"content-type": "image/png; charset=utf-8"}
+        mock_response.iter_content.return_value = [b"fake_image_data"]
+        mock_get.return_value = mock_response
+        problem_statement = SWEBenchMultimodalProblemStatement(
+            text="Test problem statement", issue_images=[self.example_image_url]
+        )
+        result = problem_statement.get_problem_statement()
+        # the parameters should be stripped before validation and encoding
+        assert "Test problem statement" in result
+        assert f"![{self.example_image_url}](data:image/png;base64," in result
+
+    @patch("requests.get")
     def test_get_problem_statement_with_network_error(self, mock_get):
         """Test that network errors are handled gracefully with warnings."""
         # mock network error
