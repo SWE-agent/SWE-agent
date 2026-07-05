@@ -4,7 +4,7 @@ import pytest
 from jinja2 import Template
 
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
-from sweagent.tools.commands import Command
+from sweagent.tools.commands import Argument, Command
 from sweagent.tools.parsing import (
     ActionParser,
     EditFormat,
@@ -12,6 +12,7 @@ from sweagent.tools.parsing import (
     Identity,
     JsonParser,
     ThoughtActionParser,
+    XMLFunctionCallingParser,
     XMLThoughtActionParser,
 )
 
@@ -129,3 +130,42 @@ def test_function_calling_parser_error_message():
     template = Template(FunctionCallingParser().error_message)
     exc1 = FunctionCallingFormatError("test", "missing")
     assert "did not use any tool calls" in template.render(**exc1.extra_info, exception_message=exc1.message)
+
+
+def _view_range_command() -> Command:
+    return Command(
+        name="view",
+        docstring="View a file.",
+        signature="view <path> <view_range>",
+        arguments=[
+            Argument(name="path", type="string", description="File path.", required=True),
+            Argument(name="view_range", type="array", description="Line range.", required=True),
+        ],
+    )
+
+
+def _xml_view_range_response(view_range: str) -> dict:
+    return {
+        "message": (
+            "Let's view the file.\n"
+            "<function=view>\n"
+            "<parameter=path>/testbed/file.py</parameter>\n"
+            f"<parameter=view_range>{view_range}</parameter>\n"
+            "</function>"
+        )
+    }
+
+
+def test_xml_function_calling_parser_view_range():
+    parser = XMLFunctionCallingParser()
+    command = _view_range_command()
+
+    # A well-formed view_range parses into the command invocation.
+    _, action = parser(_xml_view_range_response("[1, 20]"), [command])
+    assert action == "view /testbed/file.py [1, 20]"
+
+    # A value with trailing content after a valid [<int>, <int>] prefix must raise
+    # FormatError (so the model is re-queried), not an uncaught JSONDecodeError.
+    for malformed in ("[1,2]extra", "[1, 2] and more"):
+        with pytest.raises(FormatError):
+            parser(_xml_view_range_response(malformed), [command])
