@@ -154,4 +154,4 @@ The `web_browser` bundle provides tools for:
 
 We've enabled multimodal processing when `--instances.type=swe-bench --instances.subset=multimodal` are set.
 
-To disable this behavior, you must set `--templates.disable_image_processing=true`.
+To disable this behavior, you must set `--agent.templates.disable_image_processing=true`.
