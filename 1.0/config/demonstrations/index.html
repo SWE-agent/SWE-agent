@@ -2674,7 +2674,7 @@ This lets you input, at each turn, the thought (ending with END_THOUGHT) and the
 <li>Find a basic trajectory that you already like and want to use as the basis for your demo.
    For instance, consider the <code>.traj</code> files in the <a href="https://github.com/SWE-agent/SWE-agent/tree/main/trajectories/demonstrations"><code>trajectories/demonstrations/</code> folder</a>
    or find the trajectory from the previous step (the path will be printed at the bottom).</li>
-<li>Run <code>sweagent traj-to-demo --traj_path&lt;path to trajectory file.traj&gt;</code> to convert the trajectory to a demo.
+<li>Run <code>sweagent traj-to-demo &lt;path to trajectory file.traj&gt;</code> to convert the trajectory to a demo.
    This demo will be saved as a readable yaml file in the <code>demos/</code> directory.</li>
 <li>Edit the demo by hand to make it work for your particular use case and configuration.</li>
 <li>(Optional) Run <code>sweagent run-replay --traj_path &lt;path to demo&gt;</code> to execute the actions of the demo, have the system generate the execution output, and ensure that it works as expected.</li>
