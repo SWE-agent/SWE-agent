@@ -143,3 +143,7 @@ MIT. Check `LICENSE`.
 [![Markdown links](https://github.com/SWE-agent/SWE-agent/actions/workflows/check-links-periodic.yaml/badge.svg)](https://github.com/SWE-agent/SWE-agent/actions/workflows/check-links-periodic.yaml)
 
 </div>
+
+---
+
+*[Mukller](https://github.com/Mukller)*
