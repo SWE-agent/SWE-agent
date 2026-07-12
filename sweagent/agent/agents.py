@@ -627,7 +627,7 @@ class DefaultAgent(AbstractAgent):
 
         # Load history
         self.logger.info(f"DEMONSTRATION: {demonstration_path}")
-        _demo_text = Path(demonstration_path).read_text()
+        _demo_text = Path(demonstration_path).read_text(encoding="utf-8")
         if demonstration_path.suffix == ".yaml":
             demo_history = yaml.safe_load(_demo_text)["history"]
         else:
