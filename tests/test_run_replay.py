@@ -8,6 +8,15 @@ from swerex.deployment.config import DockerDeploymentConfig
 from sweagent.run.run_replay import RunReplay, RunReplayConfig
 
 
+def test_default_output_dir_uses_trajectory_dir(monkeypatch, tmp_path):
+    monkeypatch.setattr("sweagent.run.run_replay.TRAJECTORY_DIR", tmp_path)
+    monkeypatch.setattr("sweagent.run.run_replay.getuser", lambda: "test-user")
+
+    config = RunReplayConfig(traj_path=tmp_path / "test.traj")
+
+    assert config.output_dir == tmp_path / "test-user" / "replay___test"
+
+
 @pytest.fixture
 def rr_config(swe_agent_test_repo_traj, tmp_path, swe_agent_test_repo_clone):
     return RunReplayConfig(

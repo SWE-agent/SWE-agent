@@ -36,6 +36,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from sweagent import TRAJECTORY_DIR
 from sweagent.agent.agents import AbstractAgent, AgentConfig, get_agent_from_config
 from sweagent.agent.problem_statement import (
     EmptyProblemStatement,
@@ -76,7 +77,7 @@ def _get_default_output_dir(output_dir: Path, problem_statement: ProblemStatemen
         config_file = getattr(agent, "_config_files", ["no_config"])[0]
         if isinstance(config_file, Path):
             config_file = config_file.stem
-        return Path.cwd() / "trajectories" / user_id / f"{config_file}__{model_id}___{problem_id}"
+        return TRAJECTORY_DIR / user_id / f"{config_file}__{model_id}___{problem_id}"
     return output_dir
 
 
