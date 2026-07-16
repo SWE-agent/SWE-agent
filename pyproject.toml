@@ -56,7 +56,7 @@ dependencies = [
     "pydantic_settings",
     "litellm>=1.44.12,!=1.82.7,!=1.82.8",
     "GitPython",
-    "ghapi",
+    "ghapi>=1.0.0,<2",
     "swe-rex>=1.4.0",
     "tabulate",
     "textual>=1.0.0",
