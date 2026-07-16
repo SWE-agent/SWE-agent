@@ -41,10 +41,13 @@ def test_parse_gh_repo_url():
     assert _parse_gh_repo_url("git@github.com/SWE-agent/SWE-agent/asdfjsdfg") == ("SWE-agent", "SWE-agent")
     assert _parse_gh_repo_url("https://github.com/SWE-agent/SWE-agent.git") == ("SWE-agent", "SWE-agent")
     assert _parse_gh_repo_url("github.com/SWE-agent/SWE-agent.git") == ("SWE-agent", "SWE-agent")
+    assert _parse_gh_repo_url("https://github.com/SWE-agent/SWE-agent?ref=main") == ("SWE-agent", "SWE-agent")
+    assert _parse_gh_repo_url("https://github.com/SWE-agent/SWE-agent#readme") == ("SWE-agent", "SWE-agent")
+    assert _parse_gh_repo_url("https://github.com/SWE-agent/SWE-agent.git?ref=main") == ("SWE-agent", "SWE-agent")
 
 
 def test_parse_gh_repo_url_fails():
-    with pytest.raises(InvalidGithubURL):
+    with pytest.raises(InvalidGithubURL, match="repository URL"):
         _parse_gh_repo_url("adfkj;lasdfl;kj")
     with pytest.raises(InvalidGithubURL):
         _parse_gh_repo_url("github.com/")
