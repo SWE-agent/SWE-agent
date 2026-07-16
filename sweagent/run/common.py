@@ -290,7 +290,7 @@ class BasicCLI:
         if cli_args.config:
             config_files.extend(cli_args.config)
             for _f in cli_args.config:
-                txt = Path(_f).read_text()
+                txt = Path(_f).read_text(encoding="utf-8")
                 if not txt.strip():
                     self.logger.warning(f"Config file {_f} is empty")
                     continue
@@ -304,7 +304,7 @@ class BasicCLI:
                 "config file is specified. Specify --no_config_file to disable this."
             )
             self.logger.info(msg)
-            txt = config_file.read_text()
+            txt = config_file.read_text(encoding="utf-8")
             if not txt.strip():
                 self.logger.warning(f"Default config file {config_file} is empty")
                 config_merged = {}
