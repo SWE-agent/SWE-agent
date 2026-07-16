@@ -197,7 +197,7 @@ class RunBatch:
         load_environment_variables(config.env_var_path)
         config.set_default_output_dir()
         config.output_dir.mkdir(parents=True, exist_ok=True)
-        (config.output_dir / "run_batch.config.yaml").write_text(yaml.dump(config.model_dump_json(), indent=2))
+        (config.output_dir / "run_batch.config.yaml").write_text(yaml.dump(config.model_dump(mode="json"), indent=2))
         logger = get_logger("run", emoji="🏃")
         logger.debug("Loading instances from %s", f"{config.instances!r}")
         instances = config.instances.get_instance_configs()
@@ -341,7 +341,7 @@ class RunBatch:
             env=instance.env,
         )
         (output_dir / f"{instance.problem_statement.id}.config.yaml").write_text(
-            yaml.dump(single_run_replay_config.model_dump_json(), indent=2)
+            yaml.dump(single_run_replay_config.model_dump(mode="json"), indent=2)
         )
         agent.replay_config = single_run_replay_config  # type: ignore[attr-defined]
         agent.add_hook(SetStatusAgentHook(instance.problem_statement.id, self._progress_manager.update_instance_status))

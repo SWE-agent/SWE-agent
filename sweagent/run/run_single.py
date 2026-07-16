@@ -194,7 +194,9 @@ class RunSingle:
         output_dir = self.output_dir / self.problem_statement.id
         output_dir.mkdir(parents=True, exist_ok=True)
         if self.agent.replay_config is not None:  # type: ignore[attr-defined]
-            (output_dir / "config.yaml").write_text(yaml.dump(self.agent.replay_config.model_dump_json(), indent=2))  # type: ignore[attr-defined]
+            (output_dir / "config.yaml").write_text(
+                yaml.dump(self.agent.replay_config.model_dump(mode="json"), indent=2)  # type: ignore[attr-defined]
+            )
         result = self.agent.run(
             problem_statement=self.problem_statement,
             env=self.env,
