@@ -34,6 +34,7 @@ from swerex.deployment.abstract import AbstractDeployment
 from swerex.deployment.config import DeploymentConfig, get_deployment
 from typing_extensions import Self
 
+from sweagent import TRAJECTORY_DIR
 from sweagent.agent.agents import DefaultAgent
 from sweagent.agent.models import ReplayModelConfig
 from sweagent.environment.swe_env import SWEEnv
@@ -59,7 +60,7 @@ class RunReplayConfig(BaseSettings, cli_implicit_flags=False):
     def model_post_init(self, __context: Any) -> None:
         if self.output_dir == Path("DEFAULT"):
             user_id = getuser()
-            self.output_dir = Path.cwd() / "trajectories" / user_id / f"replay___{self.traj_path.stem}"
+            self.output_dir = TRAJECTORY_DIR / user_id / f"replay___{self.traj_path.stem}"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
 
