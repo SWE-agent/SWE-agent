@@ -174,7 +174,9 @@ class RunReplay:
         return SWEEnv(
             deployment=self.deployment,
             repo=self.config.env.repo,
-            post_startup_commands=[],
+            post_startup_commands=self.config.env.post_startup_commands,
+            post_startup_command_timeout=self.config.env.post_startup_command_timeout,
+            name=self.config.env.name,
         )
 
     def _get_agent(self) -> DefaultAgent:
