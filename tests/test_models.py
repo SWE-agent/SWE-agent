@@ -31,6 +31,8 @@ def _make_mock_response(content: str = "mock") -> MagicMock:
     choice = MagicMock()
     choice.message.content = content
     choice.message.tool_calls = None
+    choice.message.thinking_blocks = None
+    choice.message.reasoning_content = None
     response = MagicMock()
     response.choices = [choice]
     response.usage.prompt_tokens = 10
@@ -104,3 +106,23 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+def test_reasoning_content_is_preserved_in_model_output():
+    model = get_model(
+        GenericAPIModelConfig(
+            name="gpt-4o",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    mock_response = _make_mock_response("final answer")
+    mock_response.choices[0].message.reasoning_content = "model reasoning"
+
+    with patch("litellm.completion", return_value=mock_response):
+        output = model.query(History([{"role": "user", "content": "test"}]))
+
+    assert output == {"message": "final answer", "reasoning_content": "model reasoning"}

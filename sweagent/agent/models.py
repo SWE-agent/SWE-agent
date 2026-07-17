@@ -545,6 +545,10 @@ class PredeterminedTestModel(AbstractModel):
         result = {"message": output["message"]}
         if "tool_calls" in output:
             result["tool_calls"] = output["tool_calls"]
+        if "reasoning_content" in output:
+            result["reasoning_content"] = output["reasoning_content"]
+        if "thinking_blocks" in output:
+            result["thinking_blocks"] = output["thinking_blocks"]
         return result
 
 
@@ -687,6 +691,8 @@ class LiteLLMModel(AbstractModel):
                 del message["cache_control"]
             if "thinking_blocks" in message:
                 del message["thinking_blocks"]
+            if "reasoning_content" in message:
+                del message["reasoning_content"]
         input_tokens: int = litellm.utils.token_counter(
             messages=messages_no_cache_control,
             model=self.custom_tokenizer["identifier"] if self.custom_tokenizer is not None else self.config.name,
@@ -771,11 +777,16 @@ class LiteLLMModel(AbstractModel):
                 else:
                     tool_calls = []
                 output_dict["tool_calls"] = tool_calls
-            if (
-                hasattr(response.choices[i].message, "thinking_blocks")  # type: ignore
-                and response.choices[i].message.thinking_blocks  # type: ignore
-            ):
-                output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
+            message = response.choices[i].message
+            if hasattr(message, "thinking_blocks") and message.thinking_blocks:  # type: ignore
+                output_dict["thinking_blocks"] = message.thinking_blocks  # type: ignore
+            reasoning_content = getattr(message, "reasoning_content", None)
+            if not isinstance(reasoning_content, str):
+                provider_fields = getattr(message, "provider_specific_fields", None) or {}
+                if isinstance(provider_fields, dict):
+                    reasoning_content = provider_fields.get("reasoning_content")
+            if isinstance(reasoning_content, str) and reasoning_content:
+                output_dict["reasoning_content"] = reasoning_content
             outputs.append(output_dict)
         self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
         return outputs
