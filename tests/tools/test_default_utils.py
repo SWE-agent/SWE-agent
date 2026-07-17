@@ -151,3 +151,11 @@ def test_print_window_new_file(with_tmp_env_file, capsys):
     print(captured.out)
     expected = _DEFAULT_WINDOW_OUTPUT_NEW_FILE.format(path=wfile.path.resolve())
     assert captured.out == expected
+
+
+def test_windowed_file_replace_line_index(with_tmp_env_file):
+    content = "aaa\nbbb\nccc\n"
+    wfile = create_test_file_with_content(with_tmp_env_file, content)
+    info = wfile.replace("bbb", "BBB")
+    assert info.first_replaced_line == 1
+    assert wfile.find_all_occurrences("BBB") == [1]
