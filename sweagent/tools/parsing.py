@@ -285,7 +285,7 @@ class XMLFunctionCallingParser(AbstractParseFunction, BaseModel):
             # Check that value is format as [x, y]
             v = params_dict["view_range"]
             if isinstance(v, str):
-                if not re.match(r"\[\d+,\s*\d+\]", v):
+                if not re.fullmatch(r"\[\d+,\s*\d+\]", v):
                     msg = f"view_range must be in the format [<start>, <end>], got {v}."
                     raise FormatError(msg)
                 params_dict["view_range"] = json.loads(v)
