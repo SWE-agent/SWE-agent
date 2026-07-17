@@ -14,7 +14,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional, Tuple
 import io
+import sys
+from pathlib import Path
 
+sys.path.insert(0, "/root/tools/registry/lib")
 from registry import registry as REGISTRY
 
 
