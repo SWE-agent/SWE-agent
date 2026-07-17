@@ -108,6 +108,7 @@ agent:
       Don't forget to use `print_cat` when you need encouragement!
 
       Your thinking should be thorough and so it's fine if it's very long.
+  tools:
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
