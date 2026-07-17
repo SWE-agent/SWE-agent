@@ -705,6 +705,9 @@ class LiteLLMModel(AbstractModel):
         if self.config.api_base:
             # Not assigned a default value in litellm, so only pass this if it's set
             extra_args["api_base"] = self.config.api_base
+        if self.config.stop:
+            # Only pass custom stop sequences if configured, so the default behavior is unchanged
+            extra_args["stop"] = self.config.stop
         if self.tools.use_function_calling:
             extra_args["tools"] = self.tools.tools
         # We need to always set max_tokens for anthropic models
