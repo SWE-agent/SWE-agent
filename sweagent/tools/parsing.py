@@ -428,6 +428,8 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             # See https://github.com/SWE-agent/SWE-agent/issues/1159
             if value is None:
                 return ""
+            if isinstance(value, (list, tuple)):
+                return " ".join(str(v) for v in value)
             return value
 
         formatted_args = {
