@@ -75,8 +75,8 @@ def get_logger(name: str, *, emoji: str = "") -> logging.Logger:
     logger.setLevel(logging.TRACE)  # type: ignore
     logger.addHandler(handler)
     logger.propagate = False
-    _SET_UP_LOGGERS.add(name)
     with _LOG_LOCK:
+        _SET_UP_LOGGERS.add(name)
         for handler in _ADDITIONAL_HANDLERS.values():
             my_filter = getattr(handler, "my_filter", None)
             if my_filter is None:
@@ -114,8 +114,12 @@ def add_file_handler(
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     handler.setFormatter(formatter)
     handler.setLevel(_interpret_level(level))
+    handler.my_filter = filter  # type: ignore
+    if not id_:
+        id_ = str(uuid.uuid4())
     with _LOG_LOCK:
         # Lock because other thread might be modifying the _SET_UP_LOGGERS set
+        # or iterating _ADDITIONAL_HANDLERS.
         for name in _SET_UP_LOGGERS:
             if filter is not None:
                 if isinstance(filter, str) and filter not in name:
@@ -124,18 +128,16 @@ def add_file_handler(
                     continue
             logger = logging.getLogger(name)
             logger.addHandler(handler)
-    handler.my_filter = filter  # type: ignore
-    if not id_:
-        id_ = str(uuid.uuid4())
-    _ADDITIONAL_HANDLERS[id_] = handler
+        _ADDITIONAL_HANDLERS[id_] = handler
     return id_
 
 
 def remove_file_handler(id_: str) -> None:
     """Remove a file handler by its id."""
-    handler = _ADDITIONAL_HANDLERS.pop(id_)
     with _LOG_LOCK:
         # Lock because other thread might be modifying the _SET_UP_LOGGERS set
+        # or iterating _ADDITIONAL_HANDLERS.
+        handler = _ADDITIONAL_HANDLERS.pop(id_)
         for log_name in _SET_UP_LOGGERS:
             logger = logging.getLogger(log_name)
             logger.removeHandler(handler)
