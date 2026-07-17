@@ -884,7 +884,12 @@ class DefaultAgent(AbstractAgent):
         if is_submission or force_submission:
             assert self._env is not None
             try:
-                submission = self._env.read_file("/root/model.patch", encoding="utf-8", errors="backslashreplace")
+                submission = self._env.read_file(
+                    "/root/model.patch",
+                    encoding="utf-8",
+                    errors="backslashreplace",
+                    preserve_newlines=True,
+                )
             except FileNotFoundError:
                 self.logger.warning("Submission file not found, no submission was made")
                 return step

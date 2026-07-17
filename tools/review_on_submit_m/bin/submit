@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-from pathlib import Path
+import io
+import os
 import subprocess
 import sys
-import os
-import io
+from pathlib import Path
 
 from registry import registry
 
@@ -28,7 +28,8 @@ def main() -> None:
         cwd=repo_root,
     )
 
-    patch = patch_path.read_text(errors="backslashreplace")
+    with patch_path.open(errors="backslashreplace", newline="") as f:
+        patch = f.read()
 
     submit_review_messages = registry.get("SUBMIT_REVIEW_MESSAGES", [])
     n_stages = len(submit_review_messages)

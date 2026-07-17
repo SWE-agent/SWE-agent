@@ -11,6 +11,7 @@ from sweagent.agent.problem_statement import EmptyProblemStatement, TextProblemS
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.tools.parsing import FunctionCallingParser, Identity, ThoughtActionParser
 from sweagent.tools.tools import ToolConfig
+from sweagent.types import StepOutput
 
 
 def test_dummy_env(dummy_env):
@@ -217,6 +218,36 @@ def test_show_no_output_template(dummy_env: SWEEnv, default_agent: DefaultAgent,
     a.step()
     a.step()
     # todo: actually test that the template is used
+
+
+def test_handle_submission_preserves_patch_newlines(
+    monkeypatch: pytest.MonkeyPatch, dummy_env: SWEEnv, default_agent: DefaultAgent
+):
+    a = default_agent
+    a.setup(dummy_env, EmptyProblemStatement())
+    read_kwargs = {}
+
+    def read_file(path, encoding=None, errors=None, *, preserve_newlines=False):
+        read_kwargs.update(
+            path=path,
+            encoding=encoding,
+            errors=errors,
+            preserve_newlines=preserve_newlines,
+        )
+        return "diff --git a/file.txt b/file.txt\r\n+changed\r\n"
+
+    monkeypatch.setattr(dummy_env, "read_file", read_file)
+
+    step = a.handle_submission(StepOutput(observation="<<SWE_AGENT_SUBMISSION>>"))
+
+    assert read_kwargs == {
+        "path": "/root/model.patch",
+        "encoding": "utf-8",
+        "errors": "backslashreplace",
+        "preserve_newlines": True,
+    }
+    assert step.submission == "diff --git a/file.txt b/file.txt\r\n+changed\r\n"
+    assert step.observation == step.submission
 
 
 # todo: fixme; Needs real environment or mocking of read_file

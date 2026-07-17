@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import locale
 import logging
 import shlex
 from pathlib import PurePath
@@ -231,7 +233,14 @@ class SWEEnv:
                 raise RuntimeError(msg)
         return output
 
-    def read_file(self, path: str | PurePath, encoding: str | None = None, errors: str | None = None) -> str:
+    def read_file(
+        self,
+        path: str | PurePath,
+        encoding: str | None = None,
+        errors: str | None = None,
+        *,
+        preserve_newlines: bool = False,
+    ) -> str:
         """Read file contents from container
 
         Args:
@@ -240,10 +249,29 @@ class SWEEnv:
                 This is the same as the `encoding` argument of `Path.read_text()`
             errors: Error handling to use when reading the file. None means default error handling.
                 This is the same as the `errors` argument of `Path.read_text()`
+            preserve_newlines: If True, read bytes and decode them without Python's universal newline
+                conversion. This is useful for patch files where CRLF vs LF must be preserved.
 
         Returns:
             file_contents: Contents of file as string
         """
+        if preserve_newlines:
+            read_bytes = (
+                "import base64, pathlib, sys; "
+                "sys.stdout.write(base64.b64encode(pathlib.Path(sys.argv[1]).read_bytes()).decode('ascii'))"
+            )
+            r = asyncio.run(
+                self.deployment.runtime.execute(
+                    RexCommand(
+                        command=["python", "-c", read_bytes, str(path)],
+                        check=True,
+                        error_msg=f"Failed to read file {path!s}",
+                    )
+                )
+            )
+            file_bytes = base64.b64decode(r.stdout.encode("ascii"))
+            return file_bytes.decode(encoding or locale.getpreferredencoding(False), errors=errors or "strict")
+
         r = asyncio.run(
             self.deployment.runtime.read_file(ReadFileRequest(path=str(path), encoding=encoding, errors=errors))
         )

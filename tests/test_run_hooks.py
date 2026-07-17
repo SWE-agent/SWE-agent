@@ -130,6 +130,17 @@ def test_save_apply_patch_hook_concurrent_workers_save_to_correct_dirs(tmp_path)
     assert patch_b.read_text() == "patch B content"
 
 
+def test_save_apply_patch_hook_preserves_patch_newlines(tmp_path):
+    hook = SaveApplyPatchHook(show_success_message=False)
+    hook._output_dir = tmp_path
+    patch_content = "diff --git a/file.txt b/file.txt\r\n+changed\r\n"
+
+    patch_path = hook._save_patch("instance-crlf", {"submission": patch_content})
+
+    assert patch_path == tmp_path / "instance-crlf" / "instance-crlf.patch"
+    assert patch_path.read_bytes() == patch_content.encode("utf-8")
+
+
 @pytest.mark.parametrize(
     ("subset", "expected"),
     [

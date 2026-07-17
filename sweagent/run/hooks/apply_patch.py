@@ -86,7 +86,7 @@ class SaveApplyPatchHook(RunHook):
             self.logger.info("No patch to save.")
             return None
         model_patch = info["submission"]
-        patch_output_file.write_text(model_patch)
+        patch_output_file.write_text(model_patch, encoding="utf-8", errors="backslashreplace", newline="")
         if _is_promising_patch(info):
             # Only print big congratulations if we actually believe
             # the patch will solve the issue
