@@ -49,9 +49,10 @@ def main(replace: str):
     wf.set_window_text(replace)
     post_edit_lint = flake8(wf.path)
 
+    # flake8 lines are 1-based; WindowedFile.line_range is 0-based
     replacement_window = (
-        start_line,
-        end_line,
+        start_line + 1,
+        end_line + 1,
     )
     new_flake8_output = format_flake8_output(
         post_edit_lint,

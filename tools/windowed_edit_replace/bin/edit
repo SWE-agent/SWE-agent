@@ -129,10 +129,11 @@ def main(search: str, replace: str, replace_all: bool):
     post_edit_lint = flake8(wf.path)
 
     if not replace_all:
-        # Try to filter out pre-existing errors
+        # Try to filter out pre-existing errors (flake8 lines are 1-based)
+        start = replacement_info.first_replaced_line + 1
         replacement_window = (
-            replacement_info.first_replaced_line,
-            replacement_info.first_replaced_line + replacement_info.n_search_lines - 1,
+            start,
+            start + replacement_info.n_search_lines - 1,
         )
         # print(f"{replacement_info=}")
         # print(f"{replacement_window=}")
