@@ -48,6 +48,7 @@ from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
 from sweagent.run.hooks.open_pr import OpenPRConfig, OpenPRHook
+from sweagent.run.hooks.trajectory import SaveTrajectoryHook
 from sweagent.utils.config import load_environment_variables
 from sweagent.utils.log import add_file_handler, get_logger
 
@@ -176,6 +177,7 @@ class RunSingle:
             actions=config.actions,
         )
         self.add_hook(SaveApplyPatchHook(apply_patch_locally=config.actions.apply_patch_locally))
+        self.add_hook(SaveTrajectoryHook())
         if config.actions.open_pr:
             self.logger.debug("Adding OpenPRHook")
             self.add_hook(OpenPRHook(config.actions.pr_config))

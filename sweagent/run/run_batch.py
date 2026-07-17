@@ -58,6 +58,7 @@ from sweagent.run.batch_instances import BatchInstance, BatchInstanceSourceConfi
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
+from sweagent.run.hooks.trajectory import SaveTrajectoryHook
 from sweagent.run.merge_predictions import merge_predictions
 from sweagent.run.run_single import RunSingleConfig
 from sweagent.types import AgentRunResult
@@ -177,7 +178,7 @@ class RunBatch:
         self._chooks = CombinedRunHooks()
         self._redo_existing = redo_existing
         self._num_workers = min(num_workers, len(instances))
-        for hook in hooks or [SaveApplyPatchHook(show_success_message=False)]:
+        for hook in hooks or [SaveApplyPatchHook(show_success_message=False), SaveTrajectoryHook()]:
             self.add_hook(hook)
         self._progress_manager = RunBatchProgressManager(
             num_instances=len(instances), yaml_report_path=output_dir / "run_batch_exit_statuses.yaml"
