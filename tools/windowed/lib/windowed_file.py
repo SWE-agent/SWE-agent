@@ -244,7 +244,8 @@ class WindowedFile:
                 print(f"Error: Text not found: {search}")
                 exit(1)
             raise TextNotFound
-        replace_start_line = len(self.text[: indices[0]].split("\n"))
+        # 0-based, matching replace_in_window / find_all_occurrences
+        replace_start_line = len(self.text[: indices[0]].split("\n")) - 1
         new_text = self.text.replace(search, replace)
         self.text = new_text
         if reset_first_line == "keep":
