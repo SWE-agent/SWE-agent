@@ -11,6 +11,7 @@ from sweagent.agent.problem_statement import EmptyProblemStatement, TextProblemS
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.tools.parsing import FunctionCallingParser, Identity, ThoughtActionParser
 from sweagent.tools.tools import ToolConfig
+from sweagent.types import StepOutput
 
 
 def test_dummy_env(dummy_env):
@@ -260,3 +261,15 @@ def test_function_calling(dummy_env: SWEEnv, function_calling_agent: DefaultAgen
     assert not r.done, "Expected not done, because we haven't submitted yet"
     assert r.action.strip() == "ls", "Expected the tool call to be executed"
     assert "file1 file2" in r.observation, "Expected the tool call to return the output of the command"
+
+
+def test_add_step_to_trajectory_preserves_reasoning_content(default_agent: DefaultAgent):
+    step = StepOutput(
+        action="ls",
+        output="```ls```",
+        reasoning_content="model reasoning",
+    )
+
+    default_agent.add_step_to_trajectory(step)
+
+    assert default_agent.trajectory[-1]["reasoning_content"] == "model reasoning"

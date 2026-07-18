@@ -1044,6 +1044,7 @@ class DefaultAgent(AbstractAgent):
             # todo: Can't I override the parser in __init__?
             step.thought, step.action = self.tools.parse_actions(output)
             step.thinking_blocks = output.get("thinking_blocks", [])
+            step.reasoning_content = output.get("reasoning_content")
             if output.get("tool_calls") is not None:
                 step.tool_call_ids = [call["id"] for call in output["tool_calls"]]
                 step.tool_calls = output["tool_calls"]
@@ -1230,6 +1231,8 @@ class DefaultAgent(AbstractAgent):
                 "extra_info": step.extra_info,
             },
         )
+        if step.reasoning_content:
+            trajectory_step["reasoning_content"] = step.reasoning_content
         self.trajectory.append(trajectory_step)
 
     def step(self) -> StepOutput:
