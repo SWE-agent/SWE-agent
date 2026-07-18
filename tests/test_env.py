@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import base64
 from pathlib import Path
 from unittest import mock
 
 import pytest
 from swerex.exceptions import CommandTimeoutError
+from swerex.runtime.abstract import Command, CommandResponse
+from swerex.runtime.dummy import DummyRuntime
 
 from sweagent.environment.hooks.abstract import EnvHook
 
@@ -38,6 +41,35 @@ def test_read_file(tmp_path, test_env_args):
     with swe_env_context(test_env_args) as env:
         content = env.read_file(Path("tests/filetoread.txt"))
         assert content.splitlines()[-1].strip() == "SWEEnv.read_file"
+
+
+def test_read_file_preserve_newlines(dummy_env):
+    class BytesRuntime(DummyRuntime):
+        def __init__(self):
+            super().__init__()
+            self.command: Command | None = None
+
+        async def execute(self, command: Command) -> CommandResponse:
+            self.command = command
+            content = base64.b64encode(b"line1\r\nline2\rline3\n").decode("ascii")
+            return CommandResponse(stdout=content, exit_code=0)
+
+    runtime = BytesRuntime()
+    dummy_env.deployment.runtime = runtime  # type: ignore[assignment]
+
+    content = dummy_env.read_file("/root/model.patch", encoding="utf-8", preserve_newlines=True)
+
+    assert content == "line1\r\nline2\rline3\n"
+    assert runtime.command is not None
+    assert runtime.command.command == [
+        "python",
+        "-c",
+        (
+            "import base64, pathlib, sys; "
+            "sys.stdout.write(base64.b64encode(pathlib.Path(sys.argv[1]).read_bytes()).decode('ascii'))"
+        ),
+        "/root/model.patch",
+    ]
 
 
 @pytest.mark.slow

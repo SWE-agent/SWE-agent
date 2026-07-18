@@ -3,8 +3,8 @@
 def main() -> None:
     import json
     import os
-    from pathlib import Path
     import subprocess
+    from pathlib import Path
 
     from registry import registry
 
@@ -26,15 +26,16 @@ def main() -> None:
         cwd=repo_root,
     )
 
-    patch = patch_path.read_text(errors="backslashreplace")
+    with patch_path.open(errors="backslashreplace", newline="") as f:
+        patch = f.read()
     state["diff"] = patch.strip()
 
     state_path.write_text(json.dumps(state))
 
 
 def _del_diff():
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     state_path = Path("/root/state.json")
     if state_path.exists():
@@ -48,5 +49,5 @@ def _del_diff():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         _del_diff()
