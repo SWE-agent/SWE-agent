@@ -1,3 +1,4 @@
+import json
 import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -9,6 +10,7 @@ from sweagent.agent.problem_statement import GithubIssue, TextProblemStatement
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
 from sweagent.run.hooks.open_pr import OpenPRConfig, OpenPRHook
 from sweagent.run.hooks.swe_bench_evaluate import SweBenchEvaluate
+from sweagent.run.hooks.trajectory import SaveTrajectoryHook
 from sweagent.types import AgentRunResult
 
 
@@ -128,6 +130,57 @@ def test_save_apply_patch_hook_concurrent_workers_save_to_correct_dirs(tmp_path)
     assert patch_b.exists(), "Patch for instance-B was not saved to its own directory"
     assert patch_a.read_text() == "patch A content"
     assert patch_b.read_text() == "patch B content"
+
+
+def test_save_trajectory_hook_saves_result_to_instance_dir(tmp_path):
+    hook = SaveTrajectoryHook()
+    hook._output_dir = tmp_path
+
+    ps = TextProblemStatement(text="Issue for instance-A", id="instance-A")
+    hook.on_instance_start(index=0, env=MagicMock(), problem_statement=ps)
+    result = AgentRunResult(
+        info={"submission": "patch content", "exit_status": "submitted"},
+        trajectory=[],
+    )
+
+    hook.on_instance_completed(result=result)
+
+    trajectory_path = tmp_path / "instance-A" / "instance-A.traj"
+    assert trajectory_path.exists()
+    data = json.loads(trajectory_path.read_text(encoding="utf-8"))
+    assert data["info"]["exit_status"] == "submitted"
+    assert data["info"]["submission"] == "patch content"
+    assert data["trajectory"] == []
+
+
+def test_save_trajectory_hook_concurrent_workers_save_to_correct_dirs(tmp_path):
+    hook = SaveTrajectoryHook()
+    hook._output_dir = tmp_path
+    barrier = threading.Barrier(2)
+
+    def worker(instance_id: str, exit_status: str) -> None:
+        ps = TextProblemStatement(text=f"Issue for {instance_id}", id=instance_id)
+        hook.on_instance_start(index=0, env=MagicMock(), problem_statement=ps)
+        barrier.wait()
+        result = AgentRunResult(
+            info={"submission": None, "exit_status": exit_status},
+            trajectory=[],
+        )
+        hook.on_instance_completed(result=result)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        fa = pool.submit(worker, "instance-A", "submitted")
+        fb = pool.submit(worker, "instance-B", "early_exit")
+        fa.result()
+        fb.result()
+
+    traj_a = tmp_path / "instance-A" / "instance-A.traj"
+    traj_b = tmp_path / "instance-B" / "instance-B.traj"
+
+    assert traj_a.exists(), "Trajectory for instance-A was not saved to its own directory"
+    assert traj_b.exists(), "Trajectory for instance-B was not saved to its own directory"
+    assert json.loads(traj_a.read_text(encoding="utf-8"))["info"]["exit_status"] == "submitted"
+    assert json.loads(traj_b.read_text(encoding="utf-8"))["info"]["exit_status"] == "early_exit"
 
 
 @pytest.mark.parametrize(
