@@ -69,6 +69,16 @@ class AbstractParseFunction(ABC):
 # DEFINE NEW PARSING FUNCTIONS BELOW THIS LINE
 
 
+def _format_argument_value(value: Any, command: Command) -> Any:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return quote(value) if _should_quote(value, command) else value
+    if isinstance(value, list | tuple):
+        return [_format_argument_value(item, command) for item in value]
+    return value
+
+
 class ActionParser(AbstractParseFunction, BaseModel):
     """
     Expects the model response to be a single command.
@@ -309,11 +319,7 @@ class XMLFunctionCallingParser(AbstractParseFunction, BaseModel):
 
         # Format arguments using their individual argument_format
         formatted_args = {
-            arg.name: Template(arg.argument_format).render(
-                value=quote(params_dict[arg.name])
-                if _should_quote(params_dict[arg.name], command)
-                else params_dict[arg.name]
-            )
+            arg.name: Template(arg.argument_format).render(value=_format_argument_value(params_dict[arg.name], command))
             if arg.name in params_dict
             else ""
             for arg in command.arguments
@@ -422,16 +428,8 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             msg = f"Unexpected argument(s): {', '.join(extra_args)}"
             raise FunctionCallingFormatError(msg, "unexpected_arg")
 
-        def get_quoted_arg(value: Any) -> str:
-            if isinstance(value, str):
-                return quote(value) if _should_quote(value, command) else value
-            # See https://github.com/SWE-agent/SWE-agent/issues/1159
-            if value is None:
-                return ""
-            return value
-
         formatted_args = {
-            arg.name: Template(arg.argument_format).render(value=get_quoted_arg(values[arg.name]))
+            arg.name: Template(arg.argument_format).render(value=_format_argument_value(values[arg.name], command))
             if arg.name in values
             else ""
             for arg in command.arguments
@@ -525,8 +523,7 @@ class JsonParser(AbstractParseFunction, BaseModel):
                 for arg in command.arguments:
                     if arg.name in data_command.get("arguments", {}):
                         value = data_command["arguments"][arg.name]
-                        if _should_quote(value, command):
-                            value = quote(value)
+                        value = _format_argument_value(value, command)
                         formatted_args[arg.name] = Template(arg.argument_format).render(value=value)
                     elif strict and arg.required:
                         msg = f"Required argument '{arg.name}' missing for command '{command.name}'"

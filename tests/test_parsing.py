@@ -4,7 +4,7 @@ import pytest
 from jinja2 import Template
 
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
-from sweagent.tools.commands import Command
+from sweagent.tools.commands import Argument, Command
 from sweagent.tools.parsing import (
     ActionParser,
     EditFormat,
@@ -12,6 +12,7 @@ from sweagent.tools.parsing import (
     Identity,
     JsonParser,
     ThoughtActionParser,
+    XMLFunctionCallingParser,
     XMLThoughtActionParser,
 )
 
@@ -129,3 +130,127 @@ def test_function_calling_parser_error_message():
     template = Template(FunctionCallingParser().error_message)
     exc1 = FunctionCallingFormatError("test", "missing")
     assert "did not use any tool calls" in template.render(**exc1.extra_info, exception_message=exc1.message)
+
+
+def _str_replace_editor_command() -> Command:
+    return Command(
+        name="str_replace_editor",
+        signature="str_replace_editor <command> <path> [<view_range>] [<old_str>]",
+        docstring="Custom editing tool",
+        arguments=[
+            Argument(
+                name="command",
+                type="string",
+                description="The command to run.",
+                required=True,
+            ),
+            Argument(
+                name="path",
+                type="string",
+                description="Path to file or directory.",
+                required=True,
+            ),
+            Argument(
+                name="view_range",
+                type="array",
+                items={"type": "integer"},
+                description="Line range to view.",
+                required=False,
+                argument_format="--view_range {{value|join(' ')}}",
+            ),
+            Argument(
+                name="old_str",
+                type="string",
+                description="String to replace.",
+                required=False,
+                argument_format="--old_str {{value}}",
+            ),
+        ],
+    )
+
+
+def test_function_calling_parser_preserves_array_arguments():
+    parser = FunctionCallingParser()
+    command = _str_replace_editor_command()
+    model_response = {
+        "message": "View the relevant lines",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": '{"command": "view", "path": "/testbed/file.py", "view_range": [1, 50]}',
+                }
+            }
+        ],
+    }
+
+    thought, action = parser(model_response, [command])
+
+    assert thought == "View the relevant lines"
+    assert action == "str_replace_editor view /testbed/file.py --view_range 1 50"
+
+
+def test_function_calling_parser_preserves_tuple_arguments_from_dict():
+    parser = FunctionCallingParser()
+    command = _str_replace_editor_command()
+    model_response = {
+        "message": "View the relevant lines",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": {"command": "view", "path": "/testbed/file.py", "view_range": (1, 50)},
+                }
+            }
+        ],
+    }
+
+    _, action = parser(model_response, [command])
+
+    assert action == "str_replace_editor view /testbed/file.py --view_range 1 50"
+
+
+def test_function_calling_parser_still_quotes_string_arguments():
+    parser = FunctionCallingParser()
+    command = _str_replace_editor_command()
+    model_response = {
+        "message": "Replace text",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": {
+                        "command": "str_replace",
+                        "path": "/testbed/file.py",
+                        "old_str": "hello world",
+                    },
+                }
+            }
+        ],
+    }
+
+    _, action = parser(model_response, [command])
+
+    assert action == "str_replace_editor str_replace /testbed/file.py  --old_str 'hello world'"
+
+
+def test_xml_function_calling_parser_preserves_array_arguments():
+    parser = XMLFunctionCallingParser()
+    command = _str_replace_editor_command()
+    model_response = {
+        "message": "\n".join(
+            [
+                "View the relevant lines",
+                "<function=str_replace_editor>",
+                "<parameter=command>view</parameter>",
+                "<parameter=path>/testbed/file.py</parameter>",
+                "<parameter=view_range>[1, 50]</parameter>",
+                "</function>",
+            ]
+        )
+    }
+
+    thought, action = parser(model_response, [command])
+
+    assert thought == "View the relevant lines"
+    assert action == "str_replace_editor view /testbed/file.py --view_range 1 50"
