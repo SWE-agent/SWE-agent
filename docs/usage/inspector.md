@@ -59,6 +59,13 @@ The inspector will then be launched in the browser:
 
 - `--directory`: Directory of trajectories to inspect (Defaults to current directory)
 - `--port`: Port to host web app (Defaults to `8000`).
+- `--host`: Interface to bind to (Defaults to `127.0.0.1`, i.e. only reachable from your own machine).
+
+!!! warning
+    The web inspector has no authentication and serves your trajectory files, which
+    can contain secrets such as API keys. It binds to loopback (`127.0.0.1`) by default.
+    Only pass `--host 0.0.0.0` if you understand that this exposes the trajectories to
+    anyone who can reach the port, and make sure the machine is otherwise protected.
 
 ## Benchmark results
 

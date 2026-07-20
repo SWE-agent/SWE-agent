@@ -4,12 +4,34 @@ import http.server
 import json
 import os
 import socketserver
+import urllib.parse
 from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+
+def resolve_traj_path(traj_dir: str | os.PathLike, file_path: str) -> Path | None:
+    """Safely resolve a requested trajectory file within ``traj_dir``.
+
+    The inspector serves files from ``traj_dir`` based on the (attacker-controlled)
+    request path. To prevent path-traversal escapes, the request path is
+    percent-decoded, resolved against ``traj_dir`` and checked to make sure it
+    stays inside ``traj_dir``.
+
+    Returns the resolved absolute path, or ``None`` if the path escapes the
+    directory (e.g. ``..`` traversal, absolute paths, or symlink escapes).
+    """
+    # Drop any query string / fragment and percent-decode before resolving so
+    # that encoded traversal sequences (e.g. ``%2e%2e``) cannot slip through.
+    decoded = urllib.parse.unquote(file_path.split("?", 1)[0].split("#", 1)[0])
+    base = Path(traj_dir).resolve()
+    candidate = (base / decoded).resolve()
+    if candidate != base and base not in candidate.parents:
+        return None
+    return candidate
 
 
 def add_problem_statement(content):
@@ -238,9 +260,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps({"directory": self.traj_dir}).encode())
 
     def serve_file_content(self, file_path):
+        safe_path = resolve_traj_path(self.traj_dir, file_path)
+        if safe_path is None:
+            self.send_error(403, "Forbidden")
+            return
         try:
             content = load_content(
-                Path(self.traj_dir) / file_path,
+                safe_path,
                 self.gold_patches,
                 self.test_patches,
             )
@@ -287,12 +313,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_response(204)  # Send no content response if no update
         self.end_headers()
 
-    def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        super().end_headers()
 
-
-def main(data_path, directory, port):
+def main(data_path, directory, port, host="127.0.0.1"):
     data = []
     if data_path is not None:
         if data_path.endswith(".jsonl"):
@@ -319,8 +341,14 @@ def main(data_path, directory, port):
         test_patches=test_patches,
     )
     try:
-        with socketserver.TCPServer(("", port), handler_with_directory) as httpd:
-            print(f"Serving at http://localhost:{port}")
+        with socketserver.TCPServer((host, port), handler_with_directory) as httpd:
+            display_host = "localhost" if host in ("", "0.0.0.0", "127.0.0.1") else host
+            print(f"Serving at http://{display_host}:{port}")
+            if host in ("", "0.0.0.0"):
+                print(
+                    "WARNING: The inspector is bound to all interfaces and has no authentication. "
+                    "Anyone who can reach this port can read the served trajectories."
+                )
             httpd.serve_forever()
     except OSError as e:
         if e.errno == 48:
@@ -338,6 +366,12 @@ def get_parser():
     )
     parser.add_argument("--directory", type=str, help="Directory to serve", default=os.getcwd(), nargs="?")
     parser.add_argument("--port", type=int, help="Port to serve", default=8000)
+    parser.add_argument(
+        "--host",
+        type=str,
+        help="Host/interface to bind to. Defaults to loopback; pass 0.0.0.0 to expose on all interfaces.",
+        default="127.0.0.1",
+    )
     return parser
 
 
