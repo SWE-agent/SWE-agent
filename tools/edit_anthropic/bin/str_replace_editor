@@ -361,6 +361,24 @@ class EditTool:
     def _file_history(self, value: dict):
         REGISTRY["file_history"] = json.dumps(value)
 
+    def _append_to_history(self, path: Path, content: str):
+        # Item-mutating the object returned by the `_file_history` getter never
+        # triggers the setter, so the appended history used to be discarded (and
+        # `undo_edit` always reported "No edit history"). Re-assign through the
+        # property to persist. Keys must be `str` since `Path` is not
+        # JSON-serializable.
+        history = self._file_history
+        history[str(path)].append(content)
+        self._file_history = history
+
+    def _pop_from_history(self, path: Path) -> Optional[str]:
+        history = self._file_history
+        if not history[str(path)]:
+            return None
+        content = history[str(path)].pop()
+        self._file_history = history
+        return content
+
     def __call__(
         self,
         *,
@@ -432,7 +450,7 @@ class EditTool:
             print("The parent directory {} does not exist. Please create it first.".format(path.parent))
             sys.exit(21)
         self.write_file(path, file_text)
-        self._file_history[path].append(file_text)
+        self._append_to_history(path, file_text)
         print("File created successfully at: {}".format(path))
 
     def view(self, path: Path, view_range: Optional[List[int]] = None):
@@ -574,7 +592,7 @@ class EditTool:
                 epilogue = LINT_WARNING_TEMPLATE.format(errors=errors)
 
         # Save the content to history
-        self._file_history[path].append(file_content)
+        self._append_to_history(path, file_content)
 
         # Create a snippet of the edited section
         replacement_line = file_content.split(old_str)[0].count("\n")
@@ -618,7 +636,7 @@ class EditTool:
         snippet = "\n".join(snippet_lines)
 
         self.write_file(path, new_file_text)
-        self._file_history[path].append(file_text)
+        self._append_to_history(path, file_text)
 
         # todo: Also expand these windows
 
@@ -633,11 +651,11 @@ class EditTool:
 
     def undo_edit(self, path: Path):
         """Implement the undo_edit command."""
-        if not self._file_history[path]:
+        old_text = self._pop_from_history(path)
+        if old_text is None:
             print("No edit history found for {}.".format(path))
             sys.exit(18)
 
-        old_text = self._file_history[path].pop()
         self.write_file(path, old_text)
 
         print("Last edit to {} undone successfully. {}".format(path, self._make_output(old_text, str(path))))
