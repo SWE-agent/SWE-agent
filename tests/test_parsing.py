@@ -162,7 +162,7 @@ def test_coerce_array_argument():
     assert _coerce_array_argument([1, 50], array_arg) == [1, 50]
     # Non-array-typed args are never coerced
     assert _coerce_array_argument("[1, 50]", string_arg) == "[1, 50]"
-    # Unparseable / non-list values are returned unchanged
+    # Unparsable / non-list values are returned unchanged
     assert _coerce_array_argument("not json", array_arg) == "not json"
     assert _coerce_array_argument("5", array_arg) == "5"
 
