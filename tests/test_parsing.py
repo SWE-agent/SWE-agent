@@ -4,7 +4,7 @@ import pytest
 from jinja2 import Template
 
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
-from sweagent.tools.commands import Command
+from sweagent.tools.commands import Argument, Command
 from sweagent.tools.parsing import (
     ActionParser,
     EditFormat,
@@ -13,6 +13,7 @@ from sweagent.tools.parsing import (
     JsonParser,
     ThoughtActionParser,
     XMLThoughtActionParser,
+    _coerce_array_argument,
 )
 
 
@@ -129,3 +130,75 @@ def test_function_calling_parser_error_message():
     template = Template(FunctionCallingParser().error_message)
     exc1 = FunctionCallingFormatError("test", "missing")
     assert "did not use any tool calls" in template.render(**exc1.extra_info, exception_message=exc1.message)
+
+
+def _view_range_command() -> Command:
+    """A str_replace_editor-like command with an array-typed ``view_range`` arg."""
+    return Command(
+        name="str_replace_editor",
+        docstring="",
+        signature="str_replace_editor <command> <path> [<view_range>]",
+        arguments=[
+            Argument(name="command", type="string", description="", required=True),
+            Argument(name="path", type="string", description="", required=True),
+            Argument(
+                name="view_range",
+                type="array",
+                items={"type": "integer"},
+                description="",
+                required=False,
+                argument_format="--view_range {{value|join(' ')}}",
+            ),
+        ],
+    )
+
+
+def test_coerce_array_argument():
+    array_arg = Argument(name="view_range", type="array", description="", required=False)
+    string_arg = Argument(name="path", type="string", description="", required=False)
+    # JSON-string-encoded array is parsed back into a list
+    assert _coerce_array_argument("[1, 50]", array_arg) == [1, 50]
+    # Actual lists pass through untouched
+    assert _coerce_array_argument([1, 50], array_arg) == [1, 50]
+    # Non-array-typed args are never coerced
+    assert _coerce_array_argument("[1, 50]", string_arg) == "[1, 50]"
+    # Unparseable / non-list values are returned unchanged
+    assert _coerce_array_argument("not json", array_arg) == "not json"
+    assert _coerce_array_argument("5", array_arg) == "5"
+
+
+def test_function_calling_parser_array_argument_as_string():
+    """Regression test for #1182: an array argument returned as a JSON string
+    must not be rendered character-by-character (e.g. ``[ 1 ,   5 0 ]``)."""
+    parser = FunctionCallingParser()
+    command = _view_range_command()
+
+    # The model returns view_range as a proper JSON array.
+    as_list = {
+        "message": "look",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": '{"command": "view", "path": "/testbed/x.py", "view_range": [1, 50]}',
+                }
+            }
+        ],
+    }
+    _, action = parser(as_list, [command])
+    assert action == "str_replace_editor view /testbed/x.py --view_range 1 50"
+
+    # The model returns view_range as a JSON-encoded *string* (the #1182 case).
+    as_string = {
+        "message": "look",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": '{"command": "view", "path": "/testbed/x.py", "view_range": "[1, 50]"}',
+                }
+            }
+        ],
+    }
+    _, action = parser(as_string, [command])
+    assert action == "str_replace_editor view /testbed/x.py --view_range 1 50"
