@@ -24,7 +24,11 @@ def _guard_multiline_input(action: str, match_fct: Callable[[str], re.Match | No
             if match_action.strip():
                 eof = first_match.group(3).strip()
                 if not match_action.split("\n")[0].strip().endswith(f"<< '{eof}'"):
-                    guarded_command = match_action[first_match.start() :]
+                    # `match_action` already starts at the matched command; slicing it
+                    # again by `first_match.start()` (an offset into `rem_action`) would
+                    # chop off the first characters of the command when it is preceded
+                    # by other content.
+                    guarded_command = match_action
                     first_line = guarded_command.split("\n")[0]
                     guarded_command = guarded_command.replace(first_line, first_line + f" << '{eof}'", 1)
                     parsed_action.append(guarded_command)

@@ -1,6 +1,10 @@
+import re
+
 import pytest
 
 from sweagent.tools.commands import Argument, Command
+from sweagent.tools.tools import ToolConfig, ToolHandler
+from sweagent.tools.utils import _guard_multiline_input
 
 
 def test_command_parsing_formats():
@@ -191,3 +195,33 @@ def test_custom_argument_format():
 
     assert command.arguments[0].argument_format == "--{value}"
     assert command.invoke_format == "custom_format {arg1} "
+
+
+def test_r2_command_filter_allows_non_interactive_form():
+    """The default filter must allow `r2 -c ...` (its own allow-regex previously
+    hardcoded `radare2`, so the `r2` alias was always blocked)."""
+    handler = ToolHandler(ToolConfig())
+    # Non-interactive invocations are allowed for both the full name and the alias.
+    assert handler.should_block_action("r2 -c 'pd 10' /bin/ls") is False
+    assert handler.should_block_action("radare2 -c 'pd 10' /bin/ls") is False
+    # Interactive (no `-c`) invocations remain blocked.
+    assert handler.should_block_action("r2 /bin/ls") is True
+    assert handler.should_block_action("r2") is True
+
+
+def test_guard_multiline_input_preserves_first_line_after_preceding_content():
+    """A multi-line (heredoc) command that is preceded by other content must keep
+    its first line intact; previously the command was re-sliced and truncated."""
+    pattern = re.compile(r"^\s*(edit)\s*(.*?)^(end_of_edit)\s*$", re.DOTALL | re.MULTILINE)
+
+    def match_fct(action: str):
+        return pattern.search(action)
+
+    # Command at the start of the action already worked.
+    at_start = _guard_multiline_input("edit 5:10\nnew code\nend_of_edit", match_fct)
+    assert "edit 5:10 << 'end_of_edit'" in at_start
+
+    # Command preceded by other content used to lose the start of its first line.
+    with_prefix = _guard_multiline_input("ls -la\nedit 5:10\nnew code\nend_of_edit", match_fct)
+    assert "edit 5:10 << 'end_of_edit'" in with_prefix
+    assert with_prefix.startswith("ls -la")

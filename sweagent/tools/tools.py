@@ -67,7 +67,7 @@ class ToolFilterConfig(BaseModel):
 
     block_unless_regex: dict[str, str] = {
         "radare2": r"\b(?:radare2)\b.*\s+-c\s+.*",
-        "r2": r"\b(?:radare2)\b.*\s+-c\s+.*",
+        "r2": r"\b(?:r2)\b.*\s+-c\s+.*",
     }
     """Block any command that matches one of these names unless it also matches the regex"""
 
