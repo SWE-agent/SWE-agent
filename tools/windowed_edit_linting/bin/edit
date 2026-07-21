@@ -102,7 +102,10 @@ def main(line_range: str, replacement_text: Union[str, None] = None):
     new_flake8_output = format_flake8_output(
         post_edit_lint,
         previous_errors_string=pre_edit_lint,
-        replacement_window=(start_line, end_line),
+        # `start_line`/`end_line` are 0-based, but `format_flake8_output` compares
+        # the window against flake8's 1-based line numbers. Pass a 1-based window
+        # so a pre-existing error just above the edit isn't misread as new.
+        replacement_window=(start_line + 1, end_line + 1),
         replacement_n_lines=len(replacement_text.splitlines()),
     )
 
