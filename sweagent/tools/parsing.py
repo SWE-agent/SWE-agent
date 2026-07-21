@@ -45,8 +45,29 @@ from jinja2 import Template
 from pydantic import BaseModel
 
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
-from sweagent.tools.commands import Command
+from sweagent.tools.commands import Argument, Command
 from sweagent.tools.utils import _should_quote
+
+
+def _coerce_array_argument(value: Any, argument: Argument) -> Any:
+    """Coerce array-typed arguments that the model returned as a string.
+
+    Some models/providers return an ``array`` argument as a JSON-encoded string
+    (e.g. ``"[1, 50]"``) instead of an actual list. When such a string is later
+    rendered with a Jinja ``join`` filter it is iterated character by character,
+    producing broken output like ``[ 1 ,   5 0 ]`` (see issue #1182). If the
+    declared type is ``array`` and the value is a JSON string encoding a list,
+    parse it back into a list so the declared type is respected. Anything that
+    does not parse into a list is returned unchanged.
+    """
+    if argument.type == "array" and isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return value
+        if isinstance(parsed, list):
+            return parsed
+    return value
 
 
 class AbstractParseFunction(ABC):
@@ -308,15 +329,14 @@ class XMLFunctionCallingParser(AbstractParseFunction, BaseModel):
             raise FormatError(msg)
 
         # Format arguments using their individual argument_format
+        def _render_xml_arg(arg: Argument) -> str:
+            value = _coerce_array_argument(params_dict[arg.name], arg)
+            if _should_quote(value, command):
+                value = quote(value)
+            return Template(arg.argument_format).render(value=value)
+
         formatted_args = {
-            arg.name: Template(arg.argument_format).render(
-                value=quote(params_dict[arg.name])
-                if _should_quote(params_dict[arg.name], command)
-                else params_dict[arg.name]
-            )
-            if arg.name in params_dict
-            else ""
-            for arg in command.arguments
+            arg.name: _render_xml_arg(arg) if arg.name in params_dict else "" for arg in command.arguments
         }
         return thought, command.invoke_format.format(**formatted_args).strip()
 
@@ -431,7 +451,9 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             return value
 
         formatted_args = {
-            arg.name: Template(arg.argument_format).render(value=get_quoted_arg(values[arg.name]))
+            arg.name: Template(arg.argument_format).render(
+                value=get_quoted_arg(_coerce_array_argument(values[arg.name], arg))
+            )
             if arg.name in values
             else ""
             for arg in command.arguments
@@ -524,7 +546,7 @@ class JsonParser(AbstractParseFunction, BaseModel):
             if command.arguments:
                 for arg in command.arguments:
                     if arg.name in data_command.get("arguments", {}):
-                        value = data_command["arguments"][arg.name]
+                        value = _coerce_array_argument(data_command["arguments"][arg.name], arg)
                         if _should_quote(value, command):
                             value = quote(value)
                         formatted_args[arg.name] = Template(arg.argument_format).render(value=value)
