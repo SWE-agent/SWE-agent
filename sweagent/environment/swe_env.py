@@ -216,7 +216,11 @@ class SWEEnv:
             output: output from container
         """
         self.logger.log(logging.TRACE, "Input:\n%s", input)  # type: ignore
-        rex_check = "silent" if check else "ignore"
+        # `check` is always a non-empty (truthy) string, so `"silent" if check`
+        # always selected "silent" and swerex always extracted the exit code.
+        # Only extract it when we actually use it (`warn`/`raise`); `ignore` maps
+        # to swerex's `ignore`, which skips extraction (more stable).
+        rex_check = "ignore" if check == "ignore" else "silent"
         r = asyncio.run(
             self.deployment.runtime.run_in_session(BashAction(command=input, timeout=timeout, check=rex_check))
         )

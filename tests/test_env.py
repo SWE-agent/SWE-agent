@@ -64,3 +64,27 @@ def test_env_communicate_with_handling_timeout(test_env_args):
 def test_env_interrupt_session(test_env_args):
     with swe_env_context(test_env_args) as env:
         env.interrupt_session()
+
+
+@pytest.mark.parametrize(
+    ("check", "expected_rex_check"),
+    [("ignore", "ignore"), ("warn", "silent"), ("raise", "silent")],
+)
+def test_communicate_maps_check_to_rex_check(check, expected_rex_check):
+    """`check="ignore"` must reach swerex as `ignore` (skip exit-code extraction);
+    previously `"silent" if check` always selected `silent` since `check` is a
+    non-empty string."""
+    from sweagent.environment.swe_env import SWEEnv
+
+    captured = {}
+
+    async def fake_run_in_session(action):
+        captured["check"] = action.check
+        return mock.Mock(output="", exit_code=0)
+
+    deployment = mock.MagicMock()
+    deployment.runtime.run_in_session = fake_run_in_session
+    env = SWEEnv(deployment=deployment, repo=None, post_startup_commands=[])
+
+    env.communicate("echo 'hello world'", check=check)
+    assert captured["check"] == expected_rex_check
