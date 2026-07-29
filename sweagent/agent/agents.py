@@ -828,7 +828,11 @@ class DefaultAgent(AbstractAgent):
         step = step.model_copy(deep=True)
         step.done = True
         assert self._env is not None
-        if not asyncio.run(self._env.deployment.is_alive(timeout=10)):
+        try:
+            alive = asyncio.run(self._env.deployment.is_alive(timeout=10))
+        except RuntimeError:
+            alive = False
+        if not alive:
             # The agent is dead. This is very bad. Maybe we can take a 'diff' that was saved
             # for a previous step? (if running with diff in tools)
             self.logger.error("Runtime is no longer alive")
