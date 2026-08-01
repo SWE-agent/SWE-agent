@@ -50,21 +50,25 @@ def _clear_cache_control(entry: HistoryItem) -> None:
     entry.pop("cache_control", None)
 
 
-def _set_cache_control(entry: HistoryItem) -> None:
+def _set_cache_control(entry: HistoryItem, ttl: Literal["5m", "1h"] = "5m") -> None:
+    cache_control = {"type": "ephemeral"}
+    if ttl == "1h":
+        cache_control["ttl"] = ttl
+
     if not isinstance(entry["content"], list):
         entry["content"] = [  # type: ignore
             {
                 "type": "text",
                 "text": _get_content_text(entry),
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": cache_control,
             }
         ]
     else:
-        entry["content"][0]["cache_control"] = {"type": "ephemeral"}
+        entry["content"][0]["cache_control"] = cache_control
     if entry["role"] == "tool":
         # Workaround for weird bug
         entry["content"][0].pop("cache_control", None)
-        entry["cache_control"] = {"type": "ephemeral"}
+        entry["cache_control"] = cache_control
 
 
 # History processors
@@ -279,6 +283,9 @@ class CacheControlHistoryProcessor(BaseModel):
     we've got the completion and you want to avoid cache mismatch.
     """
 
+    ttl: Literal["5m", "1h"] = "5m"
+    """Cache lifetime for marked messages. The default preserves the existing 5-minute cache."""
+
     tagged_roles: list[str] = ["user", "tool"]
     """Only add cache control to messages with these roles."""
 
@@ -296,7 +303,7 @@ class CacheControlHistoryProcessor(BaseModel):
                 and entry["role"] in self.tagged_roles
                 and i_entry >= self.last_n_messages_offset
             ):
-                _set_cache_control(entry)
+                _set_cache_control(entry, self.ttl)
                 n_tagged += 1
             new_history.append(entry)
         return list(reversed(new_history))

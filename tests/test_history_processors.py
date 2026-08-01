@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from sweagent.agent.history_processors import LastNObservations, TagToolCallObservations
+from sweagent.agent.history_processors import CacheControlHistoryProcessor, LastNObservations, TagToolCallObservations
 from sweagent.types import History
 
 
@@ -38,3 +38,22 @@ def test_add_tag_to_edits(test_history: History):
     for entry in new_history:
         if entry.get("action", "").startswith("edit "):  # type: ignore
             assert entry.get("tags") == ["test"], entry
+
+
+@pytest.mark.parametrize(
+    ("ttl", "expected_cache_control"),
+    [
+        ("5m", {"type": "ephemeral"}),
+        ("1h", {"type": "ephemeral", "ttl": "1h"}),
+    ],
+)
+def test_cache_control_ttl(ttl: str, expected_cache_control: dict[str, str]):
+    history: History = [
+        {"role": "user", "content": "Keep this prompt cached."},
+        {"role": "tool", "content": [{"type": "text", "text": "Keep this tool output cached."}]},
+    ]
+
+    processed = CacheControlHistoryProcessor(last_n_messages=2, ttl=ttl)(history)  # type: ignore[arg-type]
+
+    assert processed[0]["content"][0]["cache_control"] == expected_cache_control  # type: ignore[index]
+    assert processed[1]["cache_control"] == expected_cache_control

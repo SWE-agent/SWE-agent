@@ -32,7 +32,11 @@ agent:
   history_processors:
   - type: cache_control
     last_n_messages: 2
+    # Optional: use the one-hour Anthropic cache for requests spaced over five minutes apart.
+    ttl: 1h
 ```
+
+Omit `ttl` to keep the existing five-minute cache lifetime.
 
 !!! warning "Other history processors"
 
