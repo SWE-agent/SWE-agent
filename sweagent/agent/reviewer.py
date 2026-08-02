@@ -293,8 +293,13 @@ class Chooser:
     def __init__(self, config: ChooserConfig):
         self.config = config
         self.model = get_model(config.model, ToolConfig(parse_function=ActionParser()))
+        self._preselector_stats = InstanceStats()
         self.logger = get_logger("chooser", emoji="🧠")
         # self.summarizer = Summarizer(config.summarizer, self.model) if config.summarizer else None
+
+    @property
+    def stats(self) -> InstanceStats:
+        return self.model.stats + self._preselector_stats
 
     def interpret(self, response: str) -> int:
         # Use regex to extract the last number of the response
@@ -342,6 +347,8 @@ class Chooser:
             except Exception as e:
                 self.logger.critical(f"Preselector failed: {e}", exc_info=True)
                 preselector_output = None
+            finally:
+                self._preselector_stats = preselector.model.stats
             if preselector_output and preselector_output.chosen_idx:
                 try:
                     _preselected_indices = [selected_indices[i] for i in preselector_output.chosen_idx]
@@ -512,7 +519,7 @@ class ChooserRetryLoop(AbstractRetryLoop):
 
     @property
     def review_model_stats(self) -> InstanceStats:
-        return InstanceStats()
+        return self._chooser.stats
 
     @property
     def _n_attempts(self) -> int:
