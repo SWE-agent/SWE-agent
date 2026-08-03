@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 from pydantic import SecretStr
 
 from sweagent import __version__
@@ -104,3 +105,61 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+@pytest.fixture
+def litellm_model():
+    return get_model(
+        GenericAPIModelConfig(name="gpt-4o", api_key=SecretStr("dummy_key"), top_p=None),
+        ToolConfig(parse_function=Identity()),
+    )
+
+
+def test_litellm_model_uses_native_n_when_supported(monkeypatch, litellm_model):
+    calls = []
+
+    def fake_single_query(messages, n=None, temperature=None):
+        calls.append((n, temperature))
+        return [{"message": str(index)} for index in range(n or 1)]
+
+    monkeypatch.setattr(litellm_model, "_single_query", fake_single_query)
+    monkeypatch.setattr("litellm.get_supported_openai_params", lambda **kwargs: ["n"])
+
+    outputs = litellm_model._query([{"role": "user", "content": "test"}], n=3, temperature=0.4)
+
+    assert calls == [(3, 0.4)]
+    assert outputs == [{"message": "0"}, {"message": "1"}, {"message": "2"}]
+
+
+def test_litellm_model_falls_back_when_native_n_is_unsupported(monkeypatch, litellm_model):
+    calls = []
+
+    def fake_single_query(messages, n=None, temperature=None):
+        calls.append((n, temperature))
+        return [{"message": "sample"}]
+
+    monkeypatch.setattr(litellm_model, "_single_query", fake_single_query)
+    monkeypatch.setattr("litellm.get_supported_openai_params", lambda **kwargs: None)
+
+    outputs = litellm_model._query([{"role": "user", "content": "test"}], n=3, temperature=0.4)
+
+    assert calls == [(None, 0.4), (None, 0.4), (None, 0.4)]
+    assert outputs == [{"message": "sample"}] * 3
+
+
+def test_litellm_model_falls_back_when_capabilities_cannot_be_resolved(monkeypatch, litellm_model):
+    calls = []
+
+    def fake_single_query(messages, n=None, temperature=None):
+        calls.append((n, temperature))
+        return [{"message": "sample"}]
+
+    monkeypatch.setattr(litellm_model, "_single_query", fake_single_query)
+    monkeypatch.setattr(
+        "litellm.get_supported_openai_params", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("unknown model"))
+    )
+
+    outputs = litellm_model._query([{"role": "user", "content": "test"}], n=2, temperature=0.4)
+
+    assert calls == [(None, 0.4), (None, 0.4)]
+    assert outputs == [{"message": "sample"}] * 2
