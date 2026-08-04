@@ -785,11 +785,16 @@ class LiteLLMModel(AbstractModel):
     ) -> list[dict]:
         if n is None:
             return self._single_query(messages, temperature=temperature)
-        outputs = []
-        # not needed for openai, but oh well.
-        for _ in range(n):
-            outputs.extend(self._single_query(messages))
-        return outputs
+        try:
+            # Native sampling sends the prompt once and lets the provider return
+            # multiple completions, which avoids multiplying prompt-token cost.
+            return self._single_query(messages, n=n, temperature=temperature)
+        except litellm.exceptions.UnsupportedParamsError:
+            # Preserve compatibility with providers that do not implement n>1.
+            outputs = []
+            for _ in range(n):
+                outputs.extend(self._single_query(messages, temperature=temperature))
+            return outputs
 
     def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
         messages = self._history_to_messages(history)

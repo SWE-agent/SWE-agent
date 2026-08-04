@@ -38,6 +38,27 @@ def _make_mock_response(content: str = "mock") -> MagicMock:
     return response
 
 
+def test_query_forwards_native_sample_count():
+    model = get_model(
+        GenericAPIModelConfig(
+            name="gpt-4o",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    response = _make_mock_response()
+    response.choices = [response.choices[0], response.choices[0], response.choices[0]]
+    with patch("litellm.completion", return_value=response) as mock_completion:
+        outputs = model._query([{"role": "user", "content": "test"}], n=3)
+
+    assert len(outputs) == 3
+    assert mock_completion.call_count == 1
+    assert mock_completion.call_args.kwargs["n"] == 3
+
+
 def test_user_agent_header_default():
     """User-Agent header is added automatically when no extra_headers are set."""
     model = get_model(
