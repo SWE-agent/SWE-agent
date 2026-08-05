@@ -757,7 +757,9 @@ class LiteLLMModel(AbstractModel):
         n_choices = n if n is not None else 1
         outputs = []
         output_tokens = 0
-        for i in range(n_choices):
+        # Some backends silently ignore `n` and return fewer choices than
+        # requested; only iterate over the choices that were actually returned.
+        for i in range(min(n_choices, len(choices))):
             output = choices[i].message.content or ""
             output_tokens += litellm.utils.token_counter(
                 text=output,
@@ -785,10 +787,24 @@ class LiteLLMModel(AbstractModel):
     ) -> list[dict]:
         if n is None:
             return self._single_query(messages, temperature=temperature)
-        outputs = []
-        # not needed for openai, but oh well.
-        for _ in range(n):
-            outputs.extend(self._single_query(messages))
+        try:
+            outputs = self._single_query(messages, n=n, temperature=temperature)
+        except litellm.exceptions.UnsupportedParamsError as e:
+            self.logger.warning(
+                "Provider rejected `n=%s` sampling (%s); falling back to separate requests", n, e
+            )
+            outputs = []
+        if len(outputs) >= n:
+            return outputs
+        # Backends that silently ignore `n` return fewer choices than
+        # requested; request the remaining samples separately.
+        self.logger.debug(
+            "Provider returned %d/%d requested samples; requesting the rest separately",
+            len(outputs),
+            n,
+        )
+        for _ in range(n - len(outputs)):
+            outputs.extend(self._single_query(messages, temperature=temperature))
         return outputs
 
     def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
