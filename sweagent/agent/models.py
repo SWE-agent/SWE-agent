@@ -790,9 +790,7 @@ class LiteLLMModel(AbstractModel):
         try:
             outputs = self._single_query(messages, n=n, temperature=temperature)
         except litellm.exceptions.UnsupportedParamsError as e:
-            self.logger.warning(
-                "Provider rejected `n=%s` sampling (%s); falling back to separate requests", n, e
-            )
+            self.logger.warning("Provider rejected `n=%s` sampling (%s); falling back to separate requests", n, e)
             outputs = []
         if len(outputs) >= n:
             return outputs
