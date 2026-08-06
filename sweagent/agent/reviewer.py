@@ -21,6 +21,7 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement
+from sweagent.exceptions import CostLimitExceededError
 from sweagent.tools.parsing import ActionParser
 from sweagent.tools.tools import ToolConfig
 from sweagent.types import AgentInfo, Trajectory, TrajectoryStep
@@ -356,9 +357,12 @@ class Chooser:
                 self.logger.error("Preselector must have failed, ignoring it.")
         messages = self.build_messages(problem_statement, [input[i] for i in selected_indices])
         chosen_idx = None
+        response = ""
         try:
             response = self.model.query(messages)["message"]  # type: ignore
             chosen_idx = self.interpret(response)
+        except CostLimitExceededError:
+            raise
         except Exception as e:
             self.logger.critical(f"Chooser failed: {e}", exc_info=True)
             chosen_idx = None
