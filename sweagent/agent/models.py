@@ -289,12 +289,27 @@ GLOBAL_STATS_LOCK = Lock()
 """Lock for accessing `GLOBAL_STATS` without race conditions"""
 
 
+def _get_usage_value(usage: Any, field: str) -> Any:
+    if usage is None:
+        return None
+    if isinstance(usage, dict):
+        return usage.get(field)
+    return getattr(usage, field, None)
+
+
+def _get_usage_int(usage: Any, field: str) -> int | None:
+    value = _get_usage_value(usage, field)
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+
+
 class InstanceStats(PydanticBaseModel):
     """This object tracks usage numbers (costs etc.) for a single instance."""
 
     instance_cost: float = 0
     tokens_sent: int = 0
     tokens_received: int = 0
+    cache_read_input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
     api_calls: int = 0
 
     def __add__(self, other: InstanceStats) -> InstanceStats:
@@ -629,12 +644,22 @@ class LiteLLMModel(AbstractModel):
         """Cost limit for the model. Returns 0 if there is no limit."""
         return self.config.per_instance_cost_limit
 
-    def _update_stats(self, *, input_tokens: int, output_tokens: int, cost: float) -> None:
+    def _update_stats(
+        self,
+        *,
+        input_tokens: int,
+        output_tokens: int,
+        cost: float,
+        cache_read_input_tokens: int = 0,
+        cache_creation_input_tokens: int = 0,
+    ) -> None:
         with GLOBAL_STATS_LOCK:
             GLOBAL_STATS.total_cost += cost
         self.stats.instance_cost += cost
         self.stats.tokens_sent += input_tokens
         self.stats.tokens_received += output_tokens
+        self.stats.cache_read_input_tokens += cache_read_input_tokens
+        self.stats.cache_creation_input_tokens += cache_creation_input_tokens
         self.stats.api_calls += 1
 
         # Log updated cost values to std. err
@@ -777,7 +802,27 @@ class LiteLLMModel(AbstractModel):
             ):
                 output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
             outputs.append(output_dict)
-        self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
+        usage = getattr(response, "usage", None)
+        provider_input_tokens = _get_usage_int(usage, "prompt_tokens")
+        provider_output_tokens = _get_usage_int(usage, "completion_tokens")
+        if provider_input_tokens is not None:
+            input_tokens = provider_input_tokens
+        if provider_output_tokens is not None:
+            output_tokens = provider_output_tokens
+        prompt_tokens_details = _get_usage_value(usage, "prompt_tokens_details")
+        cache_read_input_tokens = _get_usage_int(prompt_tokens_details, "cache_read_input_tokens")
+        if cache_read_input_tokens is None:
+            cache_read_input_tokens = _get_usage_int(prompt_tokens_details, "cached_tokens")
+        cache_creation_input_tokens = _get_usage_int(prompt_tokens_details, "cache_creation_input_tokens")
+        if cache_creation_input_tokens is None:
+            cache_creation_input_tokens = _get_usage_int(prompt_tokens_details, "cache_write_tokens")
+        self._update_stats(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=cost,
+            cache_read_input_tokens=cache_read_input_tokens or 0,
+            cache_creation_input_tokens=cache_creation_input_tokens or 0,
+        )
         return outputs
 
     def _query(
