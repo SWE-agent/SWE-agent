@@ -104,3 +104,38 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+def test_multi_sample_retries_only_the_failed_sample():
+    model = get_model(
+        GenericAPIModelConfig(
+            name="gpt-4o",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+            retry={"retries": 2, "min_wait": 0, "max_wait": 0},
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    sample_results = iter(
+        [
+            [{"message": "first"}],
+            ValueError("transient failure"),
+            [{"message": "second"}],
+        ]
+    )
+
+    def query_sample(*args, **kwargs):
+        result = next(sample_results)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    with patch.object(model, "_query", side_effect=query_sample) as query:
+        assert model.query(History([{"role": "user", "content": "test"}]), n=2) == [
+            {"message": "first"},
+            {"message": "second"},
+        ]
+
+    assert query.call_count == 3
