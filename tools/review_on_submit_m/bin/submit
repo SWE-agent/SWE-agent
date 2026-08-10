@@ -18,7 +18,7 @@ def main() -> None:
     repo_root = registry.get("ROOT", os.getenv("ROOT"))
     assert repo_root
 
-    patch_path = Path("/root/model.patch")
+    patch_path = Path(os.getenv("SWE_AGENT_MODEL_PATCH_FILE", "/root/model.patch"))
 
     subprocess.run(
         f"git add -A && git diff --cached > {patch_path}",

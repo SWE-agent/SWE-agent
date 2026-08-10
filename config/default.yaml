@@ -2,6 +2,8 @@
 # This template is heavily inspired by anthropic's computer use demo, but you can use
 # it with any LM.
 agent:
+  model:
+    name: claude-sonnet-4-20250514
   templates:
     system_template: |-
       You are a helpful assistant that can interact with a computer to solve tasks.
@@ -31,39 +33,48 @@ agent:
     next_step_no_output_template: |-
       Your command ran successfully and did not produce any output.
   tools:
+    parse_function:
+      type: function_calling
     env_variables:
       PAGER: cat
       MANPAGER: cat
       LESS: -R
-      PIP_PROGRESS_BAR: 'off'
-      TQDM_DISABLE: '1'
+      PIP_PROGRESS_BAR: "off"
+      TQDM_DISABLE: "1"
       GIT_PAGER: cat
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
       - path: tools/review_on_submit_m
     registry_variables:
-      USE_FILEMAP: 'true'
+      USE_FILEMAP: "true"
       SUBMIT_REVIEW_MESSAGES:
         - |
-          Thank you for your work on this issue. Please carefully follow the steps below to help review your changes.
+            Thank you for your work on this issue. Please carefully follow the steps below to help review your changes.
 
-          1. If you made any changes to your code after running the reproduction script, please run the reproduction script again.
-            If the reproduction script is failing, please revisit your changes and make sure they are correct.
-            If you have already removed your reproduction script, please ignore this step.
-          2. Remove your reproduction script (if you haven't done so already).
-          3. If you have modified any TEST files, please revert them to the state they had before you started fixing the issue.
-            You can do this with `git checkout -- /path/to/test/file.py`. Use below <diff> to find the files you need to revert.
-          4. Run the submit command again to confirm.
+            1. If you made any changes to your code after running the reproduction script, please run the reproduction script again.
+              If the reproduction script is failing, please revisit your changes and make sure they are correct.
+              If you have already removed your reproduction script, please ignore this step.
+            2. Remove your reproduction script (if you haven't done so already).
+            3. If you have modified any TEST files, please revert them to the state they had before you started fixing the issue.
+              You can do this with `git checkout -- /path/to/test/file.py`. Use below <diff> to find the files you need to revert.
+            4. Run the submit command again to confirm.
 
-          Here is a list of all of your changes:
+            Here is a list of all of your changes:
 
-          <diff>
-          {{diff}}
-          </diff>
+            <diff>
+            {{diff}}
+            </diff>
     enable_bash_tool: true
-    parse_function:
-      type: function_calling
   history_processors:
     - type: cache_control
       last_n_messages: 2
+
+env:
+  repo:
+    path: /path/to/your/local/repo # Replace this with the path to the repo you want to work on
+  deployment:
+    image: python:3.11
+# Example problem statement config (override this when you run the agent):
+# problem_statement:
+#   path: /path/to/your/local/repo/problem_statements/1.md

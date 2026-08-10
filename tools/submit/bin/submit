@@ -1,14 +1,16 @@
 main() {
     cd $ROOT
 
-    # Check if the patch file exists and is non-empty
-    if [ -s "/root/test.patch" ]; then
-        # Apply the patch in reverse
-        git apply -R < "/root/test.patch"
+    # Use environment-aware file locations when available.
+    test_patch=${SWE_AGENT_TEST_PATCH_FILE:-/root/test.patch}
+    model_patch=${SWE_AGENT_MODEL_PATCH_FILE:-/root/model.patch}
+
+    if [ -s "$test_patch" ]; then
+        git apply -R < "$test_patch"
     fi
 
     git add -A
-    git diff --cached > /root/model.patch
+    git diff --cached > "$model_patch"
     echo "<<SWE_AGENT_SUBMISSION>>"
 }
 

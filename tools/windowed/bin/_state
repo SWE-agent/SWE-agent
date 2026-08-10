@@ -8,7 +8,7 @@ from registry import registry  # type: ignore
 
 
 def main():
-    state_path = Path("/root/state.json")
+    state_path = Path(os.getenv("SWE_AGENT_STATE_FILE", "/root/state.json"))
 
     if state_path.exists():
         state = json.loads(state_path.read_text())

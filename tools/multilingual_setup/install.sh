@@ -10,12 +10,17 @@ env | sort
 # Only add Python 3.11 to PATH if no python exists
 if ! command -v python &> /dev/null; then
     echo -e "\nNo Python found in system, adding Python 3.11 to PATH"
-    export PATH="/root/python3.11/bin:$PATH"
+    STANDALONE_DIR=${SWE_AGENT_PYTHON_STANDALONE_DIR:-/usr/local}
+    export PATH="$STANDALONE_DIR/bin:$PATH"
 
-    # Create python/pip aliases
-    ln -s "/root/python3.11/bin/python3" "/root/python3.11/bin/python"
-    ln -s "/root/python3.11/bin/pip3" "/root/python3.11/bin/pip"
-    echo "Created symlinks: python -> python3, pip -> pip3"
+    # Create python/pip aliases if they don't already exist
+    if [ -x "$STANDALONE_DIR/bin/python3" ] && [ ! -e "$STANDALONE_DIR/bin/python" ]; then
+        ln -s "$STANDALONE_DIR/bin/python3" "$STANDALONE_DIR/bin/python"
+    fi
+    if [ -x "$STANDALONE_DIR/bin/pip3" ] && [ ! -e "$STANDALONE_DIR/bin/pip" ]; then
+        ln -s "$STANDALONE_DIR/bin/pip3" "$STANDALONE_DIR/bin/pip"
+    fi
+    echo "Using standalone python dir: $STANDALONE_DIR"
 else
     echo -e "\nPython already exists in system, skipping Python 3.11 setup"
 fi

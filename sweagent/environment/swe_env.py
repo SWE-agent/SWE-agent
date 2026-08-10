@@ -1,20 +1,29 @@
 import asyncio
 import logging
+import os
 import shlex
-from pathlib import PurePath
+import shutil
+import sys
+import tempfile
+from pathlib import Path, PurePath
 from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field
 from swerex.deployment.abstract import AbstractDeployment
-from swerex.deployment.config import DeploymentConfig, DockerDeploymentConfig, get_deployment
+from swerex.deployment.config import DeploymentConfig, DockerDeploymentConfig, LocalDeploymentConfig, get_deployment
+from swerex.deployment.docker import DockerDeployment
+from swerex.deployment.local import LocalDeployment
 from swerex.runtime.abstract import (
     BashAction,
     BashInterruptAction,
     CreateBashSessionRequest,
     ReadFileRequest,
+    UploadRequest,
     WriteFileRequest,
 )
 from swerex.runtime.abstract import Command as RexCommand
+from swerex.runtime.local import LocalRuntime
+from typing import Any
 
 from sweagent.environment.hooks.abstract import CombinedEnvHooks, EnvHook
 from sweagent.environment.repo import Repo, RepoConfig
@@ -77,7 +86,11 @@ class SWEEnv:
         self.logger = get_logger("swea-env", emoji="🪴")
         self.name = name
         self.clean_multi_line_functions = lambda x: x
+        self._local_root_dir: Path | None = None
+        self.root_path = self._create_local_root_path() if isinstance(deployment, LocalDeployment) else Path("/root")
         self._chook = CombinedEnvHooks()
+        if isinstance(deployment, LocalDeployment):
+            self._setup_local_deployment_environment()
         for hook in hooks or []:
             self.add_hook(hook)
 
@@ -118,8 +131,9 @@ class SWEEnv:
         if self.repo is None:
             return
 
-        folders = self.communicate(input="ls", check="raise").split("\n")
-        if self.repo.repo_name in folders:
+        repo_root = self.repo.get_repo_root(self.deployment)
+        exists = self.communicate(input=f"test -d {shlex.quote(repo_root)} && echo yes", check="ignore").strip() == "yes"
+        if exists:
             return
 
         self._chook.on_copy_repo_started(repo=self.repo)
@@ -149,11 +163,12 @@ class SWEEnv:
     def _reset_repository(self) -> None:
         """Clean repository of any modifications + Checkout base commit"""
         if self.repo is not None:
+            repo_root = self.repo.get_repo_root(self.deployment)
             self.logger.debug("Resetting repository %s to commit %s", self.repo.repo_name, self.repo.base_commit)
             # todo: Currently has swe-ft specific change: The original repo.copy isn't called, because the repo is already
             # present. However, reset --hard <BRANCH> also doesn't work. So modified it here to do a checkout instead.
             startup_commands = [
-                f"cd /{self.repo.repo_name}",
+                f"cd {shlex.quote(repo_root)}",
                 "export ROOT=$(pwd -P)",
                 *self.repo.get_reset_commands(),
             ]
@@ -169,6 +184,9 @@ class SWEEnv:
         """Shutdown SWE-ReX deployment etc."""
         self.logger.info("Beginning environment shutdown...")
         asyncio.run(self.deployment.stop())
+        if self._local_root_dir is not None:
+            shutil.rmtree(self._local_root_dir, ignore_errors=True)
+            self._local_root_dir = None
         self._chook.on_close()
 
     # MARK: Helper functions #
@@ -180,18 +198,97 @@ class SWEEnv:
         If cached_image is provided, it will use that image name instead of the default.
         """
         self._chook.on_start_deployment()
-        asyncio.run(self.deployment.start())
+        try:
+            asyncio.run(self.deployment.start())
+        except FileNotFoundError as exc:
+            if isinstance(self.deployment, DockerDeployment):
+                self.logger.warning(
+                    "Docker executable not found (%s). Falling back to local deployment.",
+                    exc,
+                )
+                self.deployment = LocalDeployment.from_config(LocalDeploymentConfig())
+                self.root_path = self._create_local_root_path()
+                self._setup_local_deployment_environment()
+                asyncio.run(self.deployment.start())
+            else:
+                raise
+        startup_source = [str(self.root_path / ".bashrc")] if (self.root_path / ".bashrc").exists() else []
         asyncio.run(
             self.deployment.runtime.create_session(
-                CreateBashSessionRequest(startup_source=["/root/.bashrc"], startup_timeout=10)
+                CreateBashSessionRequest(startup_source=startup_source, startup_timeout=10)
             )
         )
-        self.set_env_variables({"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "PIP_PROGRESS_BAR": "off", "PAGER": "cat"})
+        env_vars = {
+            "LANG": "C.UTF-8",
+            "LC_ALL": "C.UTF-8",
+            "PIP_PROGRESS_BAR": "off",
+            "PAGER": "cat",
+        }
+        if isinstance(self.deployment, LocalDeployment):
+            self._setup_local_deployment_environment()
+            env_vars["PATH"] = self._get_local_path_env()
+            env_vars["SWE_AGENT_ENV_FILE"] = str(self.root_path / ".swe-agent-env")
+            env_vars["SWE_AGENT_STATE_FILE"] = str(self.root_path / "state.json")
+            env_vars["SWE_AGENT_ROOT_PATH"] = str(self.root_path)
+            env_vars["ROOT"] = str(self.root_path)
+            env_vars["SWE_AGENT_MODEL_PATCH_FILE"] = str(self.root_path / "model.patch")
+        self.set_env_variables(env_vars)
         self.logger.info("Environment Initialized")
 
     def interrupt_session(self):
         self.logger.info("Interrupting session")
         asyncio.run(self.deployment.runtime.run_in_session(BashInterruptAction()))
+
+    def _normalize_path(self, path: str | PurePath | None) -> str:
+        if path is None:
+            return ""
+        path_str = str(path)
+        if isinstance(self.deployment, LocalDeployment) and path_str.startswith("/root"):
+            if path_str == "/root":
+                return str(self.root_path)
+            return str(self.root_path / path_str[len("/root/"):])
+        return path_str
+
+    def _normalize_command(self, command: str) -> str:
+        if isinstance(self.deployment, LocalDeployment):
+            return command.replace("/root", str(self.root_path))
+        return command
+
+    def _create_local_root_path(self) -> Path:
+        if self._local_root_dir is None:
+            self._local_root_dir = Path(tempfile.mkdtemp(prefix="swe-agent-"))
+        return self._local_root_dir
+
+    def _get_local_path_env(self) -> str:
+        local_bin = self.root_path / "bin"
+        return ":".join(
+            filter(
+                None,
+                [
+                    str(local_bin),
+                    str(Path(sys.executable).parent),
+                    os.getenv("PATH", "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"),
+                ],
+            )
+        )
+
+    def _setup_local_deployment_environment(self) -> None:
+        local_bin = self.root_path / "bin"
+        local_bin.mkdir(parents=True, exist_ok=True)
+        for name in ["python", "python3"]:
+            symlink_target = local_bin / name
+            if not symlink_target.exists():
+                try:
+                    os.symlink(sys.executable, symlink_target)
+                except FileExistsError:
+                    pass
+        (self.root_path / ".swe-agent-env").write_text("{}")
+        (self.root_path / "state.json").write_text("{}")
+        (self.root_path / "tools").mkdir(exist_ok=True)
+
+    def upload(self, source_path: str, target_path: str):
+        request = UploadRequest(source_path=source_path, target_path=self._normalize_path(target_path))
+        return self.deployment.runtime.upload(request)
 
     # todo: return exit code?
     def communicate(
@@ -215,6 +312,7 @@ class SWEEnv:
         Returns:
             output: output from container
         """
+        input = self._normalize_command(input)
         self.logger.log(logging.TRACE, "Input:\n%s", input)  # type: ignore
         rex_check = "silent" if check else "ignore"
         r = asyncio.run(
@@ -245,13 +343,13 @@ class SWEEnv:
             file_contents: Contents of file as string
         """
         r = asyncio.run(
-            self.deployment.runtime.read_file(ReadFileRequest(path=str(path), encoding=encoding, errors=errors))
+            self.deployment.runtime.read_file(ReadFileRequest(path=self._normalize_path(path), encoding=encoding, errors=errors))
         )
         return r.content
 
     def write_file(self, path: str | PurePath, content: str) -> None:
         """Write content to file in container"""
-        asyncio.run(self.deployment.runtime.write_file(WriteFileRequest(path=str(path), content=content)))
+        asyncio.run(self.deployment.runtime.write_file(WriteFileRequest(path=self._normalize_path(path), content=content)))
 
     def set_env_variables(self, env_variables: dict[str, str]) -> None:
         """Set environment variables in the environment."""
@@ -271,6 +369,8 @@ class SWEEnv:
         cwd: str | None = None,
     ) -> None:
         """Execute a command in the environment independent of the session (i.e., as a subprocess)"""
+        command = self._normalize_command(command)
+        normalized_cwd = self._normalize_path(cwd) if cwd is not None else None
         asyncio.run(
-            self.deployment.runtime.execute(RexCommand(command=command, shell=shell, check=check, env=env, cwd=cwd))
+            self.deployment.runtime.execute(RexCommand(command=command, shell=shell, check=check, env=env, cwd=normalized_cwd))
         )

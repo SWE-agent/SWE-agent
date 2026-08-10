@@ -23,6 +23,7 @@ class EnvRegistry:
         else:
             env_file = self._env_file
         if not env_file.exists():
+            env_file.parent.mkdir(parents=True, exist_ok=True)
             env_file.write_text("{}")
         return env_file
 

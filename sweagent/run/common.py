@@ -319,8 +319,15 @@ class BasicCLI:
         # >>> Step 4: Bring together remaining arguments and the merged config to initialize the config object
         # This is done by CliApp.run from pydantic-settings
 
+        # Merge file config and CLI options, but filter out top-level keys that are
+        # not part of the target config type. This avoids ValidationError caused by
+        # unrelated default config keys (e.g., `env`) when running a specific
+        # subcommand that doesn't accept them.
+        merged_total = merge_nested_dicts(config_merged, cl_options_dict)
+        allowed_top_level = set(self.arg_type.model_fields.keys()) if hasattr(self.arg_type, "model_fields") else set()
+        filtered_merged = {k: v for k, v in merged_total.items() if k in allowed_top_level}
         try:
-            config: BaseSettings = CliApp.run(self.arg_type, remaining_args, **config_merged, cli_exit_on_error=False)  # type: ignore
+            config: BaseSettings = CliApp.run(self.arg_type, remaining_args, **filtered_merged, cli_exit_on_error=False)  # type: ignore
         except ValidationError as e:
             rich_print(
                 Panel.fit(

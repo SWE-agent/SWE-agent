@@ -8,6 +8,7 @@ from git import InvalidGitRepositoryError
 from git import Repo as GitRepo
 from pydantic import BaseModel, ConfigDict, Field
 from swerex.deployment.abstract import AbstractDeployment
+from swerex.deployment.local import LocalDeployment
 from swerex.runtime.abstract import Command, UploadRequest
 from typing_extensions import Self
 
@@ -26,6 +27,8 @@ class Repo(Protocol):
     def copy(self, deployment: AbstractDeployment): ...
 
     def get_reset_commands(self) -> list[str]: ...
+
+    def get_repo_root(self, deployment: AbstractDeployment) -> str: ...
 
 
 def _get_git_reset_commands(base_commit: str) -> list[str]:
@@ -66,6 +69,11 @@ class PreExistingRepoConfig(BaseModel):
     def copy(self, deployment: AbstractDeployment):
         """Does nothing."""
         pass
+
+    def get_repo_root(self, deployment: AbstractDeployment) -> str:
+        if isinstance(deployment, LocalDeployment):
+            return str(Path.cwd() / self.repo_name)
+        return f"/{self.repo_name}"
 
     def get_reset_commands(self) -> list[str]:
         """Issued after the copy operation or when the environment is reset."""
@@ -108,15 +116,22 @@ class LocalRepoConfig(BaseModel):
 
     def copy(self, deployment: AbstractDeployment):
         self.check_valid_repo()
+        target_path = self.get_repo_root(deployment)
         asyncio.run(
-            deployment.runtime.upload(UploadRequest(source_path=str(self.path), target_path=f"/{self.repo_name}"))
+            deployment.runtime.upload(UploadRequest(source_path=str(self.path), target_path=target_path))
         )
-        r = asyncio.run(
-            deployment.runtime.execute(Command(command=f"chown -R root:root /{self.repo_name}", shell=True))
-        )
-        if r.exit_code != 0:
-            msg = f"Failed to change permissions on copied repository (exit code: {r.exit_code}, stdout: {r.stdout}, stderr: {r.stderr})"
-            raise RuntimeError(msg)
+        if not isinstance(deployment, LocalDeployment):
+            r = asyncio.run(
+                deployment.runtime.execute(Command(command=f"chown -R root:root {shlex.quote(target_path)}", shell=True))
+            )
+            if r.exit_code != 0:
+                msg = f"Failed to change permissions on copied repository (exit code: {r.exit_code}, stdout: {r.stdout}, stderr: {r.stderr})"
+                raise RuntimeError(msg)
+
+    def get_repo_root(self, deployment: AbstractDeployment) -> str:
+        if isinstance(deployment, LocalDeployment):
+            return str(Path.cwd() / self.repo_name)
+        return f"/{self.repo_name}"
 
     def get_reset_commands(self) -> list[str]:
         """Issued after the copy operation or when the environment is reset."""
@@ -165,18 +180,18 @@ class GithubRepoConfig(BaseModel):
         base_commit = self.base_commit
         github_token = os.getenv("GITHUB_TOKEN", "")
         url = self._get_url_with_token(github_token)
+        repo_root = self.get_repo_root(deployment)
         asyncio.run(
             deployment.runtime.execute(
                 Command(
                     command=" && ".join(
                         (
-                            f"mkdir /{self.repo_name}",
-                            f"cd /{self.repo_name}",
+                            f"mkdir -p {shlex.quote(repo_root)}",
+                            f"cd {shlex.quote(repo_root)}",
                             "git init",
                             f"git remote add origin {shlex.quote(url)}",
                             f"git fetch --depth 1 origin {shlex.quote(base_commit)}",
                             "git checkout FETCH_HEAD",
-                            "cd ..",
                         )
                     ),
                     timeout=self.clone_timeout,
@@ -185,6 +200,11 @@ class GithubRepoConfig(BaseModel):
                 )
             ),
         )
+
+    def get_repo_root(self, deployment: AbstractDeployment) -> str:
+        if isinstance(deployment, LocalDeployment):
+            return str(Path.cwd() / self.repo_name)
+        return f"/{self.repo_name}"
 
     def get_reset_commands(self) -> list[str]:
         """Issued after the copy operation or when the environment is reset."""
