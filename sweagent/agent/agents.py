@@ -12,8 +12,8 @@ import yaml
 from jinja2 import Template
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from simple_parsing.helpers.fields import field
-from swerex.exceptions import BashIncorrectSyntaxError, CommandTimeoutError, SwerexException
 from swerex.deployment.local import LocalDeployment
+from swerex.exceptions import BashIncorrectSyntaxError, CommandTimeoutError, SwerexException
 from tenacity import RetryError
 from typing_extensions import Self
 from unidiff import UnidiffParseError
@@ -883,7 +883,11 @@ class DefaultAgent(AbstractAgent):
         is_submission = self.tools.check_for_submission_cmd(observation or step.observation)
         if is_submission or force_submission:
             assert self._env is not None
-            model_patch_path = str(self._env.root_path / "model.patch") if isinstance(self._env.deployment, LocalDeployment) else "/root/model.patch"
+            model_patch_path = (
+                str(self._env.root_path / "model.patch")
+                if isinstance(self._env.deployment, LocalDeployment)
+                else "/root/model.patch"
+            )
             try:
                 submission = self._env.read_file(model_patch_path, encoding="utf-8", errors="backslashreplace")
             except FileNotFoundError:

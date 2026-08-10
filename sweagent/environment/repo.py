@@ -117,12 +117,12 @@ class LocalRepoConfig(BaseModel):
     def copy(self, deployment: AbstractDeployment):
         self.check_valid_repo()
         target_path = self.get_repo_root(deployment)
-        asyncio.run(
-            deployment.runtime.upload(UploadRequest(source_path=str(self.path), target_path=target_path))
-        )
+        asyncio.run(deployment.runtime.upload(UploadRequest(source_path=str(self.path), target_path=target_path)))
         if not isinstance(deployment, LocalDeployment):
             r = asyncio.run(
-                deployment.runtime.execute(Command(command=f"chown -R root:root {shlex.quote(target_path)}", shell=True))
+                deployment.runtime.execute(
+                    Command(command=f"chown -R root:root {shlex.quote(target_path)}", shell=True)
+                )
             )
             if r.exit_code != 0:
                 msg = f"Failed to change permissions on copied repository (exit code: {r.exit_code}, stdout: {r.stdout}, stderr: {r.stderr})"

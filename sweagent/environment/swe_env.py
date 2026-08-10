@@ -22,8 +22,6 @@ from swerex.runtime.abstract import (
     WriteFileRequest,
 )
 from swerex.runtime.abstract import Command as RexCommand
-from swerex.runtime.local import LocalRuntime
-from typing import Any
 
 from sweagent.environment.hooks.abstract import CombinedEnvHooks, EnvHook
 from sweagent.environment.repo import Repo, RepoConfig
@@ -132,7 +130,9 @@ class SWEEnv:
             return
 
         repo_root = self.repo.get_repo_root(self.deployment)
-        exists = self.communicate(input=f"test -d {shlex.quote(repo_root)} && echo yes", check="ignore").strip() == "yes"
+        exists = (
+            self.communicate(input=f"test -d {shlex.quote(repo_root)} && echo yes", check="ignore").strip() == "yes"
+        )
         if exists:
             return
 
@@ -246,7 +246,7 @@ class SWEEnv:
         if isinstance(self.deployment, LocalDeployment) and path_str.startswith("/root"):
             if path_str == "/root":
                 return str(self.root_path)
-            return str(self.root_path / path_str[len("/root/"):])
+            return str(self.root_path / path_str[len("/root/") :])
         return path_str
 
     def _normalize_command(self, command: str) -> str:
@@ -343,13 +343,17 @@ class SWEEnv:
             file_contents: Contents of file as string
         """
         r = asyncio.run(
-            self.deployment.runtime.read_file(ReadFileRequest(path=self._normalize_path(path), encoding=encoding, errors=errors))
+            self.deployment.runtime.read_file(
+                ReadFileRequest(path=self._normalize_path(path), encoding=encoding, errors=errors)
+            )
         )
         return r.content
 
     def write_file(self, path: str | PurePath, content: str) -> None:
         """Write content to file in container"""
-        asyncio.run(self.deployment.runtime.write_file(WriteFileRequest(path=self._normalize_path(path), content=content)))
+        asyncio.run(
+            self.deployment.runtime.write_file(WriteFileRequest(path=self._normalize_path(path), content=content))
+        )
 
     def set_env_variables(self, env_variables: dict[str, str]) -> None:
         """Set environment variables in the environment."""
@@ -372,5 +376,7 @@ class SWEEnv:
         command = self._normalize_command(command)
         normalized_cwd = self._normalize_path(cwd) if cwd is not None else None
         asyncio.run(
-            self.deployment.runtime.execute(RexCommand(command=command, shell=shell, check=check, env=env, cwd=normalized_cwd))
+            self.deployment.runtime.execute(
+                RexCommand(command=command, shell=shell, check=check, env=env, cwd=normalized_cwd)
+            )
         )

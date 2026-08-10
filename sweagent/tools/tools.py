@@ -17,7 +17,6 @@ from typing import Any
 from pydantic import BaseModel, Field
 from swerex.deployment.local import LocalDeployment
 from swerex.runtime.abstract import Command as RexCommand
-from swerex.runtime.abstract import UploadRequest
 from typing_extensions import Self
 
 from sweagent.environment.swe_env import SWEEnv
@@ -261,8 +260,14 @@ class ToolHandler:
             var: os.getenv(var) for var in self.config.propagate_env_variables
         }
         env.set_env_variables(env_variables)
-        env_file = str(env.root_path / ".swe-agent-env") if isinstance(env.deployment, LocalDeployment) else "/root/.swe-agent-env"
-        state_file = str(env.root_path / "state.json") if isinstance(env.deployment, LocalDeployment) else "/root/state.json"
+        env_file = (
+            str(env.root_path / ".swe-agent-env")
+            if isinstance(env.deployment, LocalDeployment)
+            else "/root/.swe-agent-env"
+        )
+        state_file = (
+            str(env.root_path / "state.json") if isinstance(env.deployment, LocalDeployment) else "/root/state.json"
+        )
         env.write_file(env_file, json.dumps(self.config.registry_variables))
         env.write_file(state_file, "{}")
         env.communicate(" && ".join(self._reset_commands), check="raise", timeout=self.config.install_timeout)
@@ -324,7 +329,9 @@ class ToolHandler:
 
     def _get_state(self, env: SWEEnv) -> dict[str, str]:
         """Retrieve the state from the environment"""
-        state_file = str(env.root_path / "state.json") if isinstance(env.deployment, LocalDeployment) else "/root/state.json"
+        state_file = (
+            str(env.root_path / "state.json") if isinstance(env.deployment, LocalDeployment) else "/root/state.json"
+        )
         try:
             state_str = env.read_file(state_file)
         except FileNotFoundError:
