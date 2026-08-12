@@ -43,7 +43,6 @@ from typing import Any, Literal
 
 from jinja2 import Template
 from pydantic import BaseModel
-
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
 from sweagent.tools.commands import Command
 from sweagent.tools.utils import _should_quote
@@ -408,6 +407,9 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
                 raise FunctionCallingFormatError(msg, "invalid_json")
         else:
             values = tool_call["function"]["arguments"]
+        if not isinstance(values, dict):
+            msg = "Tool call arguments must be a JSON object."
+            raise FunctionCallingFormatError(msg, "invalid_json")
         required_args = {arg.name for arg in command.arguments if arg.required}
         missing_args = required_args - values.keys()
         if missing_args:
