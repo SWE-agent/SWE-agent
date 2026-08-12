@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 from jinja2 import Template
+
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
 from sweagent.tools.commands import Command
-
 from sweagent.tools.parsing import (
     ActionParser,
     EditFormat,

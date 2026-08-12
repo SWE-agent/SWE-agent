@@ -43,6 +43,7 @@ from typing import Any, Literal
 
 from jinja2 import Template
 from pydantic import BaseModel
+
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
 from sweagent.tools.commands import Command
 from sweagent.tools.utils import _should_quote
