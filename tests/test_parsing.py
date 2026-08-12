@@ -129,3 +129,19 @@ def test_function_calling_parser_error_message():
     template = Template(FunctionCallingParser().error_message)
     exc1 = FunctionCallingFormatError("test", "missing")
     assert "did not use any tool calls" in template.render(**exc1.extra_info, exception_message=exc1.message)
+
+
+@pytest.mark.parametrize("arguments", ["[]", "null", '"value"', "1", "true"])
+def test_function_calling_parser_rejects_non_object_json(arguments):
+    parser = FunctionCallingParser()
+    command = Command(name="ls", docstring="", arguments=[])
+    model_response = {
+        "message": "Call ls",
+        "tool_calls": [{"function": {"name": "ls", "arguments": arguments}}],
+    }
+
+    with pytest.raises(FunctionCallingFormatError) as exc_info:
+        parser(model_response, [command])
+
+    assert exc_info.value.message == "Tool call arguments must be a JSON object."
+    assert exc_info.value.extra_info["error_code"] == "invalid_json"

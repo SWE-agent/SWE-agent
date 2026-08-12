@@ -408,6 +408,9 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
                 raise FunctionCallingFormatError(msg, "invalid_json")
         else:
             values = tool_call["function"]["arguments"]
+        if not isinstance(values, dict):
+            msg = "Tool call arguments must be a JSON object."
+            raise FunctionCallingFormatError(msg, "invalid_json")
         required_args = {arg.name for arg in command.arguments if arg.required}
         missing_args = required_args - values.keys()
         if missing_args:
