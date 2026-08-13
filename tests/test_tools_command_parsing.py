@@ -1,6 +1,42 @@
 import pytest
 
+from sweagent.tools.bundle import Bundle
 from sweagent.tools.commands import Argument, Command
+from sweagent.tools.parsing import ThoughtActionParser
+from sweagent.tools.tools import ToolConfig, ToolHandler
+
+
+def make_multiline_tool_handler(tmp_path, *, command_name="edit", end_name="END", submit_command="submit"):
+    bundle_dir = tmp_path / "tools"
+    bundle_dir.mkdir()
+    bin_dir = bundle_dir / "bin"
+    bin_dir.mkdir()
+    tool = bin_dir / command_name
+    tool.write_text("#!/bin/sh\ncat\n")
+    tool.chmod(0o755)
+    (bundle_dir / "config.yaml").write_text(
+        f"""\
+tools:
+  {command_name}:
+    signature: |-
+      {command_name} <content>
+      {end_name}
+    docstring: Edit content.
+    end_name: {end_name}
+    arguments:
+      - name: content
+        type: string
+        description: Content.
+        required: true
+"""
+    )
+    return ToolHandler(
+        ToolConfig(
+            bundles=[Bundle(path=bundle_dir)],
+            parse_function=ThoughtActionParser(),
+            submit_command=submit_command,
+        )
+    )
 
 
 def test_command_parsing_formats():
@@ -171,6 +207,34 @@ def test_multiline_command():
 
     assert command.invoke_format == "edit {filename}"
     assert command.end_name == "EOF"
+
+
+def test_multiline_tool_literals_are_matched(tmp_path):
+    handler = make_multiline_tool_handler(tmp_path)
+
+    assert handler.guard_multiline_input("edit payload\nbody\nEND") == "edit payload << 'END'\nbody\nEND"
+
+
+@pytest.mark.parametrize(
+    ("command_name", "end_name", "submit_command", "action"),
+    [
+        pytest.param("edit.py", "END", "submit", "editXpy payload\nbody\nEND", id="command-name"),
+        pytest.param("edit", "END+", "submit", "edit payload\nbody\nENDD", id="end-name"),
+        pytest.param("submit.done", "END", "submit.done", "submitXdone payload\nbody\nEND", id="submit-command"),
+        pytest.param("submit", "END+", "submit", "submit payload\nbody\nENDD", id="submit-command-end-name"),
+    ],
+)
+def test_multiline_tool_regex_metacharacters_are_matched_literally(
+    tmp_path, command_name, end_name, submit_command, action
+):
+    handler = make_multiline_tool_handler(
+        tmp_path,
+        command_name=command_name,
+        end_name=end_name,
+        submit_command=submit_command,
+    )
+
+    assert handler.guard_multiline_input(action) == action
 
 
 def test_custom_argument_format():
