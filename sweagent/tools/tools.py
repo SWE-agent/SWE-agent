@@ -413,17 +413,23 @@ class ToolHandler:
 
         _command_patterns = {}
         for command in self.config.commands:
+            command_name = re.escape(command.name)
             if command.end_name is not None:
+                end_name = re.escape(command.end_name)
                 pat = re.compile(
-                    rf"^\s*({command.name})\s*(.*?)^({command.end_name})\s*$",
+                    rf"^\s*({command_name})\s*(.*?)^({end_name})\s*$",
                     re.DOTALL | re.MULTILINE,
                 )
                 _command_patterns[command.name] = pat
             else:
-                pat = re.compile(rf"^\s*({command.name})\s*(.*?)$", re.MULTILINE)
+                pat = re.compile(rf"^\s*({command_name})\s*(.*?)$", re.MULTILINE)
                 _command_patterns[command.name] = pat
+        submit_command = re.escape(self.config.submit_command)
+        submit_command_end_name = self.config.submit_command_end_name
+        if submit_command_end_name is not None:
+            submit_command_end_name = re.escape(submit_command_end_name)
         submit_pat = re.compile(
-            rf"^\s*({self.config.submit_command})\s*(.*?)^({self.config.submit_command_end_name})\s*$",
+            rf"^\s*({submit_command})\s*(.*?)^({submit_command_end_name})\s*$",
             re.DOTALL | re.MULTILINE,
         )
         _command_patterns[self.config.submit_command] = submit_pat
