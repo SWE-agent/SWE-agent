@@ -8,8 +8,29 @@ from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 import yaml
+
+
+def resolve_trajectory_path(traj_dir: str | Path, file_path: str) -> Path:
+    """Resolve a requested trajectory path against the served directory.
+
+    ``/trajectory/`` is handled before ``SimpleHTTPRequestHandler`` gets a chance to
+    sanitize the path, so the ``..`` rejection has to happen here: without it a
+    request with literal parent segments reads trajectory files from anywhere on
+    the host.  Absolute paths are rejected for the same reason.
+
+    Raises:
+        FileNotFoundError: if the request escapes ``traj_dir``.
+    """
+    requested = unquote(urlsplit(file_path).path)
+    root = Path(traj_dir).resolve()
+    candidate = (root / requested).resolve()
+    if candidate != root and root not in candidate.parents:
+        msg = f"File {file_path} not found"
+        raise FileNotFoundError(msg)
+    return candidate
 
 
 def add_problem_statement(content):
@@ -240,7 +261,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def serve_file_content(self, file_path):
         try:
             content = load_content(
-                Path(self.traj_dir) / file_path,
+                resolve_trajectory_path(self.traj_dir, file_path),
                 self.gold_patches,
                 self.test_patches,
             )
@@ -287,12 +308,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_response(204)  # Send no content response if no update
         self.end_headers()
 
-    def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        super().end_headers()
 
-
-def main(data_path, directory, port):
+def main(data_path, directory, port, host="127.0.0.1"):
     data = []
     if data_path is not None:
         if data_path.endswith(".jsonl"):
@@ -319,8 +336,8 @@ def main(data_path, directory, port):
         test_patches=test_patches,
     )
     try:
-        with socketserver.TCPServer(("", port), handler_with_directory) as httpd:
-            print(f"Serving at http://localhost:{port}")
+        with socketserver.TCPServer((host, port), handler_with_directory) as httpd:
+            print(f"Serving at http://{host}:{port}")
             httpd.serve_forever()
     except OSError as e:
         if e.errno == 48:
@@ -338,6 +355,12 @@ def get_parser():
     )
     parser.add_argument("--directory", type=str, help="Directory to serve", default=os.getcwd(), nargs="?")
     parser.add_argument("--port", type=int, help="Port to serve", default=8000)
+    parser.add_argument(
+        "--host",
+        type=str,
+        help="Interface to bind to. Defaults to loopback; pass 0.0.0.0 to expose the inspector on the network.",
+        default="127.0.0.1",
+    )
     return parser
 
 

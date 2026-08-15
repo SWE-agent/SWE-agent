@@ -59,6 +59,9 @@ The inspector will then be launched in the browser:
 
 - `--directory`: Directory of trajectories to inspect (Defaults to current directory)
 - `--port`: Port to host web app (Defaults to `8000`).
+- `--host`: Interface to bind to (Defaults to `127.0.0.1`). Trajectories can contain
+  secrets from the environment or the solved repository, so the inspector only listens
+  on loopback; pass `0.0.0.0` to expose it on the network deliberately.
 
 ## Benchmark results
 
