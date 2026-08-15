@@ -90,12 +90,18 @@ def append_results(traj_path: Path, instance_id: str, content, results, results_
     tokens_received = f"{tokens_received:,}" if tokens_received is not None else "N/A"
     api_calls = model_stats.get("api_calls", None)
     api_calls = f"{api_calls:,}" if api_calls is not None else "N/A"
+    cache_read_tokens = model_stats.get("cache_read_tokens", None)
+    cache_read_tokens = f"{cache_read_tokens:,}" if cache_read_tokens is not None else "N/A"
+    cache_write_tokens = model_stats.get("cache_write_tokens", None)
+    cache_write_tokens = f"{cache_write_tokens:,}" if cache_write_tokens is not None else "N/A"
 
     stats.append("**** Run Stats ****")
     stats.append(f"Exit Status: {exit_status}")
     stats.append(f"Instance Cost: ${instance_cost}")
     stats.append(f"Tokens Sent: {tokens_sent}")
     stats.append(f"Tokens Received: {tokens_received}")
+    stats.append(f"Cache Read Tokens: {cache_read_tokens}")
+    stats.append(f"Cache Write Tokens: {cache_write_tokens}")
     stats.append(f"API Calls: {api_calls}\n")
 
     # Build status section

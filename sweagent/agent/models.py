@@ -270,6 +270,33 @@ ModelConfig = Annotated[
 ]
 
 
+def extract_cache_usage(response: Any) -> tuple[int, int]:
+    """Cache read/write input-token counts reported by the provider.
+
+    Providers name these differently: Anthropic reports
+    `cache_read_input_tokens`/`cache_creation_input_tokens` on the usage object,
+    while OpenAI-style responses report only reads, under
+    `prompt_tokens_details.cached_tokens`. Anything else reports neither, in
+    which case both counts are 0.
+
+    Returns:
+        `(cache_read_tokens, cache_write_tokens)`
+    """
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return 0, 0
+
+    def _int(value: Any) -> int:
+        return int(value) if isinstance(value, (int, float)) else 0
+
+    read = _int(getattr(usage, "cache_read_input_tokens", None))
+    if not read:
+        details = getattr(usage, "prompt_tokens_details", None)
+        read = _int(getattr(details, "cached_tokens", None)) if details is not None else 0
+    write = _int(getattr(usage, "cache_creation_input_tokens", None))
+    return read, write
+
+
 class GlobalStats(PydanticBaseModel):
     """This class tracks usage numbers (costs etc.) across all instances."""
 
@@ -296,6 +323,10 @@ class InstanceStats(PydanticBaseModel):
     tokens_sent: int = 0
     tokens_received: int = 0
     api_calls: int = 0
+    cache_read_tokens: int = 0
+    """Input tokens the provider served from its prompt cache. A subset of `tokens_sent`."""
+    cache_write_tokens: int = 0
+    """Input tokens the provider charged for writing a new cache entry. A subset of `tokens_sent`."""
 
     def __add__(self, other: InstanceStats) -> InstanceStats:
         return InstanceStats(
@@ -629,18 +660,30 @@ class LiteLLMModel(AbstractModel):
         """Cost limit for the model. Returns 0 if there is no limit."""
         return self.config.per_instance_cost_limit
 
-    def _update_stats(self, *, input_tokens: int, output_tokens: int, cost: float) -> None:
+    def _update_stats(
+        self,
+        *,
+        input_tokens: int,
+        output_tokens: int,
+        cost: float,
+        cache_read_tokens: int = 0,
+        cache_write_tokens: int = 0,
+    ) -> None:
         with GLOBAL_STATS_LOCK:
             GLOBAL_STATS.total_cost += cost
         self.stats.instance_cost += cost
         self.stats.tokens_sent += input_tokens
         self.stats.tokens_received += output_tokens
+        self.stats.cache_read_tokens += cache_read_tokens
+        self.stats.cache_write_tokens += cache_write_tokens
         self.stats.api_calls += 1
 
         # Log updated cost values to std. err
         self.logger.debug(
             f"input_tokens={input_tokens:,}, "
             f"output_tokens={output_tokens:,}, "
+            f"cache_read_tokens={cache_read_tokens:,}, "
+            f"cache_write_tokens={cache_write_tokens:,}, "
             f"instance_cost={self.stats.instance_cost:.2f}, "
             f"cost={cost:.2f}",
         )
@@ -777,7 +820,14 @@ class LiteLLMModel(AbstractModel):
             ):
                 output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
             outputs.append(output_dict)
-        self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
+        cache_read_tokens, cache_write_tokens = extract_cache_usage(response)
+        self._update_stats(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=cost,
+            cache_read_tokens=cache_read_tokens,
+            cache_write_tokens=cache_write_tokens,
+        )
         return outputs
 
     def _query(
