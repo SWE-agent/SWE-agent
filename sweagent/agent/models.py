@@ -780,29 +780,23 @@ class LiteLLMModel(AbstractModel):
         self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
         return outputs
 
-    def _query(
-        self, messages: list[dict[str, str]], n: int | None = None, temperature: float | None = None
-    ) -> list[dict]:
-        if n is None:
-            return self._single_query(messages, temperature=temperature)
-        outputs = []
-        # not needed for openai, but oh well.
-        for _ in range(n):
-            outputs.extend(self._single_query(messages))
-        return outputs
+    def _retrying_single_query(self, messages: list[dict[str, str]], temperature: float | None = None) -> list[dict]:
+        """Run one sample, retrying transient failures.
 
-    def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
-        messages = self._history_to_messages(history)
+        The retry sits around a *single* sample rather than around the whole
+        `n`-sample batch: a sample that already completed has been paid for, and
+        re-issuing it because a later sample failed bills it twice.
+        """
 
         def retry_warning(retry_state: RetryCallState):
             exception_info = ""
-            if attempt.retry_state.outcome is not None and attempt.retry_state.outcome.exception() is not None:
-                exception = attempt.retry_state.outcome.exception()
+            if retry_state.outcome is not None and retry_state.outcome.exception() is not None:
+                exception = retry_state.outcome.exception()
                 exception_info = f" due to {exception.__class__.__name__}: {str(exception)}"
 
             self.logger.warning(
-                f"Retrying LM query: attempt {attempt.retry_state.attempt_number} "
-                f"(slept for {attempt.retry_state.idle_for:.2f}s)"
+                f"Retrying LM query: attempt {retry_state.attempt_number} "
+                f"(slept for {retry_state.idle_for:.2f}s)"
                 f"{exception_info}"
             )
 
@@ -832,7 +826,23 @@ class LiteLLMModel(AbstractModel):
             before_sleep=retry_warning,
         ):
             with attempt:
-                result = self._query(messages, n=n, temperature=temperature)
+                result = self._single_query(messages, temperature=temperature)
+        return result
+
+    def _query(
+        self, messages: list[dict[str, str]], n: int | None = None, temperature: float | None = None
+    ) -> list[dict]:
+        if n is None:
+            return self._retrying_single_query(messages, temperature=temperature)
+        outputs = []
+        # not needed for openai, but oh well.
+        for _ in range(n):
+            outputs.extend(self._retrying_single_query(messages, temperature=temperature))
+        return outputs
+
+    def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
+        messages = self._history_to_messages(history)
+        result = self._query(messages, n=n, temperature=temperature)
         if n is None or n == 1:
             return result[0]
         return result
