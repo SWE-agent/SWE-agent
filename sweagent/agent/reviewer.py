@@ -294,7 +294,18 @@ class Chooser:
         self.config = config
         self.model = get_model(config.model, ToolConfig(parse_function=ActionParser()))
         self.logger = get_logger("chooser", emoji="🧠")
+        # Kept on the instance rather than built per call so that its spend is
+        # still readable through `stats` after `choose` returns.
+        self._preselector: Preselector | None = None
         # self.summarizer = Summarizer(config.summarizer, self.model) if config.summarizer else None
+
+    @property
+    def stats(self) -> InstanceStats:
+        """Everything this chooser spent, preselector included."""
+        stats = self.model.stats
+        if self._preselector is not None:
+            stats = stats + self._preselector.model.stats
+        return stats
 
     def interpret(self, response: str) -> int:
         # Use regex to extract the last number of the response
@@ -336,7 +347,9 @@ class Chooser:
         else:
             self.logger.debug(f"Got only {n_submitted} submitted submissions, disabling exit status filtering")
         if self.config.preselector and len(selected_indices) > 2:
-            preselector = Preselector(self.config.preselector)
+            if self._preselector is None:
+                self._preselector = Preselector(self.config.preselector)
+            preselector = self._preselector
             try:
                 preselector_output = preselector.choose(problem_statement, [input[i] for i in selected_indices])
             except Exception as e:
@@ -508,11 +521,14 @@ class ChooserRetryLoop(AbstractRetryLoop):
 
     @property
     def _total_stats(self) -> InstanceStats:
-        return sum((s.model_stats for s in self._submissions), start=InstanceStats())
+        # The chooser only runs in `get_best()`, after the retry loop has ended,
+        # so folding it in here reports its spend without changing the budget
+        # decisions in `retry()` - where it is still zero.
+        return sum((s.model_stats for s in self._submissions), start=InstanceStats()) + self._chooser.stats
 
     @property
     def review_model_stats(self) -> InstanceStats:
-        return InstanceStats()
+        return self._chooser.stats
 
     @property
     def _n_attempts(self) -> int:
