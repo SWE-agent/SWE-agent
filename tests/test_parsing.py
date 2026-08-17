@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 from jinja2 import Template
 
+from sweagent.agent.action_sampler import BinaryTrajectoryComparison
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
 from sweagent.tools.commands import Command
 from sweagent.tools.parsing import (
@@ -14,6 +15,7 @@ from sweagent.tools.parsing import (
     ThoughtActionParser,
     XMLThoughtActionParser,
 )
+from sweagent.tools.tools import ToolConfig, ToolHandler
 
 
 def test_action_parser():
@@ -34,6 +36,30 @@ def test_thought_action_parser():
     assert action == "ls -l\n"
     with pytest.raises(FormatError):
         parser({"message": "No code block"}, [])
+
+
+@pytest.mark.parametrize(
+    ("action", "expected"),
+    [
+        ("edit file.txt", True),
+        ("  edit file.txt", True),
+        ("str_replace_editor insert file.txt", True),
+        ("  str_replace_editor insert file.txt", True),
+        ("str_replace_editor str_replace file.txt", True),
+        ("  str_replace_editor str_replace file.txt", True),
+        ("cat file.txt", False),
+    ],
+)
+def test_binary_trajectory_comparison_detects_edit_actions(action: str, expected: bool):
+    tools = ToolHandler(ToolConfig(parse_function=ThoughtActionParser()))
+    sampler = BinaryTrajectoryComparison.__new__(BinaryTrajectoryComparison)
+    sampler._tools = tools
+    completion = {"message": f"Plan\n```\n{action}\n```"}
+
+    _, parsed_action = tools.parse_actions(completion)
+
+    assert tools.guard_multiline_input(parsed_action).strip() == action.strip()
+    assert sampler.contains_edits([completion]) is expected
 
 
 def test_xml_thought_action_parser():
