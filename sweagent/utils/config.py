@@ -45,6 +45,13 @@ def _convert_path_to_abspath(path: Path | str) -> Path:
     REPO_ROOT as base.
     """
     path = Path(path)
+    if not path.is_absolute() and path.root and not path.drive:
+        # POSIX-style absolute path on Windows (e.g. pointing inside the
+        # container): `Path("/x").is_absolute()` is False there because it
+        # lacks a drive, and resolving it would anchor it to the current
+        # drive. Leave it untouched. On POSIX, `is_absolute()` is True for
+        # such paths, so this branch only changes behavior on Windows.
+        return path
     root = Path(os.getenv("SWE_AGENT_CONFIG_ROOT", REPO_ROOT))
     assert root.is_dir()
     if not path.is_absolute():
