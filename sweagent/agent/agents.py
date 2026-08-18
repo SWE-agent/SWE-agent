@@ -21,6 +21,7 @@ from sweagent import __version__, get_agent_commit_hash, get_rex_commit_hash, ge
 from sweagent.agent.action_sampler import AbstractActionSampler, ActionSamplerConfig
 from sweagent.agent.history_processors import DefaultHistoryProcessor, HistoryProcessor
 from sweagent.agent.hooks.abstract import AbstractAgentHook, CombinedAgentHook
+from sweagent.agent.hooks.retry import CombinedRetryAgentHook, RetryAgentHook
 from sweagent.agent.models import (
     AbstractModel,
     HumanModel,
@@ -268,6 +269,7 @@ class RetryAgent(AbstractAgent):
         not the reviewer. Use self._total_instance_stats for the total stats.
         """
         self._chook = CombinedAgentHook()
+        self._retry_chook = CombinedRetryAgentHook()
         self._traj_path: Path | None = None
         self._problem_statement: ProblemStatement | None = None
         self._env: SWEEnv | None = None
@@ -286,6 +288,10 @@ class RetryAgent(AbstractAgent):
     def add_hook(self, hook: AbstractAgentHook) -> None:
         self._chook.add_hook(hook)
         self._hooks.append(hook)
+
+    def add_retry_hook(self, hook: RetryAgentHook) -> None:
+        """Register a hook for retry-attempt lifecycle events."""
+        self._retry_chook.add_hook(hook)
 
     def setup(
         self, env: SWEEnv, problem_statement: ProblemStatement | ProblemStatementConfig, output_dir: Path = Path(".")
@@ -316,6 +322,7 @@ class RetryAgent(AbstractAgent):
         assert self._problem_statement is not None
         assert self._env is not None
         self._agent.setup(env=self._env, problem_statement=self._problem_statement, output_dir=sub_agent_output_dir)
+        self._retry_chook.on_attempt_start(attempt_index=self._i_attempt, agent_name=agent_config.name)
         return self._agent
 
     def _next_attempt(self) -> None:
@@ -354,6 +361,11 @@ class RetryAgent(AbstractAgent):
         self._agent.save_trajectory()
         self._attempt_data.append(self._agent.get_trajectory_data())
         self._total_instance_attempt_stats += self._agent.model.stats
+        self._retry_chook.on_attempt_done(
+            attempt_index=self._i_attempt,
+            trajectory=self._agent.trajectory,
+            info=self._agent.info,
+        )
 
     def get_trajectory_data(self, choose: bool) -> dict[str, Any]:
         """Get all data that we save in .traj files."""
