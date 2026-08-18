@@ -17,6 +17,25 @@ PYTHON_MINIMUM_VERSION = (3, 11)
 SWEREX_MINIMUM_VERSION = "1.2.0"
 SWEREX_RECOMMENDED_VERSION = "1.2.1"
 
+
+def _tolerate_unencodable_output() -> None:
+    """Degrade emoji output instead of crashing where stdio cannot encode it.
+
+    On terminals whose encoding cannot represent emoji (e.g. cp1252, the default
+    on many Windows consoles), writing our emoji-decorated banner or help text
+    raises `UnicodeEncodeError`, so even `sweagent --help` dies before printing
+    anything. Replace unencodable characters on such streams instead.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            "👋".encode(stream.encoding or "utf-8")
+        except (AttributeError, LookupError, UnicodeEncodeError):
+            if hasattr(stream, "reconfigure"):
+                stream.reconfigure(errors="replace")
+
+
+_tolerate_unencodable_output()
+
 # Monkey patch the logger to use our implementation
 log_swerex.get_logger = partial(get_logger, emoji="🦖")
 
