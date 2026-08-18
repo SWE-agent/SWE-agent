@@ -7,6 +7,7 @@ import uuid
 from collections.abc import Callable
 from pathlib import Path, PurePath
 
+from rich.console import Console
 from rich.logging import RichHandler
 from rich.text import Text
 
@@ -67,6 +68,7 @@ def get_logger(name: str, *, emoji: str = "") -> logging.Logger:
         return logger
     handler = _RichHandlerWithEmoji(
         emoji=emoji,
+        console=Console(stderr=True),
         show_time=bool(os.environ.get("SWE_AGENT_LOG_TIME", False)),
         show_path=False,
     )

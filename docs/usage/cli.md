@@ -14,7 +14,7 @@ You can run `sweagent --help` to see all subcommands.
 
 * `sweagent inspect` or `sweagent i`: Open the command line inspector ([more information](inspector.md)).
 * `sweagent inspector` or `sweagent I`: Open the web-based inspector ([more information](inspector.md)).
-* `sweagent quick-stats` or `sweagent qs`: When executed in a directory with trajectories, displays a summary of `exit_status` and more
+* `sweagent quick-stats` or `sweagent qs`: When executed in a directory with trajectories, displays a summary of `exit_status` and more. Use `--format json` for machine-readable output.
 
 ## Advanced scripts
 
