@@ -8,7 +8,7 @@ You can run `sweagent --help` to see all subcommands.
 
 * `sweagent run`: Run SWE-agent on a single issue ([tutorial](hello_world.md)).
 * `sweagent run-batch`: Run SWE-agent on a batch of issues ([tutorial](batch_mode.md)).
-* `sweagent run-replay`: Replay a trajectory file or a demo file. This means that you take all actions from the trajectory and execute them again in the environment. Useful for debugging your [tools](../config/tools.md) or for building new [demonstrations](../config/demonstrations.md).
+* `sweagent run-replay`: Replay a trajectory file or a demo file. This means that you take all actions from the trajectory and execute them again in the environment. Useful for debugging your [tools](../config/tools.md) or for building new [demonstrations](../config/demonstrations.md). Use `--validate_only` to check the replay config and actions without creating a deployment.
 
 ## Inspecting runs
 

@@ -52,6 +52,8 @@ class RunReplayConfig(BaseSettings, cli_implicit_flags=False):
     """Path to a .env file to load environment variables from."""
     update_config: list[Path] = []
     """Additional config files to merge with the replay config."""
+    validate_only: bool = False
+    """Validate the replay input without creating a deployment or executing actions."""
 
     # pydantic config
     model_config = SettingsConfigDict(extra="forbid", env_prefix="SWE_AGENT_")
@@ -60,7 +62,8 @@ class RunReplayConfig(BaseSettings, cli_implicit_flags=False):
         if self.output_dir == Path("DEFAULT"):
             user_id = getuser()
             self.output_dir = Path.cwd() / "trajectories" / user_id / f"replay___{self.traj_path.stem}"
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        if not self.validate_only:
+            self.output_dir.mkdir(parents=True, exist_ok=True)
 
 
 class RunReplay:
@@ -71,16 +74,18 @@ class RunReplay:
         deployment: AbstractDeployment | None,
         output_dir: Path,
         update_config: list[Path] | None = None,
+        validate_only: bool = False,
         _catch_errors: bool = False,
         _require_zero_exit_code: bool = False,
     ):
         self.traj_path = traj_path
         self.output_dir = output_dir
-        self._replay_action_trajs_path = Path(tempfile.NamedTemporaryFile(suffix=".json").name)
+        self._replay_action_trajs_path: Path | None = None
         self.logger = get_logger("swea-run", emoji="🏃")
         self._catch_errors = _catch_errors
         self._require_zero_exit_code = _require_zero_exit_code
         self._update_config = update_config if update_config is not None else []
+        self.validate_only = validate_only
 
         if traj_path.suffix == ".yaml":
             self._traj_data = yaml.safe_load(traj_path.read_text())
@@ -88,7 +93,9 @@ class RunReplay:
             self._traj_data = json.loads(traj_path.read_text())
         self.config = self._get_config_from_agent(self._traj_data)
 
-        if deployment is None:
+        if validate_only:
+            self.deployment = None
+        elif deployment is None:
             self.deployment = get_deployment(self.config.env.deployment)
         else:
             self.deployment = deployment
@@ -117,7 +124,6 @@ class RunReplay:
 
             config = RunSingleConfig.model_validate(merged_dict)
 
-        config.agent.model = ReplayModelConfig(replay_path=self._replay_action_trajs_path)
         return config
 
     @property
@@ -127,15 +133,20 @@ class RunReplay:
     @classmethod
     def from_config(cls, config: RunReplayConfig, **kwargs) -> Self:
         load_environment_variables(config.env_var_path)
+        deployment = None
+        if not config.validate_only and config.deployment:
+            deployment = get_deployment(config.deployment)
         return cls(
             traj_path=config.traj_path,
-            deployment=get_deployment(config.deployment) if config.deployment else None,
+            deployment=deployment,
             output_dir=config.output_dir,
             update_config=config.update_config,
+            validate_only=config.validate_only,
             **kwargs,
         )
 
-    def _create_actions_file(self) -> None:
+    def validate(self) -> list[dict[str, Any]]:
+        """Validate the replay input and return its normalized assistant actions."""
         # Verify config compatibility with tool calls
         has_tool_calls = any(
             "tool_calls" in item and item["tool_calls"] is not None
@@ -168,9 +179,15 @@ class RunReplay:
         if len(actions) == 0:
             msg = "No actions found in trajectory"
             raise ValueError(msg)
+        return actions
+
+    def _create_actions_file(self, actions: list[dict[str, Any]]) -> None:
+        self._replay_action_trajs_path = Path(tempfile.NamedTemporaryFile(suffix=".json").name)
         self._replay_action_trajs_path.write_text(json.dumps({self.instance_id: actions}))
+        self.config.agent.model = ReplayModelConfig(replay_path=self._replay_action_trajs_path)
 
     def _get_env(self) -> SWEEnv:
+        assert self.deployment is not None
         return SWEEnv(
             deployment=self.deployment,
             repo=self.config.env.repo,
@@ -192,7 +209,11 @@ class RunReplay:
         )
 
     def main(self):
-        self._create_actions_file()
+        actions = self.validate()
+        if self.validate_only:
+            self.logger.info("Replay input is valid: %s", self.traj_path)
+            return
+        self._create_actions_file(actions)
         run_single = self._get_run_single()
         run_single.agent.replay_config = RunSingleConfig(
             agent=self.config.agent,
