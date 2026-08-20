@@ -104,3 +104,43 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+def test_stop_sequences_forwarded():
+    """Configured stop sequences are forwarded to litellm.completion."""
+    stop = ["Human:", "AI:"]
+    model = get_model(
+        GenericAPIModelConfig(
+            name="gpt-4o",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            stop=stop,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    mock_response = _make_mock_response()
+    with patch("litellm.completion", return_value=mock_response) as mock_completion:
+        model.query(History([{"role": "user", "content": "test"}]))
+        mock_completion.assert_called_once()
+        assert mock_completion.call_args.kwargs.get("stop") == stop
+
+
+def test_stop_sequences_omitted_by_default():
+    """No stop kwarg is passed to litellm.completion when none are configured."""
+    model = get_model(
+        GenericAPIModelConfig(
+            name="gpt-4o",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    mock_response = _make_mock_response()
+    with patch("litellm.completion", return_value=mock_response) as mock_completion:
+        model.query(History([{"role": "user", "content": "test"}]))
+        mock_completion.assert_called_once()
+        assert "stop" not in mock_completion.call_args.kwargs
