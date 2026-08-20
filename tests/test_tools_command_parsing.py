@@ -92,8 +92,9 @@ def test_argument_name_patterns():
         )
         assert command.arguments[0].name == name
 
-    # Invalid names
-    invalid_names = ["123starts_with_number", ""]
+    # Invalid names, including names that only become invalid after a valid prefix
+    # (these are accepted by re.match but must be rejected by re.fullmatch)
+    invalid_names = ["123starts_with_number", "", "arg name", "a/b", "arg;rm -rf", "arg$name"]
 
     for name in invalid_names:
         with pytest.raises(ValueError, match="Invalid argument name"):

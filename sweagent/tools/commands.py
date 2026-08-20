@@ -196,7 +196,7 @@ class Command(BaseModel):
             msg = f"Command '{self.name}': Duplicate argument names: {duplicates}"
             raise ValueError(msg)
         for arg in self.arguments:
-            if not re.match(ARGUMENT_NAME_PATTERN, arg.name):
+            if not re.fullmatch(ARGUMENT_NAME_PATTERN, arg.name):
                 msg = f"Command '{self.name}': Invalid argument name: '{arg.name}'"
                 raise ValueError(msg)
         if (invoke_keys := _extract_keys(self.invoke_format)) != {arg.name for arg in self.arguments}:
