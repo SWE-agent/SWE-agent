@@ -1,23 +1,50 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
+from swerex.deployment.config import DummyDeploymentConfig
 
 from sweagent import CONFIG_DIR, TOOLS_DIR
 from sweagent.agent.agents import DefaultAgentConfig
 from sweagent.agent.models import InstantEmptySubmitModelConfig
+from sweagent.agent.problem_statement import TextProblemStatement
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.run.common import BasicCLI
 from sweagent.run.hooks.abstract import RunHook
 from sweagent.run.run_single import RunSingle, RunSingleConfig
 from sweagent.tools.bundle import Bundle
+from sweagent.types import AgentRunResult
 
 
 class RaisesExceptionHook(RunHook):
     def on_instance_start(self, *args, **kwargs):
         msg = "test exception"
         raise ValueError(msg)
+
+
+def test_run_single_config_snapshot_is_reusable(tmp_path: Path):
+    config = RunSingleConfig(
+        env=EnvironmentConfig(deployment=DummyDeploymentConfig()),
+        agent=DefaultAgentConfig(model=InstantEmptySubmitModelConfig()),
+        problem_statement=TextProblemStatement(text="Test issue", id="test-instance"),
+        output_dir=tmp_path,
+    )
+    agent = MagicMock()
+    agent.replay_config = config
+    agent.run.return_value = AgentRunResult(info={"submission": None, "exit_status": "submitted"}, trajectory=[])
+
+    RunSingle(
+        env=MagicMock(),
+        agent=agent,
+        problem_statement=config.problem_statement,
+        output_dir=tmp_path,
+    ).run()
+
+    snapshot = tmp_path / config.problem_statement.id / "config.yaml"
+    loaded = BasicCLI(RunSingleConfig).get_config(["--config", str(snapshot)])
+    assert loaded.model_dump(mode="json") == config.model_dump(mode="json")
 
 
 @pytest.mark.slow
