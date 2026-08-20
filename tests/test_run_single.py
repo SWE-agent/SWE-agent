@@ -7,6 +7,7 @@ import pytest
 from sweagent import CONFIG_DIR, TOOLS_DIR
 from sweagent.agent.agents import DefaultAgentConfig
 from sweagent.agent.models import InstantEmptySubmitModelConfig
+from sweagent.agent.problem_statement import EmptyProblemStatement
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.run.common import BasicCLI
 from sweagent.run.hooks.abstract import RunHook
@@ -18,6 +19,20 @@ class RaisesExceptionHook(RunHook):
     def on_instance_start(self, *args, **kwargs):
         msg = "test exception"
         raise ValueError(msg)
+
+
+def test_default_output_dir_uses_trajectory_dir(monkeypatch, tmp_path):
+    monkeypatch.setattr("sweagent.run.run_single.TRAJECTORY_DIR", tmp_path)
+    monkeypatch.setattr("sweagent.run.run_single.getpass.getuser", lambda: "test-user")
+    model = InstantEmptySubmitModelConfig()
+    config = RunSingleConfig(
+        agent=DefaultAgentConfig(model=model),
+        problem_statement=EmptyProblemStatement(id="test-instance"),
+    )
+
+    config.set_default_output_dir()
+
+    assert config.output_dir == tmp_path / "test-user" / f"no_config__{model.id}___test-instance"
 
 
 @pytest.mark.slow
