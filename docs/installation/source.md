@@ -6,6 +6,14 @@ Installation from source is the preferred way to set up SWE-agent on your machin
     ```bash
     git clone https://github.com/SWE-agent/SWE-agent.git
     ```
+
+    On Windows, a checkout can fail with `Filename too long` when the clone path is deep. Enable Git's long-path support for the clone:
+
+    ```bash
+    git -c core.longpaths=true clone https://github.com/SWE-agent/SWE-agent.git
+    ```
+
+    Alternatively, enable it once with `git config --global core.longpaths true` before cloning
 2. Run
     ```
     python -m pip install --upgrade pip && pip install --editable .
