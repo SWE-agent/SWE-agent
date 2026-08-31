@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 from sweagent.agent.models import InstanceStats
 from sweagent.agent.reviewer import (
-    ReviewSubmission,
     ReviewerResult,
+    ReviewSubmission,
     ScoreRetryLoop,
 )
 
