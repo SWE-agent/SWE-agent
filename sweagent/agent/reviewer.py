@@ -652,7 +652,14 @@ class ScoreRetryLoop(AbstractRetryLoop):
         max_score = np.max(scores)
         max_indices = [i for i, s in enumerate(scores) if np.isclose(s, max_score)]
         # If there are multiple submissions with the same score, choose the shortest one
-        max_indices = sorted(max_indices, key=lambda i: self._submissions[i].model_stats.api_calls or float("inf"))
+        max_indices = sorted(
+            max_indices,
+            key=lambda i: (
+                self._submissions[i].model_stats.api_calls
+                if self._submissions[i].model_stats.api_calls is not None
+                else float("inf")
+            ),
+        )
         chosen_idx = max_indices[0]
         self.logger.info(f"Best submission: {chosen_idx}")
         return chosen_idx
