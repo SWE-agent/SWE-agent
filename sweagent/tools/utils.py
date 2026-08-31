@@ -68,7 +68,7 @@ def get_signature(cmd):
                     signature += f" <{param}>"
                 else:
                     signature += f" [<{param}>]"
-            signature += f"\n{list(cmd.arguments[-1].keys())[0]}\n{cmd.end_name}"
+            signature += f"\n{cmd.arguments[-1].name}\n{cmd.end_name}"
     return signature
 
 
