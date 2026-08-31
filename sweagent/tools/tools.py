@@ -207,7 +207,7 @@ class ToolConfig(BaseModel):
         if not self.enable_bash_tool and not (
             isinstance(self.parse_function, FunctionCallingParser) or isinstance(self.parse_function, JsonParser)
         ):
-            msg = f"Bash tool can only be disabled if {FunctionCallingParser.type} parser or {JsonParser.type} parser is used."
+            msg = "Bash tool can only be disabled if function_calling parser or json parser is used."
             raise ValueError(msg)
 
         self.multi_line_command_endings = multi_line_command_endings
