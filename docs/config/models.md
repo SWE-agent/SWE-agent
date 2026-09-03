@@ -18,7 +18,7 @@ Remember to unset spending limits and configure the action parser if you cannot 
 
 For "cost" tracking with local models, you can optionally provide a custom `litellm_model_registry` file in your configuration.
 This allows you to define custom pricing information for your local models instead of disabling cost limits entirely.
-See the [local models section](../installation/keys.md#custom-model-registry-for-cost-tracking) for detailed instructions.
+See the [local models section](../installation/keys.md#using-local-models) for detailed instructions.
 
 ### Anthropic Claude
 
@@ -39,7 +39,7 @@ agent:
     Other history processors might interfere with the prompt caching
     if you are not careful.
     However, if your history processor is only modifying the last observation,
-    you can combine as done [here](https://github.com/SWE-agent/SWE-agent/blob/main/config/sweagent_heavy.yaml).
+    you can combine as done [here](https://github.com/SWE-agent/SWE-agent/blob/main/config/benchmarks/250212_sweagent_heavy_sbl.yaml).
 
 Anthropic Claude gives you 4 cache break points per key.
 You need two of them for a single agent run (because the break points are both used to retrieve and set the cache).
@@ -53,8 +53,8 @@ grep -o "cached_tokens=[0-9]*" django__django-11299.debug.log
 ```
 
 Note that the maximum number of output tokens of Claude 3.7/4 can be extended with extra headers.
-See [this issue in litellm](https://github.com/BerriAI/litellm/issues/8984) and and [swe-agent PR #1035](https://github.com/SWE-agent/SWE-agent/issues/1035)
-for omore information.
+See [this issue in litellm](https://github.com/BerriAI/litellm/issues/8984) and [swe-agent issue #1035](https://github.com/SWE-agent/SWE-agent/issues/1035)
+for more information.
 Since [#1036](https://github.com/SWE-agent/SWE-agent/pull/1036) you can also manually set the maximum output tokens and override the information
 from `litellm`.
 
