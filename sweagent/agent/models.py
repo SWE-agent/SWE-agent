@@ -335,10 +335,9 @@ def _handle_raise_commands(action: str) -> None:
     elif action.startswith("raise_function_calling"):
         parts = shlex.split(action)
         error_code = parts[1]
-        if len(parts) == 3:
-            error_message = parts[2]
+        error_message = parts[2] if len(parts) == 3 else ""
         assert len(parts) < 4
-        raise FunctionCallingFormatError(error_message, error_code)  # type: ignore
+        raise FunctionCallingFormatError(error_message, error_code)
 
 
 class HumanModel(AbstractModel):
