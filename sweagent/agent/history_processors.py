@@ -206,9 +206,18 @@ class TagToolCallObservations(BaseModel):
         return bool(self.function_names & function_names)
 
     def __call__(self, history: History) -> History:
+        # LastNObservations only honors keep_output on observation entries.
+        # Tag the observation that follows a matching action (and the action itself).
+        tag_next_observation = False
         for entry in history:
-            if self._should_add_tags(entry):
+            if entry.get("message_type") == "action" and self._should_add_tags(entry):
                 self._add_tags(entry)
+                tag_next_observation = True
+            elif entry.get("message_type") == "observation" and tag_next_observation:
+                self._add_tags(entry)
+                tag_next_observation = False
+            else:
+                tag_next_observation = False
         return history
 
 
