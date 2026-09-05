@@ -39,7 +39,8 @@ def merge_nested_dicts(d1: dict, d2: dict) -> dict:
     """
     for key, value in d2.items():
         if isinstance(value, dict):
-            d1[key] = merge_nested_dicts(d1.get(key, {}), value)
+            previous = d1.get(key)
+            d1[key] = merge_nested_dicts(previous if isinstance(previous, dict) else {}, value)
         else:
             d1[key] = value
     return d1
