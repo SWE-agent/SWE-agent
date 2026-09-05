@@ -117,11 +117,12 @@ class SimpleBatchInstance(BaseModel):
         deployment = deployment.model_copy(deep=True)
 
         if "issue_images" in self.extra_fields:
+            extra_fields = self.extra_fields.copy()
             problem_statement = SWEBenchMultimodalProblemStatement(
                 text=self.problem_statement,
-                issue_images=self.extra_fields.pop("issue_images"),
+                issue_images=extra_fields.pop("issue_images"),
                 id=self.instance_id,
-                extra_fields=self.extra_fields,
+                extra_fields=extra_fields,
             )
         else:
             problem_statement = TextProblemStatement(

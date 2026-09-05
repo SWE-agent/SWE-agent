@@ -3,7 +3,7 @@ import json
 import pytest
 from swerex.deployment.config import DockerDeploymentConfig
 
-from sweagent.agent.problem_statement import TextProblemStatement
+from sweagent.agent.problem_statement import SWEBenchMultimodalProblemStatement, TextProblemStatement
 from sweagent.environment.repo import GithubRepoConfig, PreExistingRepoConfig
 from sweagent.run.batch_instances import BatchInstance, SimpleBatchInstance, SWEBenchInstances, _slice_spec_to_slice
 
@@ -45,6 +45,28 @@ def test_simple_batch_treats_github_urls_as_github_repos():
 
     assert isinstance(instance.env.repo, GithubRepoConfig)
     assert instance.env.repo.github_url == "https://github.com/SWE-agent/test-repo"
+
+
+@pytest.mark.parametrize("issue_images", [[], ["https://example.com/screenshot.png"]])
+def test_simple_batch_multimodal_conversion_preserves_source(issue_images):
+    simple = SimpleBatchInstance(
+        image_name="python:3.11",
+        problem_statement="Fix the layout",
+        instance_id="multimodal-example",
+        extra_fields={"issue_images": issue_images, "hint": "Keep the sidebar"},
+    )
+    original = simple.model_dump()
+    deployment = DockerDeploymentConfig(image="python:3.11")
+
+    first = simple.to_full_batch_instance(deployment)
+    second = simple.to_full_batch_instance(deployment)
+
+    for instance in (first, second):
+        assert isinstance(instance.problem_statement, SWEBenchMultimodalProblemStatement)
+        assert instance.problem_statement.issue_images == issue_images
+        assert instance.problem_statement.extra_fields == {"hint": "Keep the sidebar"}
+    assert first.model_dump() == second.model_dump()
+    assert simple.model_dump() == original
 
 
 def test_slice_spec_to_slice():
