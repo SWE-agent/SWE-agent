@@ -114,6 +114,7 @@ def _get_associated_commit_urls(org: str, repo: str, issue_number: str, *, token
     # so we have to go through the events to check if there's a commit
     events = api.issues.list_events(org, repo, issue_number)  # type: ignore
     commit_urls = []
+    closing_reference = re.compile(rf"\b(?:fixes|closes)\s+#{re.escape(issue_number)}\b", re.IGNORECASE)
     for event in events:
         if event.event != "referenced":
             continue
@@ -121,7 +122,7 @@ def _get_associated_commit_urls(org: str, repo: str, issue_number: str, *, token
             continue
         commit = api.repos.get_commit(org, repo, event.commit_id)  # type: ignore
         message = commit.commit.message
-        if f"fixes #{issue_number}" in message.lower() or f"closes #{issue_number}" in message.lower():
+        if closing_reference.search(message):
             commit_urls.append(commit.html_url)
     return commit_urls
 
