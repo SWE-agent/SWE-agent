@@ -94,6 +94,11 @@ def main(search: str, replace: str, replace_all: bool):
     # Turn \\n into \n etc., i.e., undo the escaping
     # args.replace = args.replace.encode("utf8").decode("unicode_escape")
 
+    if not search:
+        print("Search text must not be empty. Use insert to add new text.")
+        print(RETRY_WITH_OUTPUT_TOKEN)
+        exit(2)
+
     if search == replace:
         print(_NO_CHANGES_MADE_MSG)
         print(RETRY_WITH_OUTPUT_TOKEN)

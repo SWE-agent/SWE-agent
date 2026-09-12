@@ -24,6 +24,8 @@ class TextNotFound(Exception):
 
 
 def _find_all(a_str: str, sub: str):
+    if not sub:
+        raise ValueError("Search text must not be empty")
     start = 0
     while True:
         start = a_str.find(sub, start)

@@ -151,3 +151,10 @@ def test_print_window_new_file(with_tmp_env_file, capsys):
     print(captured.out)
     expected = _DEFAULT_WINDOW_OUTPUT_NEW_FILE.format(path=wfile.path.resolve())
     assert captured.out == expected
+
+
+def test_find_all_rejects_empty_search():
+    from windowed_file import _find_all
+
+    with pytest.raises(ValueError, match="Search text must not be empty"):
+        next(_find_all("some content", ""))
