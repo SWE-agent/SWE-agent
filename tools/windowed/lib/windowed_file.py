@@ -298,8 +298,7 @@ class WindowedFile:
             if not self.text:
                 new_text = text
             else:
-                current_text = self.text[1:] if self.text.startswith("\n") else self.text
-                new_text = text + "\n" + current_text
+                new_text = text + "\n" + self.text
             insert_line = 0
         else:
             # Insert at specific line
