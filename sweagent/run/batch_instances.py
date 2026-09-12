@@ -69,8 +69,7 @@ def _filter_batch_items(
 ) -> list[BatchInstance]:
     if shuffle:
         instances = sorted(instances.copy(), key=lambda x: x.problem_statement.id)
-        random.seed(42)
-        random.shuffle(instances)
+        random.Random(42).shuffle(instances)
     before_filter = len(instances)
     instances = [instance for instance in instances if re.match(filter_, instance.problem_statement.id)]
     after_filter = len(instances)
