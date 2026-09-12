@@ -2,6 +2,7 @@ import base64
 import hashlib
 import os
 import uuid
+from contextlib import closing
 from pathlib import Path
 from typing import Any, Literal, Protocol
 from urllib.parse import urlparse
@@ -235,33 +236,33 @@ class SWEBenchMultimodalProblemStatement(_BuiltinProblemStatementBase):
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.133 Safari/537.36"
             }
-            response = requests.get(url, headers=headers, timeout=30, stream=True)
-            response.raise_for_status()
-            # strip any media type parameters (e.g. "image/png; charset=utf-8") before validation
-            content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
-            if content_type == "image/jpg":
-                content_type = "image/jpeg"
-            if content_type not in VALID_IMAGE_MIME_TYPES:
-                logger.warning(f"Unsupported image MIME type '{content_type}' for URL: {url}. Not encoding image.")
-                return None
-            max_size = 10 * 1024 * 1024  # 10MB
-            content_length = response.headers.get("content-length")
-            if content_length and int(content_length) > max_size:
-                logger.warning(f"Image too large ({content_length} bytes) for URL: {url}")
-                return None
-            image_data = b""
-            for chunk in response.iter_content(chunk_size=8192):
-                image_data += chunk
-                if len(image_data) > max_size:
-                    logger.warning(f"Image too large (>{max_size} bytes) for URL: {url}")
+            with closing(requests.get(url, headers=headers, timeout=30, stream=True)) as response:
+                response.raise_for_status()
+                # strip any media type parameters (e.g. "image/png; charset=utf-8") before validation
+                content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+                if content_type == "image/jpg":
+                    content_type = "image/jpeg"
+                if content_type not in VALID_IMAGE_MIME_TYPES:
+                    logger.warning(f"Unsupported image MIME type '{content_type}' for URL: {url}. Not encoding image.")
                     return None
-            if not image_data:
-                logger.warning(f"Empty image data for URL: {url}")
-                return None
-            b64_data = base64.b64encode(image_data).decode("ascii")
-            markdown = f"![{url}](data:{content_type};base64,{b64_data})"
-            logger.info(f"Successfully processed image from {url} ({len(image_data)} bytes, {content_type})")
-            return markdown
+                max_size = 10 * 1024 * 1024  # 10MB
+                content_length = response.headers.get("content-length")
+                if content_length and int(content_length) > max_size:
+                    logger.warning(f"Image too large ({content_length} bytes) for URL: {url}")
+                    return None
+                image_data = b""
+                for chunk in response.iter_content(chunk_size=8192):
+                    image_data += chunk
+                    if len(image_data) > max_size:
+                        logger.warning(f"Image too large (>{max_size} bytes) for URL: {url}")
+                        return None
+                if not image_data:
+                    logger.warning(f"Empty image data for URL: {url}")
+                    return None
+                b64_data = base64.b64encode(image_data).decode("ascii")
+                markdown = f"![{url}](data:{content_type};base64,{b64_data})"
+                logger.info(f"Successfully processed image from {url} ({len(image_data)} bytes, {content_type})")
+                return markdown
 
         except requests.exceptions.Timeout:
             logger.warning(f"Timeout downloading image from {url}")
