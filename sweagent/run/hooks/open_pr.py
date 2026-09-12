@@ -211,6 +211,8 @@ def format_trajectory_markdown(trajectory: list[dict[str, str]], char_limit: int
 
     steps = []
     current_length = len(prefix_text) + len(suffix_text)
+    if char_limit is not None and current_length > char_limit:
+        return ""
 
     for i, step in enumerate(trajectory):
         step_strs = [
@@ -230,8 +232,12 @@ def format_trajectory_markdown(trajectory: list[dict[str, str]], char_limit: int
 
         # Check if adding this step would exceed the character limit
         if char_limit is not None and current_length + separator_length + len(step_text) > char_limit:
-            if i > 0:
-                steps.append("\n\n... (truncated due to length limit)")
+            marker = "\n\n... (truncated due to length limit)"
+            # Make room for the marker without cutting through a step's code fence.
+            while steps and current_length + len(marker) > char_limit:
+                current_length -= len(steps.pop())
+            if current_length + len(marker) <= char_limit:
+                steps.append(marker)
             break
 
         if steps:
