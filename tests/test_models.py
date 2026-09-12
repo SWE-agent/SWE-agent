@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 from pydantic import SecretStr
 
 from sweagent import __version__
@@ -104,3 +105,15 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+@pytest.mark.parametrize("action", ["echo café", "cat 文档.txt", "echo 😀", "echo café\\necho résumé"])
+def test_human_model_preserves_unicode_when_unescaping(action, monkeypatch):
+    from sweagent.agent.models import HumanModel, HumanModelConfig
+    from sweagent.tools.tools import ToolConfig
+
+    monkeypatch.setattr(HumanModel, "_load_readline_history", lambda self: None)
+    monkeypatch.setattr(HumanModel, "_save_readline_history", lambda self: None)
+    monkeypatch.setattr("builtins.input", lambda prompt: action)
+    model = HumanModel(HumanModelConfig(), ToolConfig())
+    assert model.query([])["message"] == action.replace("\\n", "\n")
