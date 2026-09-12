@@ -353,9 +353,22 @@ class ImageParsingHistoryProcessor(BaseModel):
         if entry.get("role") not in ["user", "tool"]:
             return entry
         entry = copy.deepcopy(entry)
-        content = _get_content_text(entry)
-        segments = self._parse_images(content)
-        if any(seg["type"] == "image_url" for seg in segments):
+        content = entry["content"]
+        if isinstance(content, str):
+            segments = self._parse_images(content)
+            if any(seg["type"] == "image_url" for seg in segments):
+                entry["content"] = segments
+        else:
+            segments = []
+            for item in content:
+                if item.get("type") != "text":
+                    segments.append(item)
+                    continue
+                parsed = self._parse_images(item["text"])
+                if any(seg["type"] == "image_url" for seg in parsed):
+                    segments.extend(parsed)
+                else:
+                    segments.append(item)
             entry["content"] = segments
         return entry
 
