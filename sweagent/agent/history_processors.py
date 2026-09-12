@@ -244,6 +244,7 @@ class ClosedWindowHistoryProcessor(BaseModel):
                 if file_match:
                     file = file_match.group(1)
                 else:
+                    new_history.append(data)
                     continue
                 if file in windows:
                     start = matches[0].start()
