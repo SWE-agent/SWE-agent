@@ -208,6 +208,9 @@ class XMLThoughtActionParser(AbstractParseFunction, BaseModel):
         )  # start after the last <command> tag
         end_thought = model_response["message"].rfind("<command>")  # end before the last <command> tag
         end_action = model_response["message"].rfind("</command>")  # end before the last </command> tag
+        if end_action < start_action:
+            msg = "The final <command> tag has no matching closing tag."
+            raise FormatError(msg)
         restart_thought = model_response["message"].rfind("</command>") + len(
             "</command>"
         )  # start after the last </command> tag

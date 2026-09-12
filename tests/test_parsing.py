@@ -129,3 +129,17 @@ def test_function_calling_parser_error_message():
     template = Template(FunctionCallingParser().error_message)
     exc1 = FunctionCallingFormatError("test", "missing")
     assert "did not use any tool calls" in template.render(**exc1.extra_info, exception_message=exc1.message)
+
+
+@pytest.mark.parametrize("message", ["</command>ls<command>", "<command>ls</command>unfinished<command>"])
+def test_xml_thought_action_rejects_reversed_final_tags(message):
+    with pytest.raises(FormatError):
+        XMLThoughtActionParser()({"message": message}, [])
+
+
+def test_xml_thought_action_uses_last_complete_command():
+    thought, action = XMLThoughtActionParser()(
+        {"message": "earlier <command>pwd</command> then <command>ls</command> done"}, []
+    )
+    assert action == "ls"
+    assert thought == "earlier <command>pwd</command> then  done"
