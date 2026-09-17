@@ -788,7 +788,7 @@ class LiteLLMModel(AbstractModel):
         outputs = []
         # not needed for openai, but oh well.
         for _ in range(n):
-            outputs.extend(self._single_query(messages))
+            outputs.extend(self._single_query(messages, temperature=temperature))
         return outputs
 
     def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
