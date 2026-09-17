@@ -1104,7 +1104,7 @@ class DefaultAgent(AbstractAgent):
             )
 
         n_format_fails = 0
-        while n_format_fails < self.max_requeries:
+        while n_format_fails <= self.max_requeries:
             try:
                 return self.forward(history)
 

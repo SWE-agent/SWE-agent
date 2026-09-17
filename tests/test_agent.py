@@ -117,6 +117,45 @@ def test_exit_format(dummy_env: SWEEnv, thought_action_agent: DefaultAgent, tmp_
     assert r.info["exit_status"] == "exit_format"  # type: ignore
 
 
+def test_max_requeries_zero_still_makes_one_attempt(dummy_env: SWEEnv, tmp_path):
+    """max_requeries counts requeries after an error, so 0 still queries the model once."""
+    agent = DefaultAgent.from_config(
+        DefaultAgentConfig(
+            model=InstantEmptySubmitModelConfig(),
+            tools=ToolConfig(parse_function=Identity()),
+            max_requeries=0,
+        )
+    )
+    agent.model = PredeterminedTestModel(["echo hello", "exit"])  # type: ignore
+    dummy_env.deployment.runtime.run_in_session_outputs = BashObservation(output="hello", exit_code=0)  # type: ignore
+    r = agent.run(
+        problem_statement=EmptyProblemStatement(),
+        env=dummy_env,
+        output_dir=tmp_path,
+    )
+    assert r.info["exit_status"] == "exit_command"  # type: ignore
+    assert [step["action"] for step in r.trajectory] == ["echo hello", "exit"]
+
+
+def test_max_requeries_one_allows_one_requery(dummy_env: SWEEnv, tmp_path):
+    """max_requeries=1 allows the first attempt plus one requery, i.e. two model queries."""
+    agent = DefaultAgent.from_config(
+        DefaultAgentConfig(
+            model=InstantEmptySubmitModelConfig(),
+            tools=ToolConfig(parse_function=ThoughtActionParser()),
+            max_requeries=1,
+        )
+    )
+    agent.model = PredeterminedTestModel(["a", "b"])  # type: ignore
+    r = agent.run(
+        problem_statement=EmptyProblemStatement(),
+        env=dummy_env,
+        output_dir=tmp_path,
+    )
+    assert r.info["exit_status"] == "exit_format"  # type: ignore
+    assert agent.model._idx == 1  # type: ignore
+
+
 def test_exit_blocklist(dummy_env: SWEEnv, test_agent: DefaultAgent, tmp_path):
     test_agent.model = PredeterminedTestModel(["vim", "python", "su", "nano"])  # type: ignore
     r = test_agent.run(
