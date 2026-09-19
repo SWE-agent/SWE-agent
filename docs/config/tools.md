@@ -4,7 +4,7 @@
 
     See the [tutorial on adding a new tool](../usage/adding_custom_tools.md)!
 
-Tools are one one of the ways to configure and extend the agent.
+Tools are one of the ways to configure and extend the agent.
 
 Typically, there is
 
