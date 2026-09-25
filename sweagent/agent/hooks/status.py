@@ -18,6 +18,7 @@ class SetStatusAgentHook(AbstractAgentHook):
         self._i_step = 0
         # Costs will be reset for the next attempt
         self._previous_cost += self._cost
+        self._cost = 0.0
 
     def _update(self, message: str):
         self._callable(self._id, message)
