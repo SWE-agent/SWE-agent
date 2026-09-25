@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import json
 from unittest.mock import MagicMock, patch
 
 from pydantic import SecretStr
 
 from sweagent import __version__
-from sweagent.agent.models import GenericAPIModelConfig, get_model
-from sweagent.tools.parsing import Identity
+from sweagent.agent.models import GenericAPIModelConfig, ReplayModel, ReplayModelConfig, get_model
+from sweagent.tools.parsing import FunctionCallingParser, Identity
 from sweagent.tools.tools import ToolConfig
 from sweagent.types import History
 
@@ -104,3 +105,120 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+def _make_replay_model(replay_file, parse_function=Identity()) -> ReplayModel:
+    return ReplayModel(
+        ReplayModelConfig(replay_path=replay_file),
+        ToolConfig(parse_function=parse_function),
+    )
+
+
+def _write_replay_file(path, *instances: list) -> None:
+    """Write a replay file with one `{instance_id: [actions]}` object per line,
+    the format written by `run-replay`'s `_create_actions_file`."""
+    path.write_text("\n".join(json.dumps({f"instance-{i + 1}": actions}) for i, actions in enumerate(instances)))
+
+
+def test_replay_model_advances_after_dict_submit_action(tmp_path):
+    """Replaying the submit action of an instance written as a dict (the format
+    written by `run-replay`) must advance to the next instance's actions."""
+    replay_file = tmp_path / "replay.json"
+    _write_replay_file(
+        replay_file,
+        [
+            {"message": "Let's start.\n```\necho step-one-1\n```"},
+            {"message": "Done, submitting.\n```\nsubmit\n```"},
+        ],
+        [{"message": "```\necho step-two-1\n```"}],
+    )
+    model = _make_replay_model(replay_file)
+    history = History([])
+    assert model.query(history) == {"message": "Let's start.\n```\necho step-one-1\n```"}
+    assert model.query(history) == {"message": "Done, submitting.\n```\nsubmit\n```"}
+    # The submit action ended instance 1, so the next query replays instance 2
+    assert model.query(history) == {"message": "```\necho step-two-1\n```"}
+
+
+def test_replay_model_advances_after_function_calling_submit_action(tmp_path):
+    """Replaying a submit tool call must advance to the next instance's actions."""
+    replay_file = tmp_path / "replay.json"
+    submit_call = {
+        "type": "function",
+        "id": "call_submit",
+        "function": {"name": "submit", "arguments": "{}"},
+    }
+    _write_replay_file(
+        replay_file,
+        [
+            {
+                "message": "Editing the file.",
+                "tool_calls": [
+                    {"type": "function", "id": "call_1", "function": {"name": "str_replace_editor", "arguments": "{}"}}
+                ],
+            },
+            {"message": "Calling `submit` to submit.", "tool_calls": [submit_call]},
+        ],
+        [{"message": "```\necho step-two-1\n```"}],
+    )
+    model = _make_replay_model(replay_file, parse_function=FunctionCallingParser())
+    history = History([])
+    assert model.query(history)["tool_calls"][0]["function"]["name"] == "str_replace_editor"
+    assert model.query(history)["tool_calls"] == [submit_call]
+    # The submit action ended instance 1, so the next query replays instance 2
+    assert model.query(history) == {"message": "```\necho step-two-1\n```"}
+
+
+def test_replay_model_advances_after_string_submit_action(tmp_path):
+    """Legacy replay files store plain string actions with `submit` as the last one."""
+    replay_file = tmp_path / "replay.json"
+    _write_replay_file(replay_file, ["echo one", "submit"], ["echo two"])
+    model = _make_replay_model(replay_file)
+    history = History([])
+    assert model.query(history) == {"message": "echo one"}
+    assert model.query(history) == {"message": "submit"}
+    # The submit action ended instance 1, so the next query replays instance 2
+    assert model.query(history) == {"message": "echo two"}
+
+
+def test_replay_model_advances_after_auto_submission(tmp_path):
+    """If a replayed trajectory ends without a submit action, the auto-generated
+    submission should advance to the next instance's actions instead of
+    auto-submitting over and over."""
+    replay_file = tmp_path / "replay.json"
+    _write_replay_file(
+        replay_file,
+        [{"message": "```\necho step-one-1\n```"}],
+        [{"message": "```\necho step-two-1\n```"}],
+    )
+    model = _make_replay_model(replay_file)
+    history = History([])
+    assert model.query(history) == {"message": "```\necho step-one-1\n```"}
+    # Instance 1 ran out of actions without submitting, so the model submits now
+    assert model.query(history) == {"message": "```\nsubmit\n```"}
+    # The next query replays instance 2 instead of auto-submitting again
+    assert model.query(history) == {"message": "```\necho step-two-1\n```"}
+
+
+def test_replay_model_auto_submits_when_file_exhausted(tmp_path):
+    """Queries after the last instance's submit action auto-submit instead of crashing."""
+    replay_file = tmp_path / "replay.json"
+    _write_replay_file(
+        replay_file,
+        [
+            {"message": "```\necho step-one-1\n```"},
+            {"message": "```\nsubmit\n```"},
+        ],
+        [
+            {"message": "```\necho step-two-1\n```"},
+            {"message": "```\nsubmit\n```"},
+        ],
+    )
+    model = _make_replay_model(replay_file)
+    history = History([])
+    assert model.query(history) == {"message": "```\necho step-one-1\n```"}
+    assert model.query(history) == {"message": "```\nsubmit\n```"}
+    assert model.query(history) == {"message": "```\necho step-two-1\n```"}
+    assert model.query(history) == {"message": "```\nsubmit\n```"}
+    # Both instances are done: any further query submits instead of crashing
+    assert model.query(history) == {"message": "```\nsubmit\n```"}

@@ -487,12 +487,22 @@ class ReplayModel(AbstractModel):
         self._replay_idx += 1
         self._action_idx = 0
 
+    def _is_submit_action(self, action: str | dict) -> bool:
+        """Check if the replayed action is the submit command. Handles legacy string
+        actions as well as the dict actions written by `run-replay`, where the submit
+        command is either part of the message or a tool call.
+        """
+        if isinstance(action, dict):
+            if tool_calls := action.get("tool_calls"):
+                return any(tool_call["function"]["name"] == self.submit_command for tool_call in tool_calls)
+            action = action.get("message", "")
+        return any(line.strip() == self.submit_command for line in action.splitlines())
+
     def query(self, history: History) -> dict:
         """Logic for tracking which replay action to pass to SWEEnv"""
         self.stats.api_calls += 1
-        actions = self._replays[self._replay_idx]
         try:
-            action = actions[self._action_idx]
+            action = self._replays[self._replay_idx][self._action_idx]
         except IndexError:
             # log error
             self.logger.error("Reached end of replay trajectory without submitting. Submitting now.")
@@ -516,9 +526,8 @@ class ReplayModel(AbstractModel):
         self._action_idx += 1
 
         # Assuming `submit` is always last action of replay trajectory
-        if isinstance(action, str) and action == "submit":
+        if self._is_submit_action(action):
             self._next_replay()
-            return {"message": action}
 
         # Handle both dict and string actions
         if isinstance(action, dict):
