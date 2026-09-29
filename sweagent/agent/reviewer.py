@@ -439,7 +439,7 @@ class Reviewer(AbstractReviewer):
                 score = self.interpret(answer)
             except ValueError as e:
                 self.logger.warning(f"Could not interpret response: {answer!r}, got {e}")
-                # Out-of-range and unparseable replies are ignored as answers,
+                # Out-of-range and unparsable replies are ignored as answers,
                 # but still count as failed samples in the score aggregate.
                 accepts.append(-100.0)
                 continue

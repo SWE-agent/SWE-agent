@@ -51,7 +51,7 @@ def _submission() -> ReviewSubmission:
 @pytest.mark.parametrize(
     "failed_response",
     [RuntimeError("query failed"), "not a score", "Score: 42"],
-    ids=["query exception", "unparseable reply", "out of range score"],
+    ids=["query exception", "unparsable reply", "out of range score"],
 )
 def test_failed_judge_samples_keep_the_configured_denominator(failed_response: object) -> None:
     reviewer = _reviewer([failed_response, "Score: 9", "Score: 9", "Score: 9", "Score: 9"])
