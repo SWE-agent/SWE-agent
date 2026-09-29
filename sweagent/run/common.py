@@ -33,9 +33,11 @@ def _shorten_strings(data, *, max_length=30):
         The modified data structure with shortened strings.
     """
     if isinstance(data, str):
-        # Shorten the string if it exceeds the max length
         data = data.replace("\n", "\\n")
-        return data[: max_length - 3] + "..."
+        # Shorten the string only if it exceeds the max length
+        if len(data) > max_length:
+            return data[: max_length - 3] + "..."
+        return data
     elif isinstance(data, list):
         # Recursively process each item in the list
         return [_shorten_strings(item, max_length=max_length) for item in data]
