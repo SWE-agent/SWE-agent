@@ -166,8 +166,9 @@ class ReviewerConfig(BaseModel):
     n_sample: int = 5
     reduce_by_std: float = 0.0
     score_range: tuple[float | None, float | None] = (None, None)
-    #: If set, we assume that the score is in the range [score_range[0], score_range[1]]
-    #: Reviews that are outside this range will be ignored
+    #: If set, we assume that the score is in the range [score_range[0], score_range[1]].
+    #: Out-of-range samples are omitted from ReviewerResult.outputs but receive the
+    #: failed-sample score in aggregation.
 
     type: Literal["reviewer"] = "reviewer"
 
@@ -429,16 +430,26 @@ class Reviewer(AbstractReviewer):
                 answer = self._model.query(messages)["message"]
             except Exception as e:
                 self.logger.warning(f"Query failed: {e}", exc_info=True)
+                # Keep failed samples in the aggregate. Otherwise a partially
+                # failing judge could make one optimistic answer represent all
+                # n_sample reviews (and remove the reduce_by_std penalty).
+                accepts.append(-100.0)
                 continue
             try:
                 score = self.interpret(answer)
             except ValueError as e:
                 self.logger.warning(f"Could not interpret response: {answer!r}, got {e}")
+                # Out-of-range and unparseable replies are ignored as answers,
+                # but still count as failed samples in the score aggregate.
+                accepts.append(-100.0)
                 continue
             answers.append(answer)
             accepts.append(score)
-        if not accepts:
+        if not answers:
             answers = ["No valid scores found, failing submission"]
+        if not accepts:
+            # Preserve the existing fail-closed behavior for an empty sample
+            # configuration.
             accepts = [-100.0]
         accept = sum(accepts) / len(accepts) - penalty
         std = np.std(accepts).item()
