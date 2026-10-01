@@ -305,7 +305,7 @@ class CacheControlHistoryProcessor(BaseModel):
 class RemoveRegex(BaseModel):
     """This history processor can remove arbitrary content from history items"""
 
-    remove: list[str] = ["<diff>.*</diff>"]
+    remove: list[str] = ["<diff>.*?</diff>"]
     """Regex patterns to remove from history items"""
 
     keep_last: int = 0
