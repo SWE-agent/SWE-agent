@@ -1,3 +1,6 @@
+import copy
+from unittest.mock import Mock
+
 import pytest
 import yaml
 from swerex.exceptions import SwerexException
@@ -260,3 +263,47 @@ def test_function_calling(dummy_env: SWEEnv, function_calling_agent: DefaultAgen
     assert not r.done, "Expected not done, because we haven't submitted yet"
     assert r.action.strip() == "ls", "Expected the tool call to be executed"
     assert "file1 file2" in r.observation, "Expected the tool call to return the output of the command"
+
+
+@pytest.mark.parametrize("failure", ["blocked", "invalid_json", "multiple_calls"])
+def test_function_call_requery_keeps_call_context(failure, dummy_env, function_calling_agent, tmp_path):
+    agent = function_calling_agent
+    agent.setup(dummy_env, EmptyProblemStatement(), output_dir=tmp_path)
+    original_history = copy.deepcopy(agent.history)
+    call = {
+        "id": "failed-call",
+        "type": "function",
+        "function": {"name": "bash", "arguments": '{"command": "vim"}'},
+    }
+    if failure == "invalid_json":
+        call["function"]["arguments"] = "{"
+    calls = [call]
+    if failure == "multiple_calls":
+        calls.append({**call, "id": "second-failed-call"})
+    thinking = [{"type": "thinking", "thinking": "Plan", "signature": "test-signature"}]
+    corrected = {
+        "message": "",
+        "tool_calls": [
+            {
+                "id": "corrected-call",
+                "type": "function",
+                "function": {"name": "bash", "arguments": '{"command": "echo fixed"}'},
+            }
+        ],
+    }
+    agent.model.query = Mock(
+        side_effect=[
+            {"message": "", "tool_calls": calls, "thinking_blocks": thinking},
+            corrected,
+        ]
+    )
+    step = agent.forward_with_handling(agent.messages)
+    assert step.action == "echo fixed"
+    retry = agent.model.query.call_args_list[1].args[0]
+    assistant = retry[len(original_history)]
+    assert assistant["tool_calls"] == calls
+    assert assistant["thinking_blocks"] == thinking
+    responses = retry[len(original_history) + 1 :]
+    assert [response["tool_call_ids"] for response in responses] == [[call["id"]] for call in calls]
+    assert all(response["role"] == "tool" and response["content"] for response in responses)
+    assert agent.history == original_history

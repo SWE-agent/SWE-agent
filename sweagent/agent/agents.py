@@ -787,8 +787,14 @@ class DefaultAgent(AbstractAgent):
         self.traj_path.write_text(json.dumps(data, indent=2))
 
     def get_model_requery_history(
-        self, error_template: str, *, output: str, **kwargs: str | int | float | bool | None
-    ) -> list[dict[str, str]]:
+        self,
+        error_template: str,
+        *,
+        output: str,
+        tool_calls: list[dict[str, Any]] | None = None,
+        thinking_blocks: list[dict[str, Any]] | None = None,
+        **kwargs: str | int | float | bool | None,
+    ) -> list[dict[str, Any]]:
         """Ask the model to correct after a hitting one of the following errors:
 
         1. Malformatted output (could not parse action)
@@ -815,10 +821,30 @@ class DefaultAgent(AbstractAgent):
 
         self.logger.warning(f"{error_template}")
 
-        return self.messages + [
-            {"role": "assistant", "content": output, "agent": self.name, "message_type": "assistant"},
-            {"role": "user", "content": error_template, "agent": self.name, "message_type": "user"},
-        ]
+        assistant: dict[str, Any] = {
+            "role": "assistant",
+            "content": output,
+            "agent": self.name,
+            "message_type": "assistant",
+        }
+        if tool_calls:
+            assistant["tool_calls"] = tool_calls
+            assistant["thinking_blocks"] = thinking_blocks
+            # Every call needs a matching response, including when the parser
+            # rejects a completion containing more than one call.
+            observations = [
+                {
+                    "role": "tool",
+                    "content": error_template,
+                    "agent": self.name,
+                    "message_type": "observation",
+                    "tool_call_ids": [call["id"]],
+                }
+                for call in tool_calls
+            ]
+        else:
+            observations = [{"role": "user", "content": error_template, "agent": self.name, "message_type": "user"}]
+        return self.messages + [assistant, *observations]
 
     def attempt_autosubmission_after_error(self, step: StepOutput) -> StepOutput:
         """For most exceptions, we attempt to still extract the patch and submit that.
@@ -1041,12 +1067,13 @@ class DefaultAgent(AbstractAgent):
             else:
                 output = self.model.query(history)  # type: ignore
             step.output = output["message"]
-            # todo: Can't I override the parser in __init__?
-            step.thought, step.action = self.tools.parse_actions(output)
             step.thinking_blocks = output.get("thinking_blocks", [])
             if output.get("tool_calls") is not None:
                 step.tool_call_ids = [call["id"] for call in output["tool_calls"]]
                 step.tool_calls = output["tool_calls"]
+            # Keep the original calls even when parsing fails, so the model
+            # can see and correct the rejected arguments on the next query.
+            step.thought, step.action = self.tools.parse_actions(output)
             self.logger.info(f"💭 THOUGHT\n{step.thought}\n\n🎬 ACTION\n{step.action.strip()}")
             self._chook.on_actions_generated(step=step)
             return self.handle_action(step)
@@ -1098,6 +1125,7 @@ class DefaultAgent(AbstractAgent):
                     pass
             return self.get_model_requery_history(
                 error_template=template,
+                tool_calls=step.tool_calls,
                 **step.to_template_format_dict(),
                 **getattr(exception, "extra_info", {}),
                 exception_message=exception_message,
