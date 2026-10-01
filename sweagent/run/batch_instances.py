@@ -150,8 +150,12 @@ class SimpleBatchInstance(BaseModel):
 
         deployment.image = self.image_name  # type: ignore
 
-        if isinstance(deployment, DockerDeploymentConfig) and deployment.python_standalone_dir is None:
-            # Note: you can disable this by setting python_standalone_dir to ""
+        if (
+            isinstance(deployment, DockerDeploymentConfig)
+            and deployment.python_standalone_dir is None
+            and "python_standalone_dir" not in deployment.model_fields_set
+        ):
+            # Default to standalone Python only when the option was omitted.
             deployment.python_standalone_dir = "/root"  # type: ignore
 
         return BatchInstance(
@@ -402,7 +406,11 @@ class SWESmithInstances(BaseModel, AbstractInstanceSource):
             deployment = self.deployment.model_copy(deep=True)
             deployment.image = instance_dict["image_name"]  # type: ignore
 
-            if isinstance(deployment, DockerDeploymentConfig) and deployment.python_standalone_dir is None:
+            if (
+                isinstance(deployment, DockerDeploymentConfig)
+                and deployment.python_standalone_dir is None
+                and "python_standalone_dir" not in deployment.model_fields_set
+            ):
                 deployment.python_standalone_dir = "/root"  # type: ignore
 
             instance_id = instance_dict["instance_id"]

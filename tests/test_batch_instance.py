@@ -66,3 +66,32 @@ def test_get_swe_bench_instances():
             instances = instance_config.get_instance_configs()
             assert len(instances) > 0
             assert all(isinstance(instance, BatchInstance) for instance in instances)
+
+
+@pytest.mark.parametrize("loader", ["simple", "swesmith"])
+@pytest.mark.parametrize(
+    ("options", "expected"),
+    [
+        ({}, "/root"),
+        ({"python_standalone_dir": None}, None),
+        ({"python_standalone_dir": ""}, ""),
+        ({"python_standalone_dir": "/opt/python"}, "/opt/python"),
+    ],
+)
+def test_batch_preserves_explicit_python_standalone_dir(loader, options, expected, tmp_path):
+    from sweagent.run.batch_instances import SWESmithInstances
+
+    deployment = DockerDeploymentConfig(image="python:3.11", **options)
+    original = deployment.model_dump()
+    if loader == "simple":
+        instance = SimpleBatchInstance(
+            image_name="test-image", problem_statement="Fix bug", instance_id="test"
+        ).to_full_batch_instance(deployment)
+    else:
+        path = tmp_path / "instances.json"
+        path.write_text(
+            json.dumps([{"image_name": "test-image", "problem_statement": "Fix bug", "instance_id": "test"}])
+        )
+        instance = SWESmithInstances(path=path, deployment=deployment).get_instance_configs()[0]
+    assert instance.env.deployment.python_standalone_dir == expected
+    assert deployment.model_dump() == original
