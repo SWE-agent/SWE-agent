@@ -45,6 +45,7 @@ from sweagent.exceptions import (
     FormatError,
     TotalCostLimitExceededError,
 )
+from sweagent.superfast import shadow_gate
 from sweagent.tools.parsing import (
     ActionOnlyParser,
     ThoughtActionParser,
@@ -1024,6 +1025,11 @@ class DefaultAgent(AbstractAgent):
         # need to have the previous model output to format the requery template)
         step = StepOutput()
         step.query = copy.deepcopy(history)
+        # Superfast Decision Gate: shadow-mode front-door classifier. Off by
+        # default and fail-open. It runs on a background thread and only logs a
+        # routing recommendation; it never changes routing, skips the model call,
+        # or alters behavior. See sweagent/superfast/decision_gate.py.
+        shadow_gate(history)
         try:
             # Forward model and get actions
             self._chook.on_model_query(messages=history, agent=self.name)
