@@ -114,7 +114,7 @@ def _read_noul(answer: Any) -> float | None:
     """Return a noul probability only when it is a real finite value in [0, 1].
 
     Anything else (absent, NaN, Infinity, out of range, wrong type, or a bool)
-    is treated as "no evidence" so a mis-scaled or missing answer can never
+    is treated as "no evidence" so an out-of-range or missing answer can never
     produce a decisive fast route.
     """
     if not isinstance(answer, dict):
