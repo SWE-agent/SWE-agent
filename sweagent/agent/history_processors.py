@@ -114,7 +114,7 @@ class LastNObservations(BaseModel):
     n: int
     """Number of observations to keep."""
 
-    polling: int = 1
+    polling: int = Field(default=1, ge=1)
     """How many steps to keep between updating the number of observations to keep.
     This is useful for caching, as we want to remove more and more messages, but every
     time we change the history, we need to cache everything again.

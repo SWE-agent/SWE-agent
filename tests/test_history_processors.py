@@ -32,6 +32,23 @@ def test_last_n_observations(test_history: History):
     assert count_elided_observations(new_history) == expected_elided_observations
 
 
+@pytest.mark.parametrize("polling", [0, -1, -5])
+def test_last_n_observations_rejects_nonpositive_polling(polling):
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="polling"):
+        LastNObservations(n=3, polling=polling)
+
+
+@pytest.mark.parametrize("polling", [1, 2, 3])
+def test_last_n_observations_polling_keeps_recent_output(polling):
+    history = [{"role": "user", "message_type": "observation", "content": f"output {i}"} for i in range(10)]
+    result = LastNObservations(n=3, polling=polling)(history)
+    assert result[0]["content"] == "output 0"
+    assert [entry["content"] for entry in result[-3:]] == ["output 7", "output 8", "output 9"]
+    assert count_elided_observations(result) == max(0, (10 // polling) * polling - 3 - 1)
+
+
 def test_add_tag_to_edits(test_history: History):
     processor = TagToolCallObservations(tags={"test"}, function_names={"edit"})
     new_history = processor(test_history)
