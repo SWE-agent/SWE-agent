@@ -60,10 +60,10 @@ def _set_cache_control(entry: HistoryItem) -> None:
             }
         ]
     else:
-        entry["content"][0]["cache_control"] = {"type": "ephemeral"}
+        entry["content"][-1]["cache_control"] = {"type": "ephemeral"}
     if entry["role"] == "tool":
         # Workaround for weird bug
-        entry["content"][0].pop("cache_control", None)
+        entry["content"][-1].pop("cache_control", None)
         entry["cache_control"] = {"type": "ephemeral"}
 
 
@@ -294,6 +294,7 @@ class CacheControlHistoryProcessor(BaseModel):
             if (
                 n_tagged < self.last_n_messages
                 and entry["role"] in self.tagged_roles
+                and entry["content"]
                 and i_entry >= self.last_n_messages_offset
             ):
                 _set_cache_control(entry)
