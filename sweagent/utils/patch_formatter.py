@@ -107,7 +107,7 @@ class PatchFormatter:
         """
         out: dict[str, tuple[list[int], list[int]]] = {}
         for patch in self._patch:
-            if not patch.is_modified_file:
+            if not (patch.is_modified_file or patch.is_added_file) or patch.is_binary_file:
                 continue
             starts: list[int] = []
             stops: list[int] = []
@@ -127,7 +127,7 @@ class PatchFormatter:
     def _read_files(self, original: bool) -> None:
         for patch in self._patch:
             path = patch.path
-            if not patch.is_modified_file:
+            if not (patch.is_modified_file or patch.is_added_file) or patch.is_binary_file:
                 continue
             if original:
                 msg = "Original file reading not implemented"
