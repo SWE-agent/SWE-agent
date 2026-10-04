@@ -308,6 +308,13 @@ class RunBatch:
         # Either catch and silence exception, or raise _BreakLoop to stop the loop
         # over the instances
         try:
+            # Record this attempt before startup. A successful run replaces the empty
+            # patch, while a failed rerun cannot leave an earlier prediction behind.
+            save_predictions(
+                self.output_dir,
+                instance.problem_statement.id,
+                AgentRunResult(info={"submission": ""}, trajectory=[]),
+            )
             result = self._run_instance(instance)
         except KeyboardInterrupt:
             raise _BreakLoop
