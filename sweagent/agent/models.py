@@ -133,9 +133,9 @@ class GenericAPIModelConfig(PydanticBaseModel):
     max_output_tokens: int | None = None
     """If set, this will override the max output tokens for the model that we usually look
     up from `litellm.model_cost`.
-    Use this for local models or if you want to set a custom max output token limit.
-    If this value is exceeded, a `ContextWindowExceededError` will be raised.
-    Set this to 0 to disable this check.
+    Positive values are sent to the provider as `max_tokens`, overriding the same
+    key in `completion_kwargs`. The provider enforces the generation limit.
+    For non-Anthropic models, None or 0 leaves `completion_kwargs` unchanged.
     """
 
     litellm_model_registry: str | None = None
@@ -711,6 +711,8 @@ class LiteLLMModel(AbstractModel):
         completion_kwargs = copy.deepcopy(self.config.completion_kwargs)
         if self.lm_provider == "anthropic":
             completion_kwargs["max_tokens"] = self.model_max_output_tokens
+        elif self.config.max_output_tokens is not None and self.config.max_output_tokens > 0:
+            completion_kwargs["max_tokens"] = self.config.max_output_tokens
 
         # Add User-Agent header (don't override user-provided headers)
         if "extra_headers" not in completion_kwargs:
