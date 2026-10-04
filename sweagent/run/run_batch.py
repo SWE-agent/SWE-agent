@@ -333,10 +333,11 @@ class RunBatch:
     def _run_instance(self, instance: BatchInstance) -> AgentRunResult:
         output_dir = Path(self.output_dir) / instance.problem_statement.id
         output_dir.mkdir(parents=True, exist_ok=True)
-        self.agent_config.name = f"{instance.problem_statement.id}"
-        agent = get_agent_from_config(self.agent_config)
+        agent_config = self.agent_config.model_copy(deep=True)
+        agent_config.name = f"{instance.problem_statement.id}"
+        agent = get_agent_from_config(agent_config)
         single_run_replay_config = RunSingleConfig(
-            agent=self.agent_config,
+            agent=agent_config,
             problem_statement=instance.problem_statement,
             env=instance.env,
         )
