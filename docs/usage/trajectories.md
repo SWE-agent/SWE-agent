@@ -101,3 +101,6 @@ Here are a few more files that are generated with `sweagent run-batch`:
     * Trajectories can be turned into custom demonstrations for SWE-agent ([more information](../config/demonstrations.md)).
 
 {% include-markdown "../_footer.md" %}
+
+For a workflow to distinguish tool, control, environment, provider, and model
+failures, see [Diagnosing failed runs](failure_triage.md).

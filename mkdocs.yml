@@ -83,6 +83,7 @@ nav:
       - "Agent tools": "background/aci.md"
     - "Command line interface": "usage/cli.md"
     - "Output files": "usage/trajectories.md"
+    - "Diagnosing failures": "usage/failure_triage.md"
     - Configuration:
       - "index": "config/index.md"
       - "Config files": "config/config.md"
