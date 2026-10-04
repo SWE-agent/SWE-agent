@@ -33,14 +33,12 @@ main() {
         echo "No matches found for \"$search_term\" in $file"
         return
     fi
-    # Calculate total number of matches
+    # Calculate total number of matching lines
     local num_matches=$(echo "$matches" | wc -l | awk '{$1=$1; print $0}')
 
-    # calculate total number of lines matched
-    local num_lines=$(echo "$matches" | cut -d: -f1 | sort | uniq | wc -l | awk '{$1=$1; print $0}')
-    # if num_lines is > 100, print an error
-    if [ $num_lines -gt 100 ]; then
-        echo "More than $num_lines lines matched for \"$search_term\" in $file. Please narrow your search."
+    # If more than 100 lines matched, print an error
+    if [ $num_matches -gt 100 ]; then
+        echo "More than $num_matches lines matched for \"$search_term\" in $file. Please narrow your search."
         return
     fi
 
