@@ -689,6 +689,7 @@ class LiteLLMModel(AbstractModel):
                 del message["thinking_blocks"]
         input_tokens: int = litellm.utils.token_counter(
             messages=messages_no_cache_control,
+            tools=self.tools.tools if self.tools.use_function_calling else None,
             model=self.custom_tokenizer["identifier"] if self.custom_tokenizer is not None else self.config.name,
             custom_tokenizer=self.custom_tokenizer,
         )
