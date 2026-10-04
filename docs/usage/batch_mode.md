@@ -229,3 +229,18 @@ Path("all_preds.jsonl").write_text("\\n".join(jsonl))
 
     Take a look at our [competitive runs tutorial](competitive_runs.md)
     for more information on running on SWE-Bench and similar benchmarks.
+
+## Predictions from failed attempts
+
+Each instance that starts running gets an empty prediction before environment
+startup. A completed agent run replaces it with its submission. If startup or
+execution fails before a submission is saved, `preds.json` therefore retains the
+instance with an empty patch after predictions are merged. A failed rerun also
+replaces an earlier prediction, so the old patch cannot appear as the result of
+the new attempt. Instances skipped because an existing trajectory is complete
+keep their previous prediction.
+
+While a batch is running, a started instance may still have an empty prediction.
+Instances cancelled before they start do not get a new prediction. Check
+`run_batch_exit_statuses.yaml` and the instance logs to distinguish these cases;
+the prediction file alone is not a completion report.
