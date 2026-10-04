@@ -82,6 +82,29 @@ agent:
 
 as other values aren't supported by `o1`.
 
+## Limiting request tokens
+
+Set `agent.model.max_input_tokens` to reject a prompt locally when its estimated
+input exceeds your chosen limit. Set `agent.model.max_output_tokens` to a positive
+integer to send a generation cap to the provider, for example:
+
+```yaml
+agent:
+  model:
+    name: gpt-4o
+    max_input_tokens: 24000
+    max_output_tokens: 2000
+```
+
+The positive output limit overrides `completion_kwargs.max_tokens`. For
+non-Anthropic models, leaving it unset or setting it to zero preserves any
+limit supplied in `completion_kwargs`.
+
+A per-request cap does not enforce a tokens-per-minute quota across calls or
+batch workers. To reduce growing input, use the
+[`last_n_observations` history processor](../reference/history_processor_config.md);
+reduce batch concurrency when several requests share a provider quota.
+
 ## Using multiple keys
 
 We support rotating through multiple keys for [`run-batch`](../usage/batch_mode.md). For this, concatenate all keys with `:::` and set them via the `--agent.model.api_key` flag.
