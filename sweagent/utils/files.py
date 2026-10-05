@@ -21,7 +21,7 @@ def load_file(path: Path | str | None) -> Any:
         return json.loads(path.read_text())
     if path.suffix == ".jsonl":
         return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
-    if path.suffix == ".yaml":
+    if path.suffix in [".yaml", ".yml"]:
         return yaml.safe_load(path.read_text())
     msg = f"Unsupported file extension: {path.suffix}"
     raise NotImplementedError(msg)
