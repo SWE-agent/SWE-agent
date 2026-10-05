@@ -139,6 +139,7 @@ def remove_file_handler(id_: str) -> None:
         for log_name in _SET_UP_LOGGERS:
             logger = logging.getLogger(log_name)
             logger.removeHandler(handler)
+    handler.close()
 
 
 def _add_logger_name_to_stream_handler(logger: logging.Logger) -> None:
