@@ -32,7 +32,7 @@ main() {
     fi
 
     echo "Found $num_matches matches for \"$search_term\" in $dir:"
-    echo "$matches" | awk '{$2=$2; gsub(/^\.+\/+/, "./", $2); print $2 " ("$1" matches)"}'
+    echo "$matches" | awk '{count=$1; sub(/^[[:space:]]*[0-9]+[[:space:]]+/, ""); gsub(/^\.+\/+/, "./"); print $0 " ("count" matches)"}'
     echo "End of matches for \"$search_term\" in $dir"
 }
 
