@@ -163,3 +163,34 @@ def test_swe_bench_evaluate_unsupported_subset_raises_value_error(tmp_path, subs
     hook = SweBenchEvaluate(output_dir=tmp_path, subset=subset, split="dev")
     with pytest.raises(ValueError, match=subset):
         hook._get_sb_call(tmp_path / "preds.json")
+
+
+@pytest.mark.parametrize("n_reports", [0, 2])
+def test_swe_bench_evaluate_preserves_results_without_unique_report(tmp_path, n_reports):
+    results = tmp_path / "results.json"
+    results.write_text('{"resolved_ids": ["existing-result"]}')
+    report_dir = tmp_path / "sb-cli-reports"
+    report_dir.mkdir()
+    for i in range(n_reports):
+        (report_dir / f"report-{i}.json").write_text("{}")
+
+    hook = SweBenchEvaluate(output_dir=tmp_path, subset="lite", split="dev")
+    hook.move_sb_cli_report()
+
+    assert results.read_text() == '{"resolved_ids": ["existing-result"]}'
+    assert len(list(report_dir.glob("*.json"))) == n_reports
+
+
+def test_swe_bench_evaluate_replaces_results_with_unique_report(tmp_path):
+    results = tmp_path / "results.json"
+    results.write_text("old results")
+    report_dir = tmp_path / "sb-cli-reports"
+    report_dir.mkdir()
+    report = report_dir / "report.json"
+    report.write_text('{"resolved_ids": ["new-result"]}')
+
+    hook = SweBenchEvaluate(output_dir=tmp_path, subset="lite", split="dev")
+    hook.move_sb_cli_report()
+
+    assert results.read_text() == '{"resolved_ids": ["new-result"]}'
+    assert not report.exists()
