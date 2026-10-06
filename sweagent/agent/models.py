@@ -754,7 +754,7 @@ class LiteLLMModel(AbstractModel):
                 raise ModelConfigurationError(msg)
             cost = 0
         choices: litellm.types.utils.Choices = response.choices  # type: ignore
-        n_choices = n if n is not None else 1
+        n_choices = min(n if n is not None else 1, len(choices))
         outputs = []
         output_tokens = 0
         for i in range(n_choices):
@@ -788,13 +788,17 @@ class LiteLLMModel(AbstractModel):
         try:
             # Native sampling sends the prompt once and lets the provider return
             # multiple completions, which avoids multiplying prompt-token cost.
-            return self._single_query(messages, n=n, temperature=temperature)
+            outputs = self._single_query(messages, n=n, temperature=temperature)
         except litellm.exceptions.UnsupportedParamsError:
             # Preserve compatibility with providers that do not implement n>1.
             outputs = []
-            for _ in range(n):
-                outputs.extend(self._single_query(messages, temperature=temperature))
-            return outputs
+        # Some providers silently drop unsupported parameters when LiteLLM is
+        # configured with drop_params, returning fewer choices instead of
+        # raising UnsupportedParamsError. Top up those results through the
+        # existing one-sample fallback so _query still honors n.
+        for _ in range(n - len(outputs)):
+            outputs.extend(self._single_query(messages, temperature=temperature))
+        return outputs
 
     def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
         messages = self._history_to_messages(history)

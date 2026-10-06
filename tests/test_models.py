@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import litellm
 from pydantic import SecretStr
 
 from sweagent import __version__
@@ -57,6 +58,57 @@ def test_query_forwards_native_sample_count():
     assert len(outputs) == 3
     assert mock_completion.call_count == 1
     assert mock_completion.call_args.kwargs["n"] == 3
+
+
+def test_query_falls_back_when_native_sampling_is_unsupported():
+    model = get_model(
+        GenericAPIModelConfig(
+            name="gpt-4o",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    responses = [
+        litellm.exceptions.UnsupportedParamsError("provider does not support n"),
+        _make_mock_response("first"),
+        _make_mock_response("second"),
+        _make_mock_response("third"),
+    ]
+    with patch("litellm.completion", side_effect=responses) as mock_completion:
+        outputs = model._query([{"role": "user", "content": "test"}], n=3)
+
+    assert [output["message"] for output in outputs] == ["first", "second", "third"]
+    assert mock_completion.call_count == 4
+    assert mock_completion.call_args_list[0].kwargs["n"] == 3
+    assert all(call.kwargs["n"] is None for call in mock_completion.call_args_list[1:])
+
+
+def test_query_tops_up_when_native_sampling_returns_fewer_choices():
+    model = get_model(
+        GenericAPIModelConfig(
+            name="gpt-4o",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    short_response = _make_mock_response("native-1")
+    short_response.choices = [short_response.choices[0], _make_mock_response("native-2").choices[0]]
+    with patch(
+        "litellm.completion",
+        side_effect=[short_response, _make_mock_response("fallback")],
+    ) as mock_completion:
+        outputs = model._query([{"role": "user", "content": "test"}], n=3)
+
+    assert [output["message"] for output in outputs] == ["native-1", "native-2", "fallback"]
+    assert mock_completion.call_count == 2
+    assert mock_completion.call_args_list[0].kwargs["n"] == 3
+    assert mock_completion.call_args_list[1].kwargs["n"] is None
 
 
 def test_user_agent_header_default():
