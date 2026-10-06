@@ -97,12 +97,11 @@ class SweBenchEvaluate(RunHook):
         if not output_dir.exists():
             self.logger.warning("No SweBench report found at %s", output_dir)
             return
-        (self.output_dir / "results.json").unlink(missing_ok=True)
         reports = list(output_dir.glob("*.json"))
         if len(reports) != 1:
             self.logger.warning("Expected 1 SweBench report at %s, found %d. Cannot rename.", output_dir, len(reports))
             return
-        reports[0].rename(self.output_dir / "results.json")
+        reports[0].replace(self.output_dir / "results.json")
 
     def on_end(self) -> None:
         self.logger.info("Submitting results to SWE-Bench")
