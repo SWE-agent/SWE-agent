@@ -65,6 +65,7 @@ def main():
 
     print(json.dumps(state))
 
+
 if __name__ == "__main__":
     main()
 ```
