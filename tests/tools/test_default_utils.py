@@ -11,6 +11,8 @@ DEFAULT_TOOLS_DIR = TOOLS_DIR / "windowed"
 DEFAULT_TOOLS_BIN = DEFAULT_TOOLS_DIR / "bin"
 
 make_python_tool_importable(DEFAULT_TOOLS_DIR / "lib/windowed_file.py", "windowed_file")
+make_python_tool_importable(DEFAULT_TOOLS_BIN / "open", "open_tool")
+import open_tool  # type: ignore
 import windowed_file  # type: ignore
 from windowed_file import TextNotFound, WindowedFile  # type: ignore
 
@@ -74,6 +76,25 @@ def test_windowed_file_goto(windowed_file):
     assert wfile.line_range[0] == 47
     wfile.goto(100, mode="top")
     assert wfile.line_range[1] == 99
+
+
+def test_open_file_without_line_starts_at_top(windowed_file, capsys):
+    windowed_file.first_line = 50
+
+    open_tool.main(str(windowed_file.path))
+
+    assert WindowedFile().first_line == 0
+    assert "\n1:0\n" in capsys.readouterr().out
+
+
+def test_open_without_path_preserves_window(windowed_file, capsys):
+    windowed_file.first_line = 50
+
+    with pytest.raises(SystemExit, match="0"):
+        open_tool.main()
+
+    assert WindowedFile().first_line == 50
+    assert "\n51:50\n" in capsys.readouterr().out
 
 
 def test_windowed_file_scroll(windowed_file):
