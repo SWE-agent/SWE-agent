@@ -35,8 +35,7 @@ def main(path: Optional[str] = None, line_number: Optional[str] = None) -> None:
             print("Warning: Setting <line_number> to 1")
             line_num = 1
     else:
-        # Default to middle of window if no line number provided
-        line_num = wf.first_line
+        line_num = 1
 
     wf.goto(line_num - 1, mode="top")
     wf.print_window()
