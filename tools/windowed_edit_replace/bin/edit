@@ -14,8 +14,8 @@ else:
     sys.path.append(str(default_lib))
     sys.path.append(str(TOOLS_DIR / "registry" / "lib"))
 
-from windowed_file import FileNotOpened, TextNotFound, WindowedFile  # type: ignore
 from flake8_utils import flake8, format_flake8_output  # type: ignore
+from windowed_file import FileNotOpened, TextNotFound, WindowedFile  # type: ignore
 
 RETRY_WITH_OUTPUT_TOKEN = "###SWE-AGENT-RETRY-WITH-OUTPUT###"
 
@@ -76,10 +76,16 @@ DO NOT re-run the same failed edit command. Running it again will lead to the sa
 """
 
 
-def _str2bool(value: str) -> bool:
-    # `type=bool` would turn any non-empty string (including "false") into
-    # True, making it impossible to request a single replacement.
-    return value.strip().lower() in ("true", "1", "yes")
+def _str2bool(value: str | bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    val = value.strip().lower()
+    if val in ("true", "1", "yes", "t", "y"):
+        return True
+    if val in ("false", "0", "no", "f", "n", ""):
+        return False
+    msg = f"Boolean value expected, got {value!r}"
+    raise argparse.ArgumentTypeError(msg)
 
 
 def get_parser() -> argparse.ArgumentParser:
