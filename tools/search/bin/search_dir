@@ -15,7 +15,7 @@ main() {
         return
     fi
     dir=$(realpath "$dir")
-    local matches=$(find "$dir" -type f ! -path '*/.*' -exec grep -nIH -- "$search_term" {} + | cut -d: -f1 | sort | uniq -c)
+    local matches=$(find "$dir" -type f ! -path '*/.*' -exec grep -nIHZ -- "$search_term" {} + | tr '\000' '\n' | awk 'NR % 2 == 1' | sort | uniq -c)
     # if no matches, return
     if [ -z "$matches" ]; then
         echo "No matches found for \"$search_term\" in $dir"
