@@ -56,7 +56,7 @@ from sweagent.agent.problem_statement import SWEBenchMultimodalProblemStatement
 problem_statement = SWEBenchMultimodalProblemStatement(
     text="Fix the rendering issue",
     issue_images=["https://example.com/screenshot.png"],
-    disable_image_processing=True  # Skip image processing
+    disable_image_processing=True,  # Skip image processing
 )
 ```
 
@@ -107,10 +107,7 @@ from sweagent.agent.problem_statement import SWEBenchMultimodalProblemStatement
 
 problem_statement = SWEBenchMultimodalProblemStatement(
     text="Fix the rendering issue shown in the screenshots",
-    issue_images=[
-        "https://example.com/before.png",
-        "https://example.com/after.png"
-    ]
+    issue_images=["https://example.com/before.png", "https://example.com/after.png"],
 )
 
 # This downloads images and converts them to base64 markdown
