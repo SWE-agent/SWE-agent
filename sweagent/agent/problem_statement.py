@@ -119,7 +119,7 @@ class FileProblemStatement(_BuiltinProblemStatementBase):
             self.id = hashlib.sha256(self.get_problem_statement().encode()).hexdigest()[:6]
 
     def get_problem_statement(self) -> str:
-        return self.path.read_text()
+        return self.path.read_text(encoding="utf-8")
 
     def get_extra_fields(self) -> dict[str, Any]:
         return self.extra_fields
