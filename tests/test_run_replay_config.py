@@ -114,3 +114,18 @@ def test_replay_replaces_explicit_model_variant(tmp_path):
 def test_replay_replaces_history_processor_list(tmp_path):
     config = _replay(tmp_path, [{"agent": {"history_processors": []}}]).config
     assert config.agent.history_processors == []
+
+
+@pytest.mark.parametrize("explicit_id", [None, "explicit-id"])
+def test_replay_replaces_text_problem_statement_and_its_derived_id(tmp_path, explicit_id):
+    saved = {
+        "agent": {"model": {"name": "human"}},
+        "problem_statement": {"type": "text", "text": "saved text"},
+    }
+    replacement = {"text": "replacement"}
+    if explicit_id is not None:
+        replacement["id"] = explicit_id
+    config = _replay(tmp_path, [{"problem_statement": replacement}], saved).config
+    assert config.problem_statement.type == "text"
+    assert config.problem_statement.text == "replacement"
+    assert config.problem_statement.id == (explicit_id or hashlib.sha256(b"replacement").hexdigest()[:6])

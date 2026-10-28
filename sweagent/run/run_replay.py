@@ -124,6 +124,9 @@ class RunReplay:
             # Convert the merged data back to a RunSingleConfig
             config_dict = config.model_dump(mode="json")
             merged_dict = _merge_replay_config(config_dict, update_data)
+            # Replacing the source must also regenerate any content-derived ID.
+            if "problem_statement" in update_data:
+                merged_dict["problem_statement"] = update_data["problem_statement"]
 
             # Ensure agent.model is preserved if not explicitly updated
             if "agent" in merged_dict and "model" not in merged_dict["agent"]:
