@@ -20,7 +20,7 @@ def load_file(path: Path | str | None) -> Any:
     if path.suffix in [".json", ".traj"]:
         return json.loads(path.read_text())
     if path.suffix == ".jsonl":
-        return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+        return [json.loads(line) for line in path.read_text().split("\n") if line.strip()]
     if path.suffix == ".yaml":
         return yaml.safe_load(path.read_text())
     msg = f"Unsupported file extension: {path.suffix}"
