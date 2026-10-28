@@ -43,6 +43,20 @@ from sweagent.utils.config import load_environment_variables
 from sweagent.utils.log import get_logger
 
 
+def _merge_replay_config(base: dict[str, Any], updates: dict[str, Any]) -> dict[str, Any]:
+    for key, value in updates.items():
+        previous = base.get(key)
+        discriminator = "name" if key == "model" else "type"
+        if (
+            isinstance(previous, dict)
+            and isinstance(value, dict)
+            and (discriminator not in value or value[discriminator] == previous.get(discriminator))
+        ):
+            value = _merge_replay_config(previous, value)
+        base[key] = value
+    return base
+
+
 class RunReplayConfig(BaseSettings, cli_implicit_flags=False):
     traj_path: Path
     deployment: DeploymentConfig | None = None
@@ -109,7 +123,7 @@ class RunReplay:
             current_model = config.agent.model
             # Convert the merged data back to a RunSingleConfig
             config_dict = config.model_dump(mode="json")
-            merged_dict = config_dict | update_data
+            merged_dict = _merge_replay_config(config_dict, update_data)
 
             # Ensure agent.model is preserved if not explicitly updated
             if "agent" in merged_dict and "model" not in merged_dict["agent"]:
