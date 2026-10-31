@@ -188,23 +188,31 @@ class RunSingle:
     def run(self):
         self._chooks.on_start()
         self.logger.info("Starting environment")
-        self.env.start()
-        self.logger.info("Running agent")
-        self._chooks.on_instance_start(index=0, env=self.env, problem_statement=self.problem_statement)
-        output_dir = self.output_dir / self.problem_statement.id
-        output_dir.mkdir(parents=True, exist_ok=True)
-        if self.agent.replay_config is not None:  # type: ignore[attr-defined]
-            (output_dir / "config.yaml").write_text(yaml.dump(self.agent.replay_config.model_dump_json(), indent=2))  # type: ignore[attr-defined]
-        result = self.agent.run(
-            problem_statement=self.problem_statement,
-            env=self.env,
-            output_dir=output_dir,
-        )
-        self._chooks.on_instance_completed(result=result)
-        self.logger.info("Done")
-        self._chooks.on_end()
-        save_predictions(self.output_dir, self.problem_statement.id, result)
-        self.env.close()
+        try:
+            self.env.start()
+            self.logger.info("Running agent")
+            self._chooks.on_instance_start(index=0, env=self.env, problem_statement=self.problem_statement)
+            output_dir = self.output_dir / self.problem_statement.id
+            output_dir.mkdir(parents=True, exist_ok=True)
+            if self.agent.replay_config is not None:  # type: ignore[attr-defined]
+                (output_dir / "config.yaml").write_text(yaml.dump(self.agent.replay_config.model_dump_json(), indent=2))  # type: ignore[attr-defined]
+            result = self.agent.run(
+                problem_statement=self.problem_statement,
+                env=self.env,
+                output_dir=output_dir,
+            )
+            self._chooks.on_instance_completed(result=result)
+            self.logger.info("Done")
+            self._chooks.on_end()
+            save_predictions(self.output_dir, self.problem_statement.id, result)
+        except BaseException:
+            try:
+                self.env.close()
+            except BaseException:
+                self.logger.exception("Failed to close environment after run failure")
+            raise
+        else:
+            self.env.close()
 
 
 def run_from_config(config: RunSingleConfig):
