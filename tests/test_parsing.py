@@ -156,7 +156,9 @@ def test_json_parser_non_strict_unknown_command_coerces_argument_values(argument
 def test_json_parser_non_strict_unknown_command_requires_object_arguments():
     """`arguments` that is not a JSON object must become a FormatError, not AttributeError."""
     parser = JsonParser()
-    payload = {"message": json.dumps({"thought": "try it", "command": {"name": "missing_cmd", "arguments": "not-a-dict"}})}
+    payload = {
+        "message": json.dumps({"thought": "try it", "command": {"name": "missing_cmd", "arguments": "not-a-dict"}})
+    }
 
     with pytest.raises(FormatError, match="not a JSON object"):
         parser(payload, [], strict=False)
