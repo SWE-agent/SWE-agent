@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 from jinja2 import Template
 
@@ -129,3 +131,34 @@ def test_function_calling_parser_error_message():
     template = Template(FunctionCallingParser().error_message)
     exc1 = FunctionCallingFormatError("test", "missing")
     assert "did not use any tool calls" in template.render(**exc1.extra_info, exception_message=exc1.message)
+
+
+@pytest.mark.parametrize(
+    ("arguments", "expected"),
+    [
+        ({"path": "file.py", "range": [1, 5]}, "missing_cmd file.py [1, 5]"),
+        ({"count": 3, "flag": True}, "missing_cmd 3 True"),
+    ],
+)
+def test_json_parser_non_strict_unknown_command_coerces_argument_values(arguments, expected):
+    """In non-strict mode an unknown command is tolerated, so its argument values must be
+    rendered even when they are not strings; a raw TypeError kills the run instead of
+    producing a FormatError the retry loop understands."""
+    parser = JsonParser()
+    payload = {"message": json.dumps({"thought": "try it", "command": {"name": "missing_cmd", "arguments": arguments}})}
+
+    thought, action = parser(payload, [], strict=False)
+
+    assert thought == "try it"
+    assert action == expected
+
+
+def test_json_parser_non_strict_unknown_command_requires_object_arguments():
+    """`arguments` that is not a JSON object must become a FormatError, not AttributeError."""
+    parser = JsonParser()
+    payload = {
+        "message": json.dumps({"thought": "try it", "command": {"name": "missing_cmd", "arguments": "not-a-dict"}})
+    }
+
+    with pytest.raises(FormatError, match="not a JSON object"):
+        parser(payload, [], strict=False)
