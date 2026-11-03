@@ -164,6 +164,10 @@ class RunBatch:
             msg = "Cannot run with human model in parallel"
             raise ValueError(msg)
 
+        if num_workers < 1:
+            msg = f"num_workers must be at least 1, got {num_workers}"
+            raise ValueError(msg)
+
         self.logger = get_logger("swea-run", emoji="🏃")
         add_file_handler(
             output_dir / "run_batch.log",
