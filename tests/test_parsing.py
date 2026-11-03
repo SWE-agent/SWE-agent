@@ -130,6 +130,7 @@ def test_function_calling_parser_error_message():
     exc1 = FunctionCallingFormatError("test", "missing")
     assert "did not use any tool calls" in template.render(**exc1.extra_info, exception_message=exc1.message)
 
+
 @pytest.mark.parametrize("parser", [ThoughtActionParser(), EditFormat()])
 def test_empty_code_block_is_a_format_error(parser):
     response = {"message": "I am done.\n```\n```"}
