@@ -160,7 +160,14 @@ class ThoughtActionParser(AbstractParseFunction, BaseModel):
         if last_valid_block:
             start, end = last_valid_block
             thought = model_response["message"][: start.start()] + model_response["message"][end.end() :]
-            return thought, model_response["message"][start.end() : end.start()]
+            action = model_response["message"][start.end() : end.start()]
+            if not action.strip():
+                msg = (
+                    "The last code block in your response is empty. Put the command(s) you "
+                    "want to run inside it."
+                )
+                raise FormatError(msg)
+            return thought, action
         msg = "No action found in model response."
         raise FormatError(msg)
 
