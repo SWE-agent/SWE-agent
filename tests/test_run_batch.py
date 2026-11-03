@@ -108,3 +108,21 @@ def test_empty_instances_expert(test_data_sources_path: Path, tmp_path: Path):
 #         "dummy",
 #     ]
 #     main(cmd)
+
+
+def test_num_workers_below_one_is_named(test_data_sources_path: Path, tmp_path: Path):
+    ds_path = test_data_sources_path / "simple_instances.yaml"
+    cmd = [
+        "run-batch",
+        "--agent.model.name",
+        "instant_empty_submit",
+        "--instances.path",
+        str(ds_path),
+        "--output_dir",
+        str(tmp_path),
+        "--num_workers",
+        "0",
+    ]
+
+    with pytest.raises(ValueError, match="num_workers must be at least 1"):
+        main(cmd)
