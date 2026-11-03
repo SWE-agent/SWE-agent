@@ -558,21 +558,22 @@ class BashCodeBlockParser(AbstractParseFunction, BaseModel):
     type: Literal["all_bash_code_blocks"] = "all_bash_code_blocks"
 
     def __call__(self, model_response: dict, commands: list[Command], strict=False):
-        """Parses the action from the output of the API call.
-        We assume that model output is a JSON object with the following fields:
-        """
-        pattern = re.compile(r"```bash\n(.*?)\n```", re.DOTALL)
+        """Parses the action from the output of the API call."""
+        pattern = re.compile(r"```bash[ \t]*\r?\n(.*?)\r?\n```", re.DOTALL)
         matches = pattern.findall(model_response["message"])
         if not matches:
             msg = "No bash code blocks were detected in your output."
             raise FormatError(msg)
         thought = pattern.sub("<extracted_code_block>", model_response["message"])
         action = "\n".join(matches)
+        if not action.strip():
+            msg = "The bash code block(s) in your response are empty. Put the command(s) you want to run inside it."
+            raise FormatError(msg)
         return thought, action
 
 
 class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
-    """Executes all commands in ```bash code blocks."""
+    """Executes the command in a single ```bash code block."""
 
     error_message: str = dedent("""\
     We did not detect the right number of bash code blocks in your output.
@@ -587,10 +588,8 @@ class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
     type: Literal["single_bash_code_block"] = "single_bash_code_block"
 
     def __call__(self, model_response: dict, commands: list[Command], strict=False):
-        """Parses the action from the output of the API call.
-        We assume that model output is a JSON object with the following fields:
-        """
-        pattern = re.compile(r"```bash\n(.*?)\n```", re.DOTALL)
+        """Parses the action from the output of the API call."""
+        pattern = re.compile(r"```bash[ \t]*\r?\n(.*?)\r?\n```", re.DOTALL)
         matches = pattern.findall(model_response["message"])
         if not matches:
             msg = "No bash code blocks were detected in your output."
@@ -603,6 +602,9 @@ class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
             raise FormatError(msg)
         thought = pattern.sub("<extracted_code_block>", model_response["message"])
         action = "\n".join(matches)
+        if not action.strip():
+            msg = "The bash code block in your response is empty. Put the command(s) you want to run inside it."
+            raise FormatError(msg)
         return thought, action
 
 
