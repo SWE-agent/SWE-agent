@@ -565,7 +565,7 @@ class BashCodeBlockParser(AbstractParseFunction, BaseModel):
             msg = "No bash code blocks were detected in your output."
             raise FormatError(msg)
         thought = pattern.sub("<extracted_code_block>", model_response["message"])
-        action = "\n".join(matches)
+        action = "\n".join(matches).replace("\r\n", "\n").replace("\r", "\n")
         if not action.strip():
             msg = "The bash code block(s) in your response are empty. Put the command(s) you want to run inside it."
             raise FormatError(msg)
@@ -601,7 +601,7 @@ class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
             )
             raise FormatError(msg)
         thought = pattern.sub("<extracted_code_block>", model_response["message"])
-        action = "\n".join(matches)
+        action = "\n".join(matches).replace("\r\n", "\n").replace("\r", "\n")
         if not action.strip():
             msg = "The bash code block in your response is empty. Put the command(s) you want to run inside it."
             raise FormatError(msg)

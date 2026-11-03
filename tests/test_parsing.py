@@ -162,9 +162,9 @@ def test_single_bash_code_block_parser():
 @pytest.mark.parametrize("parser_cls", [BashCodeBlockParser, SingleBashCodeBlockParser])
 def test_bash_code_block_parser_crlf_and_trailing_whitespace(parser_cls):
     parser = parser_cls()
-    msg = "THOUGHT: run command\r\n```bash   \r\necho hello\r\n```"
+    msg = "THOUGHT: run command\r\n```bash   \r\necho hello\r\necho world\r\n```"
     thought, action = parser({"message": msg}, [])
-    assert action == "echo hello"
+    assert action == "echo hello\necho world"
     assert "<extracted_code_block>" in thought
 
 
