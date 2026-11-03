@@ -7,10 +7,12 @@ from sweagent.exceptions import FormatError, FunctionCallingFormatError
 from sweagent.tools.commands import Command
 from sweagent.tools.parsing import (
     ActionParser,
+    BashCodeBlockParser,
     EditFormat,
     FunctionCallingParser,
     Identity,
     JsonParser,
+    SingleBashCodeBlockParser,
     ThoughtActionParser,
     XMLThoughtActionParser,
 )
@@ -129,3 +131,52 @@ def test_function_calling_parser_error_message():
     template = Template(FunctionCallingParser().error_message)
     exc1 = FunctionCallingFormatError("test", "missing")
     assert "did not use any tool calls" in template.render(**exc1.extra_info, exception_message=exc1.message)
+
+
+def test_bash_code_block_parser():
+    parser = BashCodeBlockParser()
+    msg = "Let's run some commands.\n```bash\necho 1\n```\nSome thoughts.\n```bash\necho 2\n```"
+    thought, action = parser({"message": msg}, [])
+    assert action == "echo 1\necho 2"
+    assert "<extracted_code_block>" in thought
+
+    with pytest.raises(FormatError, match="No bash code blocks were detected"):
+        parser({"message": "No bash blocks here"}, [])
+
+
+def test_single_bash_code_block_parser():
+    parser = SingleBashCodeBlockParser()
+    msg = "THOUGHT: inspect files\n```bash\nls -la\n```"
+    thought, action = parser({"message": msg}, [])
+    assert action == "ls -la"
+    assert "<extracted_code_block>" in thought
+
+    with pytest.raises(FormatError, match="No bash code blocks were detected"):
+        parser({"message": "No bash blocks here"}, [])
+
+    multiple = "```bash\ncmd1\n```\n```bash\ncmd2\n```"
+    with pytest.raises(FormatError, match="multiple bash code blocks"):
+        parser({"message": multiple}, [])
+
+
+@pytest.mark.parametrize("parser_cls", [BashCodeBlockParser, SingleBashCodeBlockParser])
+def test_bash_code_block_parser_crlf_and_trailing_whitespace(parser_cls):
+    parser = parser_cls()
+    msg = "THOUGHT: run command\r\n```bash   \r\necho hello\r\necho world\r\n```"
+    thought, action = parser({"message": msg}, [])
+    assert action == "echo hello\necho world"
+    assert "<extracted_code_block>" in thought
+
+
+@pytest.mark.parametrize(
+    ("parser_cls", "error_match"),
+    [
+        (BashCodeBlockParser, r"code block\(s\) in your response are empty"),
+        (SingleBashCodeBlockParser, r"code block in your response is empty"),
+    ],
+)
+def test_bash_code_block_parser_empty_raises_format_error(parser_cls, error_match):
+    parser = parser_cls()
+    empty_msg = "THOUGHT: nothing\n```bash\n   \n```"
+    with pytest.raises(FormatError, match=error_match):
+        parser({"message": empty_msg}, [])
