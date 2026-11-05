@@ -71,6 +71,10 @@ function createTrajectoryItem(item, index) {
 
     while ((match = imageRegex.exec(observation)) !== null) {
       const [fullMatch, altText, format, base64Data] = match;
+      // The format is copied into an HTML attribute. Only a token can land there.
+      if (!/^[A-Za-z0-9.+-]+$/.test(format)) {
+        continue;
+      }
 
       // create image object
       const imageObj = {
@@ -119,26 +123,26 @@ function createTrajectoryItem(item, index) {
     ? item.query
         .map((msg, msgIndex) => {
           let content = `----Item ${msgIndex}-----\n`;
-          content += `role: ${msg.role}\n`;
+          content += `role: ${escapeHtml(msg.role)}\n`;
           content += `content: |\n${escapeHtml(getMessageContent(msg))}\n`;
 
           if (msg.tool_calls && msg.tool_calls.length > 0) {
             msg.tool_calls.forEach((tool, idx) => {
               content += `- tool call ${idx + 1}:\n`;
               if (tool.function) {
-                content += `    - name: ${tool.function.name}\n`;
+                content += `    - name: ${escapeHtml(tool.function.name)}\n`;
                 // Handle arguments based on type
                 let args = tool.function.arguments;
                 try {
                   if (typeof args === "string") {
                     args = JSON.parse(args);
                   }
-                  content += `    - arguments: ${JSON.stringify(args, null, 2).replace(/\n/g, "\n    ")}\n`;
+                  content += `    - arguments: ${escapeHtml(JSON.stringify(args, null, 2).replace(/\n/g, "\n    "))}\n`;
                 } catch (e) {
                   content += `    - arguments: ${escapeHtml(String(args))}\n`;
                 }
               }
-              content += `    - id: ${tool.id}\n`;
+              content += `    - id: ${escapeHtml(tool.id)}\n`;
             });
           }
 
@@ -164,7 +168,7 @@ function createTrajectoryItem(item, index) {
               .map(
                 (img) =>
                   `<div class="observation-image-container">
-                <img src="${img.dataUrl}" alt="${escapeHtml(img.altText)}" class="observation-image" id="${img.id}">
+                <img src="${escapeHtml(img.dataUrl)}" alt="${escapeHtml(img.altText)}" class="observation-image" id="${escapeHtml(img.id)}">
                 <div class="image-caption">${escapeHtml(img.altText)}</div>
               </div>`,
               )
@@ -194,7 +198,7 @@ ${escapeHtml(item.action)}</code></pre>
                 ${observationImagesPane}
                 ${
                   item.execution_time
-                    ? `<div class="execution-time">Execution time: ${item.execution_time}s</div>`
+                    ? `<div class="execution-time">Execution time: ${escapeHtml(String(item.execution_time))}s</div>`
                     : ""
                 }
             </div>
