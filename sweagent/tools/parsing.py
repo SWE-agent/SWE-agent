@@ -159,6 +159,13 @@ class ThoughtActionParser(AbstractParseFunction, BaseModel):
                 stack.append(match)
         if last_valid_block:
             start, end = last_valid_block
+            language = (start.group(1) or "").lower()
+            if language and language not in {"bash", "sh", "shell", "console"}:
+                msg = (
+                    f"The command block is marked as {language}, so it was not run as a shell command. "
+                    "Use an unmarked ``` block with one shell command."
+                )
+                raise FormatError(msg)
             thought = model_response["message"][: start.start()] + model_response["message"][end.end() :]
             return thought, model_response["message"][start.end() : end.start()]
         msg = "No action found in model response."
