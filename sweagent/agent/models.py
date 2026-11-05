@@ -753,6 +753,17 @@ class LiteLLMModel(AbstractModel):
                 self.logger.error(msg)
                 raise ModelConfigurationError(msg)
             cost = 0
+        else:
+            # Some providers price an unknown model as 0 instead of raising. A
+            # cost limit then never trips, so the run keeps spending.
+            limit_set = self.config.per_instance_cost_limit > 0 or self.config.total_cost_limit > 0
+            if limit_set and not cost and self.config.name not in litellm.model_cost:
+                msg = (
+                    f"No price is known for model {self.config.name}, so a cost limit cannot be enforced. "
+                    "Set per_instance_cost_limit and total_cost_limit to 0 if this model is free or local."
+                )
+                self.logger.error(msg)
+                raise ModelConfigurationError(msg)
         choices: litellm.types.utils.Choices = response.choices  # type: ignore
         n_choices = n if n is not None else 1
         outputs = []
