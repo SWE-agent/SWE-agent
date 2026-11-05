@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 from pydantic import SecretStr
 
 from sweagent import __version__
 from sweagent.agent.models import GenericAPIModelConfig, get_model
+from sweagent.exceptions import ModelConfigurationError
 from sweagent.tools.parsing import Identity
 from sweagent.tools.tools import ToolConfig
 from sweagent.types import History
@@ -104,3 +106,23 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+def test_unpriced_model_does_not_ignore_a_cost_limit():
+    model = get_model(
+        GenericAPIModelConfig(
+            name="gemini-2.5-pro",
+            api_key=SecretStr("dummy_key"),
+            top_p=None,
+            per_instance_cost_limit=4,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    with (
+        patch("litellm.completion", return_value=_make_mock_response()),
+        patch("litellm.cost_calculator.completion_cost", return_value=0),
+        patch("litellm.model_cost", {}),
+        pytest.raises(ModelConfigurationError, match="No price is known"),
+    ):
+        model.query(History([{"role": "user", "content": "test"}]))
