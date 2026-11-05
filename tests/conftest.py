@@ -59,11 +59,7 @@ def test_data_sources_path(test_data_path) -> Path:
 
 @pytest.fixture
 def test_trajectory_path(test_trajectories_path) -> Path:
-    traj = (
-        test_trajectories_path
-        / "gpt4-local-repo"
-        / "swe-agent__test-repo-i1.traj"
-    )
+    traj = test_trajectories_path / "gpt4-local-repo" / "swe-agent__test-repo-i1.traj"
     assert traj.exists()
     return traj
 
@@ -129,10 +125,6 @@ def swe_agent_test_repo_clone(tmp_path):
 
 @pytest.fixture
 def swe_agent_test_repo_traj(test_trajectories_path) -> Path:
-    p = (
-        test_trajectories_path
-        / "gpt4-test-repo"
-        / "6e44b9__sweagenttestrepo-1c2844.traj"
-    )
+    p = test_trajectories_path / "gpt4-test-repo" / "6e44b9__sweagenttestrepo-1c2844.traj"
     assert p.is_file()
     return p
