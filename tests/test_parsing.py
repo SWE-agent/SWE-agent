@@ -34,6 +34,10 @@ def test_thought_action_parser():
     assert action == "ls -l\n"
     with pytest.raises(FormatError):
         parser({"message": "No code block"}, [])
+    with pytest.raises(FormatError, match="marked as python"):
+        parser({"message": "I will write a program.\n```python\nprint('hi')\n```"}, [])
+    thought, action = parser({"message": "List the directory.\n```bash\nls -l\n```"}, [])
+    assert action == "ls -l\n"
 
 
 def test_xml_thought_action_parser():
