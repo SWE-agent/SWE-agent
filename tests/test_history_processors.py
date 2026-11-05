@@ -17,10 +17,7 @@ def count_elided_observations(history: History):
 
 @pytest.fixture
 def test_history(test_trajectories_path: Path):
-    return get_history(
-        test_trajectories_path
-        / "gpt4__swe-agent-test-repo__default_from_url__t-0.00__p-0.95__c-3.00__install-1/6e44b9__sweagenttestrepo-1c2844.traj"
-    )
+    return get_history(test_trajectories_path / "gpt4-test-repo/6e44b9__sweagenttestrepo-1c2844.traj")
 
 
 def test_last_n_observations(test_history: History):

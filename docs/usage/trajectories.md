@@ -37,7 +37,7 @@ Here's a full example:
 Note: This trajectory is from SWE-agent v0.7.0. It might look different in newer versions.
 
 ```json
---8<-- "trajectories/demonstrations/replay__marshmallow-code__marshmallow-1867__default__t-0.20__p-0.95__c-2.00__install-1___install_from_source/marshmallow-code__marshmallow-1867.traj"
+--8<-- "trajectories/demonstrations/mm1867-from-source.traj"
 ```
 </details>
 

@@ -77,7 +77,7 @@ agent:
       (Current directory: {{working_dir}})
       bash-$
     demonstrations:
-      - trajectories/demonstrations/replay__marshmallow-code__marshmallow-1867__xml_sys-env_window100__t-0.20__p-0.95__c-2.00__install-1/marshmallow-code__marshmallow-1867.traj
+      - trajectories/demonstrations/mm1867-xml-window.traj
     put_demos_in_history: true
   tools:
     env_variables:

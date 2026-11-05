@@ -372,7 +372,7 @@ agent:
       {demonstration}
       --- END OF DEMONSTRATION ---
     demonstrations:
-    - /Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/demonstrations/human_thought__swe-bench-HumanEvalFix-python__lcb__t-0.00__p-0.95__c-4.00__install-0/humanevalfix-python-0.traj
+    - /Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/demonstrations/humanevalfix-python.traj
     env_variables:
       CURRENT_FILE: ''
       CURRENT_LINE: '0'
@@ -649,7 +649,7 @@ You should only include a *SINGLE* command in the command section and then wait 
 If you'd like to issue two commands at once, PLEASE DO NOT DO THAT! Please instead first submit just the first command, and then after receiving a response you'll be able to issue the second command.
 You're free to use any other bash commands you want (e.g. find, grep, cat, ls, cd) in addition to the special commands listed above.
 However, the environment does NOT support interactive session commands (e.g. python, vim), so please do not invoke them.
-2024-07-12 17:57:44,679 INFO DEMONSTRATION: /Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/demonstrations/human_thought__swe-bench-HumanEvalFix-python__lcb__t-0.00__p-0.95__c-4.00__install-0/humanevalfix-python-0.traj
+2024-07-12 17:57:44,679 INFO DEMONSTRATION: /Users/fuchur/Documents/24/git_sync/SWE-agent/trajectories/demonstrations/humanevalfix-python.traj
 2024-07-12 17:57:44,680 INFO Trajectory will be saved to trajectories/fuchur/azure-gpt4__problem__coding_challenge__t-0.00__p-0.95__c-3.00__install-1/26d111.traj
 2024-07-12 17:57:44,747 INFO 🤖 MODEL INPUT
 We're currently attempting to solve the following problem:
