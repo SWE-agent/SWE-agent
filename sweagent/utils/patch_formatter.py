@@ -72,7 +72,8 @@ class PatchFormatter:
             # Count from 1
             out.append(f"[{starts[0] - 1} lines above omitted]")
         last_stop: int | None = None
-        lines = text.splitlines()
+        # Git's hunk coordinates count LF-delimited lines, including on CRLF files.
+        lines = [line.removesuffix("\r") for line in text.removesuffix("\n").split("\n")] if text else []
         for start, stop in zip(starts, stops):
             assert start >= 1
             if last_stop is not None:
