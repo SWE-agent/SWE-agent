@@ -520,14 +520,17 @@ class EditTool:
         old_str = old_str.expandtabs()
         new_str = new_str.expandtabs() if new_str is not None else ""
 
-        # Check if old_str is unique in the file
-        occurrences = file_content.count(old_str)
-        if occurrences == 0:
+        # Starting one character later catches overlapping matches as well.
+        first_match = file_content.find(old_str)
+        if first_match == -1:
             print("No replacement was performed, old_str `{}` did not appear verbatim in {}.".format(old_str, path))
             sys.exit(15)
-        elif occurrences > 1:
-            file_content_lines = file_content.split("\n")
-            lines = [idx + 1 for idx, line in enumerate(file_content_lines) if old_str in line]
+        second_match = file_content.find(old_str, first_match + 1)
+        if second_match != -1:
+            if "\n" in old_str:
+                lines = [file_content.count("\n", 0, match) + 1 for match in (first_match, second_match)]
+            else:
+                lines = [idx + 1 for idx, line in enumerate(file_content.split("\n")) if old_str in line]
             print(
                 "No replacement was performed. Multiple occurrences of old_str `{}` in lines {}. Please ensure it is unique".format(old_str, lines)
             )
