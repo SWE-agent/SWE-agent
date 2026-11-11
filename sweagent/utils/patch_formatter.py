@@ -49,10 +49,10 @@ class PatchFormatter:
         return list(merged_starts), list(merged_stops)
 
     def format_file(self, text: str, starts: list[int], stops: list[int], *, linenos: bool = True) -> str:
-        """Reads file and returns string representation of the relevant lines.
+        """Returns a string representation of the relevant lines of `text`.
 
         Args:
-            path: The path to the file within the repo location
+            text: The file contents to format
             starts: The starting line numbers of the relevant lines. The first line is line 1.
             stops: The stopping line numbers of the relevant lines. The stop is not inclusive.
                 The first line is line 1.

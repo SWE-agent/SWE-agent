@@ -207,7 +207,7 @@ class SWEEnv:
 
         Args:
             input: input to send to container
-            timeout_duration: duration to wait for output
+            timeout: duration to wait for output
             check: `ignore`: do not extract exit code (more stable), `warn`: extract exit code and log error if
                 exit code is non-zero, `raise`: raise error if exit code is non-zero
             error_msg: error message to raise if the command fails
