@@ -31,3 +31,46 @@ def test_extract_pred_trajectory_layout(tmp_path: Path, relative_path: str, run_
         "model_patch": submission,
         "instance_id": instance_id,
     }
+
+
+@pytest.mark.parametrize(
+    ("attempt_index", "aggregate_kind", "run_name"),
+    [
+        (0, "matching", "run"),
+        (2, "matching", "run"),
+        (2, "wrong_index", "attempt_2"),
+        (0, "unrelated", "attempt_0"),
+        (0, "malformed", "attempt_0"),
+        (0, "directory", "attempt_0"),
+    ],
+)
+def test_extract_pred_ambiguous_retry_layout(
+    tmp_path: Path, attempt_index: int, aggregate_kind: str, run_name: str
+) -> None:
+    instance_id = f"attempt_{attempt_index}"
+    instance_dir = tmp_path / "run" / instance_id
+    aggregate_path = instance_dir / f"{instance_id}.traj"
+    trajectory = instance_dir / instance_id / aggregate_path.name
+    trajectory.parent.mkdir(parents=True)
+    submission = "example patch\n"
+    payload = {"info": {"submission": submission}, "replay_config": None}
+    trajectory.write_text(json.dumps(payload))
+
+    if aggregate_kind == "matching":
+        aggregate_path.write_text(json.dumps({"attempts": [{}] * attempt_index + [payload]}))
+    elif aggregate_kind == "wrong_index":
+        aggregate_path.write_text(json.dumps({"attempts": [payload, {}, {}]}))
+    elif aggregate_kind == "unrelated":
+        aggregate_path.write_text(json.dumps(payload))
+    elif aggregate_kind == "malformed":
+        aggregate_path.write_text("{")
+    else:
+        aggregate_path.mkdir()
+
+    main(["extract-pred", str(trajectory)])
+
+    assert json.loads(trajectory.with_suffix(".pred").read_text()) == {
+        "model_name_or_path": run_name,
+        "model_patch": submission,
+        "instance_id": instance_id,
+    }
