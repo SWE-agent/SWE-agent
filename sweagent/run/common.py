@@ -367,9 +367,14 @@ class BasicCLI:
         return config
 
 
+def prediction_path(traj_dir: Path, instance_id: str) -> Path:
+    """Return the prediction file for an instance."""
+    return traj_dir / instance_id / (instance_id + ".pred")
+
+
 def save_predictions(traj_dir: Path, instance_id: str, result: AgentRunResult):
     """Save predictions in a file readable by SWE-bench"""
-    output_file = traj_dir / instance_id / (instance_id + ".pred")
+    output_file = prediction_path(traj_dir, instance_id)
     output_file.parent.mkdir(parents=True, exist_ok=True)
     datum = {
         "model_name_or_path": traj_dir.name,
