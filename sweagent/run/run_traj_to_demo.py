@@ -28,12 +28,12 @@ def save_demo(data: str | dict | list, file: Path, traj_path: Path) -> None:
     """Save demo data as a yaml file. Takes care of multi-line strings and adds a header."""
     content = _yaml_serialization_with_linebreaks(data)
     header = DEMO_COMMENT.format(traj_path=str(traj_path))
-    with open(file, "w") as f:
+    with open(file, "w", encoding="utf-8") as f:
         f.write(f"{header}\n{content}")
 
 
 def convert_traj_to_action_demo(traj_path: Path, output_file: Path, include_user: bool = False) -> None:
-    with open(traj_path) as file:
+    with open(traj_path, encoding="utf-8") as file:
         traj = json.load(file)
     replay_config = traj["replay_config"]
     if isinstance(traj["replay_config"], str):
