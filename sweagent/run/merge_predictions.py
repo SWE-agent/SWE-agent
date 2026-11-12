@@ -29,8 +29,13 @@ def merge_predictions(directories: list[Path], output: Path | None = None) -> No
         return
     if output is None:
         output = directories[0] / "preds.json"
+    merge_prediction_files(preds, output)
+
+
+def merge_prediction_files(predictions: list[Path], output: Path) -> None:
+    """Merge the given prediction files into one JSON file."""
     data = {}
-    for pred in preds:
+    for pred in predictions:
         _data = json.loads(pred.read_text())
         instance_id = _data["instance_id"]
         if "model_patch" not in _data:

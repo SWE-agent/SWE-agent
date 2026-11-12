@@ -55,10 +55,10 @@ from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import ModelConfigurationError, TotalCostLimitExceededError
 from sweagent.run._progress import RunBatchProgressManager
 from sweagent.run.batch_instances import BatchInstance, BatchInstanceSourceConfig, SWEBenchInstances
-from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
+from sweagent.run.common import BasicCLI, ConfigHelper, prediction_path, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
-from sweagent.run.merge_predictions import merge_predictions
+from sweagent.run.merge_predictions import merge_prediction_files
 from sweagent.run.run_single import RunSingleConfig
 from sweagent.types import AgentRunResult
 from sweagent.utils.config import load_environment_variables
@@ -246,10 +246,15 @@ class RunBatch:
         else:
             self.main_multi_worker()
 
-        output_dirs = []
-        for instance in self.instances:
-            output_dirs.append(self.output_dir / instance.problem_statement.id)
-        merge_predictions(output_dirs, self.output_dir / "preds.json")
+        # Instance directories can be nested when IDs contain slashes.
+        prediction_paths = [
+            prediction_path(self.output_dir, instance.problem_statement.id) for instance in self.instances
+        ]
+        predictions = [path for path in prediction_paths if path.exists()]
+        if predictions:
+            merge_prediction_files(predictions, self.output_dir / "preds.json")
+        else:
+            self.logger.warning("No predictions found for the selected instances in %s", self.output_dir)
 
         self._chooks.on_end()
 
