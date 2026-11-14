@@ -52,6 +52,7 @@ from sweagent.tools.parsing import (
 from sweagent.tools.tools import ToolConfig, ToolHandler
 from sweagent.types import AgentInfo, AgentRunResult, StepOutput, Trajectory, TrajectoryStep
 from sweagent.utils.config import _convert_paths_to_abspath, _strip_abspath_from_dict
+from sweagent.utils.files import write_checkpoint
 from sweagent.utils.jinja_warnings import _warn_probably_wrong_jinja_syntax
 from sweagent.utils.log import get_logger
 from sweagent.utils.patch_formatter import PatchFormatter
@@ -385,7 +386,7 @@ class RetryAgent(AbstractAgent):
     def save_trajectory(self, choose: bool) -> None:
         data = self.get_trajectory_data(choose=choose)
         assert self._traj_path is not None
-        self._traj_path.write_text(json.dumps(data, indent=2))
+        write_checkpoint(self._traj_path, json.dumps(data, indent=2))
 
     def run(
         self,
@@ -784,7 +785,7 @@ class DefaultAgent(AbstractAgent):
         """
         data = self.get_trajectory_data()
         assert self.traj_path is not None
-        self.traj_path.write_text(json.dumps(data, indent=2))
+        write_checkpoint(self.traj_path, json.dumps(data, indent=2))
 
     def get_model_requery_history(
         self, error_template: str, *, output: str, **kwargs: str | int | float | bool | None
