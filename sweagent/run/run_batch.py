@@ -33,6 +33,7 @@ import getpass
 import json
 import logging
 import random
+import stat
 import sys
 import time
 import traceback
@@ -53,6 +54,7 @@ from sweagent.agent.hooks.status import SetStatusAgentHook
 from sweagent.environment.hooks.status import SetStatusEnvironmentHook
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import ModelConfigurationError, TotalCostLimitExceededError
+from sweagent.run import common
 from sweagent.run._progress import RunBatchProgressManager
 from sweagent.run.batch_instances import BatchInstance, BatchInstanceSourceConfig, SWEBenchInstances
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
@@ -298,17 +300,17 @@ class RunBatch:
 
         self._progress_manager.on_instance_start(instance.problem_statement.id)
 
-        if previous_exit_status := self.should_skip(instance):
-            self._progress_manager.on_instance_end(
-                instance.problem_statement.id, exit_status=f"skipped ({previous_exit_status})"
-            )
-            self._remove_instance_log_file_handlers(instance.problem_statement.id)
-            return
+        previous_exit_status = self.should_skip(instance)
 
         # Either catch and silence exception, or raise _BreakLoop to stop the loop
         # over the instances
         try:
-            result = self._run_instance(instance)
+            if previous_exit_status:
+                self._restore_prediction(instance.problem_statement.id)
+                exit_status = f"skipped ({previous_exit_status})"
+            else:
+                result = self._run_instance(instance)
+                exit_status = result.info.get("exit_status", "unknown_exit")
         except KeyboardInterrupt:
             raise _BreakLoop
         except (SystemExit, ModelConfigurationError, TotalCostLimitExceededError) as e:
@@ -323,9 +325,7 @@ class RunBatch:
             if self._raise_exceptions:
                 raise
         else:
-            self._progress_manager.on_instance_end(
-                instance.problem_statement.id, exit_status=result.info.get("exit_status", "unknown_exit")
-            )
+            self._progress_manager.on_instance_end(instance.problem_statement.id, exit_status=exit_status)
         finally:
             self._progress_manager.update_exit_status_table()
             self._remove_instance_log_file_handlers(instance.problem_statement.id)
@@ -373,6 +373,31 @@ class RunBatch:
         self._chooks.on_instance_completed(result=result)
         return result
 
+    def _trajectory_path(self, instance_id: str) -> Path:
+        return self.output_dir / instance_id / (instance_id + ".traj")
+
+    def _restore_prediction(self, instance_id: str) -> None:
+        """Recover the derived prediction from an already completed trajectory."""
+        trajectory_path = self._trajectory_path(instance_id)
+        prediction_path = trajectory_path.with_suffix(".pred")
+        try:
+            existing = prediction_path.lstat()
+            if not stat.S_ISREG(existing.st_mode) or existing.st_nlink > 1:
+                return
+            json.loads(prediction_path.read_text())
+        except (FileNotFoundError, UnicodeDecodeError, json.JSONDecodeError):
+            pass
+        else:
+            return
+
+        info = json.loads(trajectory_path.read_text())["info"]
+        if "submission" not in info:
+            return
+        submission = info["submission"]
+        if submission is None or isinstance(submission, str):
+            common.save_recovered_prediction(prediction_path, self.output_dir.name, instance_id, submission)
+            self.logger.info("Restored prediction from %s", trajectory_path)
+
     def should_skip(self, instance: BatchInstance) -> bool | str:
         """Check if we should skip this instance.
         Returns previous exit status if the instance should be skipped.
@@ -381,7 +406,7 @@ class RunBatch:
             return False
 
         # Check if there's an existing trajectory for this instance
-        log_path = self.output_dir / instance.problem_statement.id / (instance.problem_statement.id + ".traj")
+        log_path = self._trajectory_path(instance.problem_statement.id)
         if not log_path.exists():
             return False
 
