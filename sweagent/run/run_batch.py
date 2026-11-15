@@ -298,20 +298,17 @@ class RunBatch:
 
         self._progress_manager.on_instance_start(instance.problem_statement.id)
 
-        if previous_exit_status := self.should_skip(instance):
-            try:
-                self._restore_prediction(instance.problem_statement.id)
-                self._progress_manager.on_instance_end(
-                    instance.problem_statement.id, exit_status=f"skipped ({previous_exit_status})"
-                )
-            finally:
-                self._remove_instance_log_file_handlers(instance.problem_statement.id)
-            return
+        previous_exit_status = self.should_skip(instance)
 
         # Either catch and silence exception, or raise _BreakLoop to stop the loop
         # over the instances
         try:
-            result = self._run_instance(instance)
+            if previous_exit_status:
+                self._restore_prediction(instance.problem_statement.id)
+                exit_status = f"skipped ({previous_exit_status})"
+            else:
+                result = self._run_instance(instance)
+                exit_status = result.info.get("exit_status", "unknown_exit")
         except KeyboardInterrupt:
             raise _BreakLoop
         except (SystemExit, ModelConfigurationError, TotalCostLimitExceededError) as e:
@@ -326,9 +323,7 @@ class RunBatch:
             if self._raise_exceptions:
                 raise
         else:
-            self._progress_manager.on_instance_end(
-                instance.problem_statement.id, exit_status=result.info.get("exit_status", "unknown_exit")
-            )
+            self._progress_manager.on_instance_end(instance.problem_statement.id, exit_status=exit_status)
         finally:
             self._progress_manager.update_exit_status_table()
             self._remove_instance_log_file_handlers(instance.problem_statement.id)
@@ -392,8 +387,11 @@ class RunBatch:
         else:
             return
 
-        submission = json.loads(trajectory_path.read_text())["info"].get("submission")
-        if isinstance(submission, str):
+        info = json.loads(trajectory_path.read_text())["info"]
+        if "submission" not in info:
+            return
+        submission = info["submission"]
+        if submission is None or isinstance(submission, str):
             save_predictions(
                 self.output_dir, instance_id, AgentRunResult(info={"submission": submission}, trajectory=[])
             )

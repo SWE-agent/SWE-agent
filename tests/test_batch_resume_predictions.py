@@ -4,12 +4,16 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+import yaml
 
+from sweagent.run.common import save_predictions
 from sweagent.run.run import main
 from sweagent.run.run_batch import RunBatch
 
 
-def _prepare_batch(tmp_path: Path, instance_id: str, info: dict) -> tuple[list[str], Path]:
+def _prepare_batch(
+    tmp_path: Path, instance_id: str, info: dict, *, raise_exceptions: bool = True
+) -> tuple[list[str], Path]:
     instances = tmp_path / "instances.json"
     instances.write_text(
         json.dumps(
@@ -36,7 +40,7 @@ def _prepare_batch(tmp_path: Path, instance_id: str, info: dict) -> tuple[list[s
         "--output_dir",
         str(output),
         "--raise_exceptions",
-        "True",
+        str(raise_exceptions),
     ]
     return args, trajectory
 
@@ -47,6 +51,7 @@ def _prepare_batch(tmp_path: Path, instance_id: str, info: dict) -> tuple[list[s
         (None, "saved patch", "instance"),
         (b'{"model_patch": "', "saved \u03c0 patch", "instance"),
         (b"\xff", "", "group/nested"),
+        (None, None, "empty-submission"),
     ],
 )
 def test_run_batch_restores_prediction_on_resume(tmp_path, monkeypatch, previous, submission, instance_id):
@@ -65,7 +70,9 @@ def test_run_batch_restores_prediction_on_resume(tmp_path, monkeypatch, previous
     assert trajectory.read_bytes() == original_trajectory
     expected = {"instance_id": instance_id, "model_name_or_path": "output", "model_patch": submission}
     assert json.loads(prediction.read_bytes()) == expected
-    assert json.loads((tmp_path / "output" / "preds.json").read_bytes()) == {instance_id: expected}
+    assert json.loads((tmp_path / "output" / "preds.json").read_bytes()) == {
+        instance_id: {**expected, "model_patch": submission if submission is not None else ""}
+    }
 
 
 def test_run_batch_keeps_existing_prediction(tmp_path, monkeypatch):
@@ -83,9 +90,8 @@ def test_run_batch_keeps_existing_prediction(tmp_path, monkeypatch):
     assert json.loads((tmp_path / "output" / "preds.json").read_bytes()) == {"instance": json.loads(existing)}
 
 
-@pytest.mark.parametrize("info", [{"exit_status": "submitted"}, {"exit_status": "exit_cost", "submission": None}])
-def test_run_batch_leaves_legacy_trajectory_without_submission_alone(tmp_path, monkeypatch, info):
-    args, trajectory = _prepare_batch(tmp_path, "instance", info)
+def test_run_batch_leaves_legacy_trajectory_without_submission_alone(tmp_path, monkeypatch):
+    args, trajectory = _prepare_batch(tmp_path, "instance", {"exit_status": "submitted"})
     original = trajectory.read_bytes()
     execute = Mock(side_effect=AssertionError("completed instances must not run again"))
     monkeypatch.setattr(RunBatch, "_run_instance", execute)
@@ -144,3 +150,38 @@ def test_run_batch_reports_prediction_io_error_and_keeps_trajectory(tmp_path, mo
     cleanup.assert_called_once()
     assert cleanup.call_args.args[1] == "instance"
     assert trajectory.read_bytes() == original
+
+
+def test_run_batch_continues_after_failed_prediction_recovery(tmp_path, monkeypatch):
+    args, blocked = _prepare_batch(
+        tmp_path, "blocked", {"exit_status": "submitted", "submission": "saved patch"}, raise_exceptions=False
+    )
+    instances = tmp_path / "instances.json"
+    data = json.loads(instances.read_bytes())
+    data.append({**data[0], "problem_statement": {**data[0]["problem_statement"], "id": "other"}})
+    instances.write_text(json.dumps(data))
+    output = tmp_path / "output"
+    other = output / "other" / "other.traj"
+    other.parent.mkdir()
+    other.write_bytes(blocked.read_bytes())
+    original = blocked.read_bytes()
+    execute = Mock(side_effect=AssertionError("completed instances must not run again"))
+    monkeypatch.setattr(RunBatch, "_run_instance", execute)
+
+    def fail_blocked_prediction(output_dir, instance_id, result):
+        if instance_id == "blocked":
+            raise OSError(errno.ENOSPC, "cannot write prediction")
+        save_predictions(output_dir, instance_id, result)
+
+    monkeypatch.setattr("sweagent.run.run_batch.save_predictions", fail_blocked_prediction)
+
+    main(args)
+
+    execute.assert_not_called()
+    assert blocked.read_bytes() == original
+    assert not blocked.with_suffix(".pred").exists()
+    assert json.loads((output / "preds.json").read_bytes()) == {
+        "other": {"instance_id": "other", "model_name_or_path": "output", "model_patch": "saved patch"}
+    }
+    report = yaml.safe_load((output / "run_batch_exit_statuses.yaml").read_text())
+    assert report["instances_by_exit_status"] == {"Uncaught OSError": ["blocked"], "skipped (submitted)": ["other"]}
