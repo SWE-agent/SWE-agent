@@ -1,6 +1,8 @@
 import errno
 import json
+import os
 import stat
+import struct
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -57,6 +59,8 @@ def _prepare_batch(
     ],
 )
 def test_run_batch_restores_prediction_on_resume(tmp_path, monkeypatch, previous, submission, instance_id):
+    if previous is not None and not hasattr(os, "listxattr"):
+        pytest.skip("Replacing an existing prediction requires inspecting its access metadata")
     args, trajectory = _prepare_batch(tmp_path, instance_id, {"exit_status": "submitted", "submission": submission})
     prediction = trajectory.with_suffix(".pred")
     if previous is not None:
@@ -250,3 +254,40 @@ def test_run_batch_cleans_partial_staging_after_write_failure(tmp_path, monkeypa
     assert not interrupted_write[0].parent.exists()
     assert prediction.read_bytes() == previous
     assert trajectory.read_bytes() == original
+
+
+def _linux_acl(named_user: int, owner_permissions: int) -> bytes:
+    # Linux POSIX ACL xattr version 2 with the owner, a named user, group, mask and other entries.
+    no_id = 2**32 - 1
+    entries = [(1, owner_permissions, no_id), (2, 4, named_user), (4, 0, no_id), (16, 4, no_id), (32, 0, no_id)]
+    return struct.pack("<I", 2) + b"".join(struct.pack("<HHI", *entry) for entry in entries)
+
+
+@pytest.mark.skipif(not hasattr(os, "listxattr"), reason="Requires Linux ACL extended attributes")
+@pytest.mark.parametrize("original_has_acl", [False, True])
+def test_run_batch_retains_exact_access_acl(tmp_path, monkeypatch, original_has_acl):
+    args, trajectory = _prepare_batch(tmp_path, "resumed", {"exit_status": "submitted", "submission": "saved patch"})
+    prediction = trajectory.with_suffix(".pred")
+    prediction.write_bytes(b'{"model_patch": "')
+    prediction.chmod(0o640)
+    acl = "system.posix_acl_access"
+    try:
+        if original_has_acl:
+            os.setxattr(prediction, acl, _linux_acl(os.getuid() + 1, 6))
+        os.setxattr(prediction.parent, "system.posix_acl_default", _linux_acl(os.getuid() + 2, 7))
+    except OSError as error:
+        if error.errno == errno.ENOTSUP:
+            pytest.skip("Test filesystem does not support POSIX ACLs")
+        raise
+    before = os.getxattr(prediction, acl) if acl in os.listxattr(prediction) else None
+    mode_before = stat.S_IMODE(prediction.stat().st_mode)
+    execute = Mock(side_effect=AssertionError("completed instances must not run again"))
+    monkeypatch.setattr(RunBatch, "_run_instance", execute)
+
+    main(args)
+
+    execute.assert_not_called()
+    after = os.getxattr(prediction, acl) if acl in os.listxattr(prediction) else None
+    assert after == before
+    assert stat.S_IMODE(prediction.stat().st_mode) == mode_before
+    assert json.loads(prediction.read_bytes())["model_patch"] == "saved patch"

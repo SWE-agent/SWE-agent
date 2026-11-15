@@ -1,6 +1,8 @@
 """Common functionality for the run scripts."""
 
+import errno
 import json
+import os
 import stat
 import sys
 from argparse import ArgumentParser
@@ -385,11 +387,44 @@ def save_recovered_prediction(
         staged = Path(directory) / "prediction"
         staged.write_text(_prediction_json(model_name_or_path, instance_id, submission))
         try:
-            with output_file.open("r+"):
-                staged.chmod(stat.S_IMODE(output_file.stat().st_mode))
+            previous = output_file.open("r+")
         except FileNotFoundError:
             pass
+        else:
+            with previous:
+                _preserve_prediction_access(previous.fileno(), staged, output_file)
         staged.replace(output_file)
+
+
+def _preserve_prediction_access(previous_fd: int, staged: Path, output_file: Path) -> None:
+    """Check access metadata before replacing an existing ordinary prediction."""
+    message = "Cannot preserve the prediction's permissions"
+    if not hasattr(os, "listxattr"):
+        raise OSError(errno.ENOTSUP, message, output_file)
+
+    previous = os.fstat(previous_fd)
+    staged_stat = staged.stat()
+    if (previous.st_uid, previous.st_gid) != (staged_stat.st_uid, staged_stat.st_gid):
+        raise OSError(errno.ENOTSUP, message, output_file)
+
+    previous_attrs = _prediction_attributes(previous_fd)
+    staged.chmod(stat.S_IMODE(previous.st_mode))
+    staged_attrs = _prediction_attributes(staged)
+    acl = "system.posix_acl_access"
+    if acl in previous_attrs:
+        os.setxattr(staged, acl, previous_attrs[acl])
+    elif acl in staged_attrs:
+        os.removexattr(staged, acl)
+
+    # Compare other visible attributes too, since filesystems may store access metadata in them.
+    if _prediction_attributes(staged) != previous_attrs or stat.S_IMODE(staged.stat().st_mode) != stat.S_IMODE(
+        previous.st_mode
+    ):
+        raise OSError(errno.ENOTSUP, message, output_file)
+
+
+def _prediction_attributes(path: int | Path) -> dict[str, bytes]:
+    return {name: os.getxattr(path, name) for name in os.listxattr(path)}
 
 
 def _prediction_json(model_name_or_path: str, instance_id: str, submission: str | None) -> str:
