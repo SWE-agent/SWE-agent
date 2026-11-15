@@ -33,6 +33,7 @@ import getpass
 import json
 import logging
 import random
+import stat
 import sys
 import time
 import traceback
@@ -378,9 +379,10 @@ class RunBatch:
         """Recover the derived prediction from an already completed trajectory."""
         trajectory_path = self._trajectory_path(instance_id)
         prediction_path = trajectory_path.with_suffix(".pred")
-        if prediction_path.is_symlink():
-            return
         try:
+            existing = prediction_path.lstat()
+            if not stat.S_ISREG(existing.st_mode) or existing.st_nlink > 1:
+                return
             json.loads(prediction_path.read_text())
         except (FileNotFoundError, UnicodeDecodeError, json.JSONDecodeError):
             pass
@@ -393,7 +395,10 @@ class RunBatch:
         submission = info["submission"]
         if submission is None or isinstance(submission, str):
             save_predictions(
-                self.output_dir, instance_id, AgentRunResult(info={"submission": submission}, trajectory=[])
+                self.output_dir,
+                instance_id,
+                AgentRunResult(info={"submission": submission}, trajectory=[]),
+                atomic=True,
             )
             self.logger.info("Restored prediction from %s", trajectory_path)
 

@@ -1,11 +1,13 @@
 """Common functionality for the run scripts."""
 
 import json
+import stat
 import sys
 from argparse import ArgumentParser
 from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import UnionType
 from typing import Any
 
@@ -367,7 +369,7 @@ class BasicCLI:
         return config
 
 
-def save_predictions(traj_dir: Path, instance_id: str, result: AgentRunResult):
+def save_predictions(traj_dir: Path, instance_id: str, result: AgentRunResult, *, atomic: bool = False) -> None:
     """Save predictions in a file readable by SWE-bench"""
     output_file = traj_dir / instance_id / (instance_id + ".pred")
     output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -376,7 +378,21 @@ def save_predictions(traj_dir: Path, instance_id: str, result: AgentRunResult):
         "instance_id": instance_id,
         "model_patch": result.info.get("submission"),
     }
-    output_file.write_text(json.dumps(datum))
+    serialized = json.dumps(datum)
+    if not atomic:
+        output_file.write_text(serialized)
+        return
+
+    # Continuous evaluation can scan for predictions while a worker is recovering one.
+    with TemporaryDirectory(dir=output_file.parent) as directory:
+        staged = Path(directory) / "prediction"
+        staged.write_text(serialized)
+        try:
+            with output_file.open("r+"):
+                staged.chmod(stat.S_IMODE(output_file.stat().st_mode))
+        except FileNotFoundError:
+            pass
+        staged.replace(output_file)
 
 
 def _is_promising_patch(info: AgentInfo) -> bool:

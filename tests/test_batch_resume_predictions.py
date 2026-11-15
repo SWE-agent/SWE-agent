@@ -1,5 +1,6 @@
 import errno
 import json
+import stat
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -7,6 +8,7 @@ import pytest
 import yaml
 
 from sweagent.run.common import save_predictions
+from sweagent.run.merge_predictions import merge_predictions
 from sweagent.run.run import main
 from sweagent.run.run_batch import RunBatch
 
@@ -59,6 +61,8 @@ def test_run_batch_restores_prediction_on_resume(tmp_path, monkeypatch, previous
     prediction = trajectory.with_suffix(".pred")
     if previous is not None:
         prediction.write_bytes(previous)
+        prediction.chmod(0o640)
+        original_mode = stat.S_IMODE(prediction.stat().st_mode)
     original_trajectory = trajectory.read_bytes()
     execute = Mock(side_effect=AssertionError("completed instances must not run again"))
     monkeypatch.setattr(RunBatch, "_run_instance", execute)
@@ -70,6 +74,8 @@ def test_run_batch_restores_prediction_on_resume(tmp_path, monkeypatch, previous
     assert trajectory.read_bytes() == original_trajectory
     expected = {"instance_id": instance_id, "model_name_or_path": "output", "model_patch": submission}
     assert json.loads(prediction.read_bytes()) == expected
+    if previous is not None:
+        assert stat.S_IMODE(prediction.stat().st_mode) == original_mode
     assert json.loads((tmp_path / "output" / "preds.json").read_bytes()) == {
         instance_id: {**expected, "model_patch": submission if submission is not None else ""}
     }
@@ -136,6 +142,7 @@ def test_run_batch_reports_prediction_io_error_and_keeps_trajectory(tmp_path, mo
         return read_text(path, *args, **kwargs)
 
     if operation == "read":
+        prediction.write_text(json.dumps({"instance_id": "instance", "model_patch": "previous"}))
         monkeypatch.setattr(Path, "read_text", fail_read)
         error = PermissionError(errno.EACCES, "cannot read prediction")
     else:
@@ -150,6 +157,8 @@ def test_run_batch_reports_prediction_io_error_and_keeps_trajectory(tmp_path, mo
     cleanup.assert_called_once()
     assert cleanup.call_args.args[1] == "instance"
     assert trajectory.read_bytes() == original
+    report = yaml.safe_load((tmp_path / "output" / "run_batch_exit_statuses.yaml").read_text())
+    assert report["instances_by_exit_status"] == {f"Uncaught {type(error).__name__}": ["instance"]}
 
 
 def test_run_batch_continues_after_failed_prediction_recovery(tmp_path, monkeypatch):
@@ -168,10 +177,10 @@ def test_run_batch_continues_after_failed_prediction_recovery(tmp_path, monkeypa
     execute = Mock(side_effect=AssertionError("completed instances must not run again"))
     monkeypatch.setattr(RunBatch, "_run_instance", execute)
 
-    def fail_blocked_prediction(output_dir, instance_id, result):
+    def fail_blocked_prediction(output_dir, instance_id, result, *, atomic=False):
         if instance_id == "blocked":
             raise OSError(errno.ENOSPC, "cannot write prediction")
-        save_predictions(output_dir, instance_id, result)
+        save_predictions(output_dir, instance_id, result, atomic=atomic)
 
     monkeypatch.setattr("sweagent.run.run_batch.save_predictions", fail_blocked_prediction)
 
@@ -185,3 +194,59 @@ def test_run_batch_continues_after_failed_prediction_recovery(tmp_path, monkeypa
     }
     report = yaml.safe_load((output / "run_batch_exit_statuses.yaml").read_text())
     assert report["instances_by_exit_status"] == {"Uncaught OSError": ["blocked"], "skipped (submitted)": ["other"]}
+
+
+def test_run_batch_stages_prediction_out_of_view_of_merge(tmp_path, monkeypatch):
+    args, trajectory = _prepare_batch(tmp_path, "resumed", {"exit_status": "submitted", "submission": "saved patch"})
+    output = tmp_path / "output"
+    existing = output / "other" / "other.pred"
+    existing.parent.mkdir()
+    other_prediction = {"instance_id": "other", "model_patch": "other patch"}
+    existing.write_text(json.dumps(other_prediction))
+    read_during_write = tmp_path / "during-write.json"
+    write_text = Path.write_text
+    execute = Mock(side_effect=AssertionError("completed instances must not run again"))
+    monkeypatch.setattr(RunBatch, "_run_instance", execute)
+
+    def observe_partial_write(path, contents, *args, **kwargs):
+        if path.is_relative_to(trajectory.parent) and '"model_patch": "saved patch"' in contents:
+            write_text(path, contents[:1], *args, **kwargs)
+            merge_predictions([output], read_during_write)
+        return write_text(path, contents, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", observe_partial_write)
+    main(args)
+
+    execute.assert_not_called()
+    assert json.loads(read_during_write.read_bytes()) == {"other": other_prediction}
+    assert json.loads(trajectory.with_suffix(".pred").read_bytes())["model_patch"] == "saved patch"
+
+
+def test_run_batch_cleans_partial_staging_after_write_failure(tmp_path, monkeypatch):
+    args, trajectory = _prepare_batch(tmp_path, "resumed", {"exit_status": "submitted", "submission": "saved patch"})
+    prediction = trajectory.with_suffix(".pred")
+    previous = b'{"model_patch": "'
+    prediction.write_bytes(previous)
+    original = trajectory.read_bytes()
+    write_text = Path.write_text
+    interrupted_write = []
+    execute = Mock(side_effect=AssertionError("completed instances must not run again"))
+    monkeypatch.setattr(RunBatch, "_run_instance", execute)
+
+    def interrupt_prediction_write(path, contents, *args, **kwargs):
+        if '"model_patch": "saved patch"' in contents:
+            interrupted_write.append(path)
+            write_text(path, contents[:1], *args, **kwargs)
+            raise OSError(errno.ENOSPC, "cannot complete prediction")
+        return write_text(path, contents, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", interrupt_prediction_write)
+
+    with pytest.raises(OSError, match="cannot complete prediction"):
+        main(args)
+
+    execute.assert_not_called()
+    assert len(interrupted_write) == 1
+    assert not interrupted_write[0].parent.exists()
+    assert prediction.read_bytes() == previous
+    assert trajectory.read_bytes() == original
