@@ -299,10 +299,13 @@ class RunBatch:
         self._progress_manager.on_instance_start(instance.problem_statement.id)
 
         if previous_exit_status := self.should_skip(instance):
-            self._progress_manager.on_instance_end(
-                instance.problem_statement.id, exit_status=f"skipped ({previous_exit_status})"
-            )
-            self._remove_instance_log_file_handlers(instance.problem_statement.id)
+            try:
+                self._restore_prediction(instance.problem_statement.id)
+                self._progress_manager.on_instance_end(
+                    instance.problem_statement.id, exit_status=f"skipped ({previous_exit_status})"
+                )
+            finally:
+                self._remove_instance_log_file_handlers(instance.problem_statement.id)
             return
 
         # Either catch and silence exception, or raise _BreakLoop to stop the loop
@@ -373,6 +376,29 @@ class RunBatch:
         self._chooks.on_instance_completed(result=result)
         return result
 
+    def _trajectory_path(self, instance_id: str) -> Path:
+        return self.output_dir / instance_id / (instance_id + ".traj")
+
+    def _restore_prediction(self, instance_id: str) -> None:
+        """Recover the derived prediction from an already completed trajectory."""
+        trajectory_path = self._trajectory_path(instance_id)
+        prediction_path = trajectory_path.with_suffix(".pred")
+        if prediction_path.is_symlink():
+            return
+        try:
+            json.loads(prediction_path.read_text())
+        except (FileNotFoundError, UnicodeDecodeError, json.JSONDecodeError):
+            pass
+        else:
+            return
+
+        submission = json.loads(trajectory_path.read_text())["info"].get("submission")
+        if isinstance(submission, str):
+            save_predictions(
+                self.output_dir, instance_id, AgentRunResult(info={"submission": submission}, trajectory=[])
+            )
+            self.logger.info("Restored prediction from %s", trajectory_path)
+
     def should_skip(self, instance: BatchInstance) -> bool | str:
         """Check if we should skip this instance.
         Returns previous exit status if the instance should be skipped.
@@ -381,7 +407,7 @@ class RunBatch:
             return False
 
         # Check if there's an existing trajectory for this instance
-        log_path = self.output_dir / instance.problem_statement.id / (instance.problem_statement.id + ".traj")
+        log_path = self._trajectory_path(instance.problem_statement.id)
         if not log_path.exists():
             return False
 
