@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 import yaml
 
-from sweagent.run.common import save_predictions
+from sweagent.run.common import save_recovered_prediction
 from sweagent.run.merge_predictions import merge_predictions
 from sweagent.run.run import main
 from sweagent.run.run_batch import RunBatch
@@ -147,7 +147,7 @@ def test_run_batch_reports_prediction_io_error_and_keeps_trajectory(tmp_path, mo
         error = PermissionError(errno.EACCES, "cannot read prediction")
     else:
         error = OSError(errno.ENOSPC, "cannot write prediction")
-        monkeypatch.setattr("sweagent.run.run_batch.save_predictions", Mock(side_effect=error))
+        monkeypatch.setattr("sweagent.run.common.save_recovered_prediction", Mock(side_effect=error))
 
     with pytest.raises(OSError) as caught:
         main(args)
@@ -177,12 +177,12 @@ def test_run_batch_continues_after_failed_prediction_recovery(tmp_path, monkeypa
     execute = Mock(side_effect=AssertionError("completed instances must not run again"))
     monkeypatch.setattr(RunBatch, "_run_instance", execute)
 
-    def fail_blocked_prediction(output_dir, instance_id, result, *, atomic=False):
+    def fail_blocked_prediction(path, model_name_or_path, instance_id, submission):
         if instance_id == "blocked":
             raise OSError(errno.ENOSPC, "cannot write prediction")
-        save_predictions(output_dir, instance_id, result, atomic=atomic)
+        save_recovered_prediction(path, model_name_or_path, instance_id, submission)
 
-    monkeypatch.setattr("sweagent.run.run_batch.save_predictions", fail_blocked_prediction)
+    monkeypatch.setattr("sweagent.run.common.save_recovered_prediction", fail_blocked_prediction)
 
     main(args)
 

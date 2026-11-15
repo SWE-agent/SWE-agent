@@ -369,30 +369,31 @@ class BasicCLI:
         return config
 
 
-def save_predictions(traj_dir: Path, instance_id: str, result: AgentRunResult, *, atomic: bool = False) -> None:
+def save_predictions(traj_dir: Path, instance_id: str, result: AgentRunResult):
     """Save predictions in a file readable by SWE-bench"""
     output_file = traj_dir / instance_id / (instance_id + ".pred")
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    datum = {
-        "model_name_or_path": traj_dir.name,
-        "instance_id": instance_id,
-        "model_patch": result.info.get("submission"),
-    }
-    serialized = json.dumps(datum)
-    if not atomic:
-        output_file.write_text(serialized)
-        return
+    output_file.write_text(_prediction_json(traj_dir.name, instance_id, result.info.get("submission")))
 
+
+def save_recovered_prediction(
+    output_file: Path, model_name_or_path: str, instance_id: str, submission: str | None
+) -> None:
+    """Publish an entire recovered prediction at once."""
     # Continuous evaluation can scan for predictions while a worker is recovering one.
     with TemporaryDirectory(dir=output_file.parent) as directory:
         staged = Path(directory) / "prediction"
-        staged.write_text(serialized)
+        staged.write_text(_prediction_json(model_name_or_path, instance_id, submission))
         try:
             with output_file.open("r+"):
                 staged.chmod(stat.S_IMODE(output_file.stat().st_mode))
         except FileNotFoundError:
             pass
         staged.replace(output_file)
+
+
+def _prediction_json(model_name_or_path: str, instance_id: str, submission: str | None) -> str:
+    return json.dumps({"model_name_or_path": model_name_or_path, "instance_id": instance_id, "model_patch": submission})
 
 
 def _is_promising_patch(info: AgentInfo) -> bool:

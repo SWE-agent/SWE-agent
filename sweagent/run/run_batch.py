@@ -54,6 +54,7 @@ from sweagent.agent.hooks.status import SetStatusAgentHook
 from sweagent.environment.hooks.status import SetStatusEnvironmentHook
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import ModelConfigurationError, TotalCostLimitExceededError
+from sweagent.run import common
 from sweagent.run._progress import RunBatchProgressManager
 from sweagent.run.batch_instances import BatchInstance, BatchInstanceSourceConfig, SWEBenchInstances
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
@@ -394,12 +395,7 @@ class RunBatch:
             return
         submission = info["submission"]
         if submission is None or isinstance(submission, str):
-            save_predictions(
-                self.output_dir,
-                instance_id,
-                AgentRunResult(info={"submission": submission}, trajectory=[]),
-                atomic=True,
-            )
+            common.save_recovered_prediction(prediction_path, self.output_dir.name, instance_id, submission)
             self.logger.info("Restored prediction from %s", trajectory_path)
 
     def should_skip(self, instance: BatchInstance) -> bool | str:
