@@ -136,6 +136,43 @@ and set `agent.model.api_key` to the key you've configured for your proxy (or a 
     (it's currently mostly used for anthropic cache control).
     See [#957](https://github.com/SWE-agent/SWE-agent/issues/957) for more information.
 
+## Using a hosted gateway or relay
+
+The instructions above for local models also apply to any hosted OpenAI-compatible gateway or relay: keep the `openai/` prefix on the model name, point `api_base` at the gateway, and set `api_key` to the key issued by that service (it cannot be empty, even if the gateway meters usage some other way).
+
+```yaml title="config/your_config.yaml"
+agent:
+  model:
+    name: openai/<model-id-from-the-gateway>
+    api_base: https://gateway.example.com/v1
+    api_key: your-gateway-key
+```
+
+Things to check before relying on a gateway:
+
+* **`/v1` shape:** the most common failure is the trailing `/v1`. Some gateways expect `https://host/v1`, others the bare host. If the first request returns `Error code: 404`, try the other form before anything else.
+* **Model IDs:** they are the gateway's own names and are not always the vendor's public names. Fetch `{api_base}/models` and copy the IDs exactly.
+* **Cost limits:** a gateway model will not be in the `litellm` cost dictionary, so either disable cost tracking as shown above or add the model to a custom `litellm_model_registry` (see [custom cost tracking](../config/models.md#custom-cost-tracking)).
+* **Anthropic models:** if the gateway also serves the Anthropic Messages API, litellm's `anthropic/` provider honors `api_base`, so `name: anthropic/<model-id>` works with the Anthropic-protocol base URL of the gateway.
+
+### Example: a dual-protocol gateway
+
+> **Disclosure:** this example uses TeapotRouter, a hosted API gateway, and I'm one of its developers. The steps are identical for any endpoint serving the same protocols, and I'm happy to swap the example for another service or anonymize it.
+
+```yaml title="config/your_config.yaml"
+agent:
+  model:
+    name: openai/gpt-6.1-sol
+    api_base: https://api.teapotrouter.com/v1
+    api_key: your-teapotrouter-key
+    per_instance_cost_limit: 0
+    total_cost_limit: 0
+    per_instance_call_limit: 100
+    max_input_tokens: 0
+```
+
+Valid model IDs on the OpenAI-compatible path include `gpt-6-astra`, `gpt-6.1-sol`, and `gpt-6.1-terra`; the Anthropic-protocol path (`api_base: https://api.teapotrouter.com` with `name: anthropic/<model-id>`) serves `claude-sonnet-5-5`, `claude-opus-5-5`, `claude-haiku-4-5`, and `claude-fable-5-2`. Sample outputs for each model are viewable without an account at [teapotrouter.com/demo/model-lab](https://teapotrouter.com/demo/model-lab) if you want to see how a model behaves before configuring it.
+
 ## Something went wrong?
 
 * If you get `Error code: 404`, please check your configured keys, in particular
