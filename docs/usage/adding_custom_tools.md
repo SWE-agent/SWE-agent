@@ -264,6 +264,7 @@ agent:
 
 from registry import registry
 
+
 def main():
     # Get a simple value with a fallback
     setting = registry.get("MY_CUSTOM_SETTING", "default value")
@@ -273,6 +274,7 @@ def main():
     messages = registry.get("MORALE_MESSAGES", [])
     if messages:
         import random
+
         message = random.choice(messages)
         print(f"🐱 {message}")
 
@@ -280,6 +282,7 @@ def main():
     registry["LAST_MORALE_BOOST"] = "2024-01-15 10:30:00"
 
     print("Morale boosted! 🚀")
+
 
 if __name__ == "__main__":
     main()
