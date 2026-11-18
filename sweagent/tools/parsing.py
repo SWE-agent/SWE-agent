@@ -528,9 +528,11 @@ class JsonParser(AbstractParseFunction, BaseModel):
                         if _should_quote(value, command):
                             value = quote(value)
                         formatted_args[arg.name] = Template(arg.argument_format).render(value=value)
-                    elif strict and arg.required:
+                    elif arg.required:
                         msg = f"Required argument '{arg.name}' missing for command '{command.name}'"
                         raise FormatError(msg)
+                    else:
+                        formatted_args[arg.name] = ""
 
             # Use the formatted arguments with invoke_format
             action = command.invoke_format.format(**formatted_args).strip()
