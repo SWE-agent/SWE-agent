@@ -24,9 +24,7 @@ class _NoServeTCPServer:
 @pytest.fixture
 def trajectory_dir(tmp_path):
     """A trajectory directory as written by ``sweagent run``/``sweagent run-batch``."""
-    (tmp_path / "args.yaml").write_text(
-        "environment:\n  data_path: tests/test_data/data_sources/does-not-exist.json\n"
-    )
+    (tmp_path / "args.yaml").write_text("environment:\n  data_path: tests/test_data/data_sources/does-not-exist.json\n")
     return tmp_path
 
 
