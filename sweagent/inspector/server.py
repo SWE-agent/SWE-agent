@@ -305,7 +305,7 @@ def main(data_path, directory, port):
             args = yaml.safe_load(file)
         if "environment" in args and "data_path" in args["environment"]:
             data_path = Path(__file__).parent.parent / args["environment"]["data_path"]
-            if data_path.exists:
+            if data_path.exists():
                 with open(data_path) as f:
                     data = json.load(f)
 
