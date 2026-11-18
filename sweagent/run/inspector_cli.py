@@ -374,7 +374,13 @@ class TrajectoryInspectorApp(App):
         self.trajectory_index = 0
         self.overview_stats = collections.defaultdict(dict)
         self._build_overview_stats()
-        self._data = load_file(data_path)
+        data = load_file(data_path)
+        if isinstance(data, list):
+            # Datasets passed via `--data_path` (e.g. SWE-bench) are lists of instance records
+            data = {
+                record["instance_id"]: record for record in data if isinstance(record, dict) and "instance_id" in record
+            }
+        self._data = data
 
     def get_gold_patch(self, instance_id: str) -> str | None:
         if self._data is None:
@@ -485,7 +491,7 @@ def main(args: list[str] | None = None):
     parser.add_argument("-d", "--data_path", type=Path, help="Path to the data file to load gold patches from")
     parsed_args = parser.parse_args(args)
 
-    app = TrajectoryInspectorApp(parsed_args.trajectory_path)
+    app = TrajectoryInspectorApp(parsed_args.trajectory_path, data_path=parsed_args.data_path)
     app.run()
 
 
