@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 from jinja2 import Template
 
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
-from sweagent.tools.commands import Command
+from sweagent.tools.commands import Argument, Command
 from sweagent.tools.parsing import (
     ActionParser,
     EditFormat,
@@ -123,6 +125,88 @@ def test_function_calling_parser():
     }
     with pytest.raises(FormatError):
         parser(invalid_json, [command])
+
+
+def _view_command() -> Command:
+    return Command(
+        name="str_replace_editor",
+        docstring="",
+        signature="str_replace_editor <command> <path> [<view_range>]",
+        arguments=[
+            Argument(name="command", type="string", description="", required=True),
+            Argument(name="path", type="string", description="", required=True),
+            Argument(
+                name="view_range",
+                type="array",
+                items={"type": "integer"},
+                description="",
+                required=False,
+                argument_format="--view_range {{value|join(' ')}}",
+            ),
+        ],
+    )
+
+
+def test_function_calling_parser_rejects_integer_view_range():
+    command = _view_command()
+    parser = FunctionCallingParser()
+    listed = {
+        "message": "view",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": {"command": "view", "path": "/testbed/a.py", "view_range": [1, 3]},
+                }
+            }
+        ],
+    }
+    assert parser(listed, [command]) == ("view", "str_replace_editor view /testbed/a.py --view_range 1 3")
+    integer = {
+        "message": "view",
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "str_replace_editor",
+                    "arguments": {"command": "view", "path": "/testbed/a.py", "view_range": 3},
+                }
+            }
+        ],
+    }
+    with pytest.raises(FormatError, match="view_range"):
+        parser(integer, [command])
+
+
+def test_json_parser_rejects_integer_view_range():
+    command = _view_command()
+    parser = JsonParser()
+    listed = {
+        "message": json.dumps(
+            {
+                "thought": "view",
+                "command": {
+                    "name": "str_replace_editor",
+                    "arguments": {"command": "view", "path": "/testbed/a.py", "view_range": [1, 3]},
+                },
+            }
+        )
+    }
+    thought, action = parser(listed, [command])
+    assert thought == "view"
+    assert "--view_range 1 3" in action
+    integer = {
+        "message": json.dumps(
+            {
+                "thought": "view",
+                "command": {
+                    "name": "str_replace_editor",
+                    "arguments": {"command": "view", "path": "/testbed/a.py", "view_range": 3},
+                },
+            }
+        )
+    }
+    with pytest.raises(FormatError, match="view_range"):
+        parser(integer, [command])
 
 
 def test_function_calling_parser_error_message():
