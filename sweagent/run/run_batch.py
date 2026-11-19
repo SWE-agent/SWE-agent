@@ -41,7 +41,6 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Self
 
-import yaml
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.live import Live
@@ -55,7 +54,7 @@ from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import ModelConfigurationError, TotalCostLimitExceededError
 from sweagent.run._progress import RunBatchProgressManager
 from sweagent.run.batch_instances import BatchInstance, BatchInstanceSourceConfig, SWEBenchInstances
-from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
+from sweagent.run.common import BasicCLI, ConfigHelper, dump_config_yaml, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
 from sweagent.run.merge_predictions import merge_predictions
@@ -197,7 +196,7 @@ class RunBatch:
         load_environment_variables(config.env_var_path)
         config.set_default_output_dir()
         config.output_dir.mkdir(parents=True, exist_ok=True)
-        (config.output_dir / "run_batch.config.yaml").write_text(yaml.dump(config.model_dump_json(), indent=2))
+        (config.output_dir / "run_batch.config.yaml").write_text(dump_config_yaml(config))
         logger = get_logger("run", emoji="🏃")
         logger.debug("Loading instances from %s", f"{config.instances!r}")
         instances = config.instances.get_instance_configs()
@@ -341,7 +340,7 @@ class RunBatch:
             env=instance.env,
         )
         (output_dir / f"{instance.problem_statement.id}.config.yaml").write_text(
-            yaml.dump(single_run_replay_config.model_dump_json(), indent=2)
+            dump_config_yaml(single_run_replay_config)
         )
         agent.replay_config = single_run_replay_config  # type: ignore[attr-defined]
         agent.add_hook(SetStatusAgentHook(instance.problem_statement.id, self._progress_manager.update_instance_status))

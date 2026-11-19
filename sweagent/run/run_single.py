@@ -32,7 +32,6 @@ import sys
 from pathlib import Path
 from typing import Self
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -44,7 +43,7 @@ from sweagent.agent.problem_statement import (
 )
 from sweagent.environment.swe_env import EnvironmentConfig, SWEEnv
 from sweagent.run.common import AutoCorrectSuggestion as ACS
-from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
+from sweagent.run.common import BasicCLI, ConfigHelper, dump_config_yaml, save_predictions
 from sweagent.run.hooks.abstract import CombinedRunHooks, RunHook
 from sweagent.run.hooks.apply_patch import SaveApplyPatchHook
 from sweagent.run.hooks.open_pr import OpenPRConfig, OpenPRHook
@@ -194,7 +193,7 @@ class RunSingle:
         output_dir = self.output_dir / self.problem_statement.id
         output_dir.mkdir(parents=True, exist_ok=True)
         if self.agent.replay_config is not None:  # type: ignore[attr-defined]
-            (output_dir / "config.yaml").write_text(yaml.dump(self.agent.replay_config.model_dump_json(), indent=2))  # type: ignore[attr-defined]
+            (output_dir / "config.yaml").write_text(dump_config_yaml(self.agent.replay_config))  # type: ignore[attr-defined]
         result = self.agent.run(
             problem_statement=self.problem_statement,
             env=self.env,
