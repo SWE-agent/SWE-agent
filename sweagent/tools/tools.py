@@ -255,9 +255,14 @@ class ToolHandler:
 
     def reset(self, env: SWEEnv) -> None:
         self.logger.info("Resetting tools")
-        env_variables = self.config.env_variables.copy() | {
-            var: os.getenv(var) for var in self.config.propagate_env_variables
-        }
+        env_variables = self.config.env_variables.copy()
+        for var in self.config.propagate_env_variables:
+            value = os.getenv(var)
+            if value is None:
+                # Never forward an unset variable: `set_env_variables` would export the string "None"
+                self.logger.debug("Not propagating %s, because it is not set on the host", var)
+                continue
+            env_variables[var] = value
         env.set_env_variables(env_variables)
         env.write_file("/root/.swe-agent-env", json.dumps(self.config.registry_variables))
         env.write_file("/root/state.json", "{}")
