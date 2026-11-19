@@ -9,12 +9,34 @@ from sweagent.agent.agents import DefaultAgent, DefaultAgentConfig
 from sweagent.agent.models import InstantEmptySubmitModelConfig, PredeterminedTestModel
 from sweagent.agent.problem_statement import EmptyProblemStatement, TextProblemStatement
 from sweagent.environment.swe_env import SWEEnv
-from sweagent.tools.parsing import FunctionCallingParser, Identity, ThoughtActionParser
+from sweagent.tools.parsing import FunctionCallingParser, Identity, JsonParser, ThoughtActionParser
 from sweagent.tools.tools import ToolConfig
 
 
 def test_dummy_env(dummy_env):
     pass
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        '{"thought": "Try a command", "command": {"name": {}}}',
+        '{"thought": "Try a command", "command": {"name": "bash", "arguments": "command"}}',
+    ],
+)
+def test_json_parser_requeries_invalid_types(dummy_env, tmp_path, response):
+    agent = DefaultAgent.from_config(
+        DefaultAgentConfig(model=InstantEmptySubmitModelConfig(), tools=ToolConfig(parse_function=JsonParser()))
+    )
+    agent.model = PredeterminedTestModel(
+        [response, '{"thought": "List files", "command": {"name": "bash", "arguments": {"command": "ls"}}}']
+    )
+    agent.setup(dummy_env, EmptyProblemStatement(), output_dir=tmp_path)
+    step = agent.step()
+    assert not step.done
+    assert step.exit_status is None
+    assert step.action == "ls"
+    assert len(agent.trajectory) == 2
 
 
 @pytest.fixture
