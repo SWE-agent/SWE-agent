@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 from jinja2 import Template
 
@@ -78,6 +80,43 @@ def test_json_parser():
     missing_keys = '{"thought": "Missing command key"}'
     with pytest.raises(FormatError):
         parser({"message": missing_keys}, [])
+
+
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("name", [{}, [], None, 42, True])
+def test_json_parser_invalid_command_name(name, strict):
+    message = json.dumps({"thought": "Try a command", "command": {"name": name}})
+    with pytest.raises(FormatError, match="name.*string"):
+        JsonParser()({"message": message}, [], strict=strict)
+
+
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("name", ["ls", "unknown"])
+@pytest.mark.parametrize("arguments", ["path", [], None, 42, True])
+def test_json_parser_invalid_arguments(arguments, name, strict):
+    message = json.dumps({"thought": "List files", "command": {"name": name, "arguments": arguments}})
+    with pytest.raises(FormatError, match="arguments.*JSON object"):
+        JsonParser()({"message": message}, [Command(name="ls", docstring="")], strict=strict)
+
+
+@pytest.mark.parametrize("value", [[1, 20], 3, {}, None, True])
+def test_json_parser_unknown_command_typed_arguments(value):
+    message = json.dumps({"thought": "Try a command", "command": {"name": "unknown", "arguments": {"arg": value}}})
+    with pytest.raises(FormatError, match="argument.*string"):
+        JsonParser()({"message": message}, [])
+    with pytest.raises(FormatError, match="not found"):
+        JsonParser()({"message": message}, [], strict=True)
+
+
+def test_json_parser_unknown_command_string_arguments():
+    message = '{"thought": "List files", "command": {"name": "unknown", "arguments": {"path": "/testbed"}}}'
+    assert JsonParser()({"message": message}, []) == ("List files", "unknown /testbed")
+
+
+@pytest.mark.parametrize("strict", [False, True])
+def test_json_parser_no_arguments(strict):
+    message = '{"thought": "List files", "command": {"name": "ls"}}'
+    assert JsonParser()({"message": message}, [Command(name="ls", docstring="")], strict=strict) == ("List files", "ls")
 
 
 def test_function_calling_parser():

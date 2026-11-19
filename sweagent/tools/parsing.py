@@ -507,6 +507,13 @@ class JsonParser(AbstractParseFunction, BaseModel):
                     msg = f"Key '{key}' is missing from 'command' object."
                     raise FormatError(msg)
 
+            if not isinstance(data_command["name"], str):
+                msg = "Value of 'name' key is not a string."
+                raise FormatError(msg)
+            if not isinstance(data_command.get("arguments", {}), dict):
+                msg = "Value of 'arguments' key is not a JSON object."
+                raise FormatError(msg)
+
             thought = data["thought"]
             commands_dict = {c.name: c for c in commands}
             command = commands_dict.get(data_command["name"])
@@ -517,7 +524,11 @@ class JsonParser(AbstractParseFunction, BaseModel):
                     msg = f"Command '{data_command['name']}' not found in list of available commands."
                     raise FormatError(msg)
                 # In non-strict mode, just join command name with argument values
-                return thought, " ".join([data_command["name"], *data_command.get("arguments", {}).values()])
+                arguments = data_command.get("arguments", {})
+                if not all(isinstance(value, str) for value in arguments.values()):
+                    msg = "Unknown command argument values must be strings."
+                    raise FormatError(msg)
+                return thought, " ".join([data_command["name"], *arguments.values()])
 
             # Format arguments using their individual argument_format
             formatted_args = {}
