@@ -577,13 +577,14 @@ class EditTool:
         self._file_history[path].append(file_content)
 
         # Create a snippet of the edited section
+        new_file_lines = new_file_content.split("\n")
         replacement_line = file_content.split(old_str)[0].count("\n")
         start_line = max(1, replacement_line - SNIPPET_LINES)
-        end_line = min(replacement_line + SNIPPET_LINES + new_str.count("\n"), len(new_file_content.splitlines()))
+        end_line = min(replacement_line + SNIPPET_LINES + new_str.count("\n"), len(new_file_lines))
         start_line, end_line = WindowExpander(suffix=path.suffix).expand_window(
-            new_file_content.split("\n"), start_line, end_line, max_added_lines=MAX_WINDOW_EXPANSION_EDIT_CONFIRM
+            new_file_lines, start_line, end_line, max_added_lines=MAX_WINDOW_EXPANSION_EDIT_CONFIRM
         )
-        snippet = "\n".join(new_file_content.split("\n")[start_line - 1 : end_line])
+        snippet = "\n".join(new_file_lines[start_line - 1 : end_line])
 
         # Prepare the success message
         success_msg = "The file {} has been edited. ".format(path)
