@@ -99,16 +99,18 @@ def test_json_parser_invalid_arguments(arguments, name, strict):
         JsonParser()({"message": message}, [Command(name="ls", docstring="")], strict=strict)
 
 
-def test_json_parser_unknown_command_typed_arguments():
-    message = json.dumps(
-        {
-            "thought": "View lines",
-            "command": {"name": "unknown", "arguments": {"path": "/testbed", "range": [1, 20], "line": 3}},
-        }
-    )
-    assert JsonParser()({"message": message}, []) == ("View lines", "unknown /testbed [1, 20] 3")
+@pytest.mark.parametrize("value", [[1, 20], 3, {}, None, True])
+def test_json_parser_unknown_command_typed_arguments(value):
+    message = json.dumps({"thought": "Try a command", "command": {"name": "unknown", "arguments": {"arg": value}}})
+    with pytest.raises(FormatError, match="argument.*string"):
+        JsonParser()({"message": message}, [])
     with pytest.raises(FormatError, match="not found"):
         JsonParser()({"message": message}, [], strict=True)
+
+
+def test_json_parser_unknown_command_string_arguments():
+    message = '{"thought": "List files", "command": {"name": "unknown", "arguments": {"path": "/testbed"}}}'
+    assert JsonParser()({"message": message}, []) == ("List files", "unknown /testbed")
 
 
 @pytest.mark.parametrize("strict", [False, True])

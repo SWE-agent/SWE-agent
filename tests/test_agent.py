@@ -22,6 +22,8 @@ def test_dummy_env(dummy_env):
     [
         '{"thought": "Try a command", "command": {"name": {}}}',
         '{"thought": "Try a command", "command": {"name": "bash", "arguments": "command"}}',
+        '{"thought": "Try a command", "command": {"name": "unknown", "arguments": {"range": [1, 20]}}}',
+        '{"thought": "Try a command", "command": {"name": "unknown", "arguments": {"line": 3}}}',
     ],
 )
 def test_json_parser_requeries_invalid_types(dummy_env, tmp_path, response):

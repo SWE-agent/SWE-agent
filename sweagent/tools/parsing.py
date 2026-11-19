@@ -524,7 +524,11 @@ class JsonParser(AbstractParseFunction, BaseModel):
                     msg = f"Command '{data_command['name']}' not found in list of available commands."
                     raise FormatError(msg)
                 # In non-strict mode, just join command name with argument values
-                return thought, " ".join(map(str, [data_command["name"], *data_command.get("arguments", {}).values()]))
+                arguments = data_command.get("arguments", {})
+                if not all(isinstance(value, str) for value in arguments.values()):
+                    msg = "Unknown command argument values must be strings."
+                    raise FormatError(msg)
+                return thought, " ".join([data_command["name"], *arguments.values()])
 
             # Format arguments using their individual argument_format
             formatted_args = {}
