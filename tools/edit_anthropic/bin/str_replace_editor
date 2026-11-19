@@ -520,6 +520,13 @@ class EditTool:
         old_str = old_str.expandtabs()
         new_str = new_str.expandtabs() if new_str is not None else ""
 
+        # "".count("") is 1, so an empty search looks unique on an empty file,
+        # writes new_str, then crashes on "".split(""). A non-empty file already
+        # reports multiple matches and does not write.
+        if old_str == "" and file_content == "":
+            print("No replacement was performed, old_str is empty.")
+            sys.exit(22)
+
         # Check if old_str is unique in the file
         occurrences = file_content.count(old_str)
         if occurrences == 0:
