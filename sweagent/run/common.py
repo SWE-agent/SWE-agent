@@ -10,7 +10,7 @@ from types import UnionType
 from typing import Any
 
 import yaml
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from pydantic_settings import BaseSettings, CliApp, SettingsError
 from rich import print as rich_print
 from rich.panel import Panel
@@ -19,6 +19,15 @@ from sweagent import CONFIG_DIR
 from sweagent.types import AgentInfo, AgentRunResult
 from sweagent.utils.log import get_logger
 from sweagent.utils.serialization import merge_nested_dicts
+
+
+def dump_config_yaml(config: BaseModel) -> str:
+    """Serialize a config as a YAML mapping ``--config`` can merge.
+
+    ``model_dump_json()`` is a string. ``yaml.dump`` of that string is a scalar,
+    and ``merge_nested_dicts`` then fails because a string has no ``items()``.
+    """
+    return yaml.dump(config.model_dump(mode="json"), indent=2)
 
 
 def _shorten_strings(data, *, max_length=30):
