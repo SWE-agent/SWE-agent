@@ -45,8 +45,20 @@ from jinja2 import Template
 from pydantic import BaseModel
 
 from sweagent.exceptions import FormatError, FunctionCallingFormatError
-from sweagent.tools.commands import Command
+from sweagent.tools.commands import Argument, Command
 from sweagent.tools.utils import _should_quote
+
+
+def _reject_scalar_array(arg: Argument, value: Any) -> None:
+    """An array argument has to be a sequence before a template joins it.
+
+    Strings stay allowed here because a quoted range is a separate parse
+    (#1182). Integers and other scalars are not iterable, so ``join`` raises
+    TypeError and the run exits instead of asking the model to retry.
+    """
+    if arg.type == "array" and not isinstance(value, (str, list, tuple)):
+        msg = f"Argument '{arg.name}' must be an array."
+        raise FormatError(msg)
 
 
 class AbstractParseFunction(ABC):
@@ -430,6 +442,9 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
                 return ""
             return value
 
+        for arg in command.arguments:
+            if arg.name in values:
+                _reject_scalar_array(arg, values[arg.name])
         formatted_args = {
             arg.name: Template(arg.argument_format).render(value=get_quoted_arg(values[arg.name]))
             if arg.name in values
@@ -525,6 +540,7 @@ class JsonParser(AbstractParseFunction, BaseModel):
                 for arg in command.arguments:
                     if arg.name in data_command.get("arguments", {}):
                         value = data_command["arguments"][arg.name]
+                        _reject_scalar_array(arg, value)
                         if _should_quote(value, command):
                             value = quote(value)
                         formatted_args[arg.name] = Template(arg.argument_format).render(value=value)
