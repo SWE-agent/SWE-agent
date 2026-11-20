@@ -6,6 +6,7 @@ from swerex.runtime.dummy import DummyRuntime
 
 from sweagent import CONFIG_DIR
 from sweagent.agent.agents import DefaultAgent, DefaultAgentConfig
+from sweagent.agent.hooks.abstract import AbstractAgentHook
 from sweagent.agent.models import InstantEmptySubmitModelConfig, PredeterminedTestModel
 from sweagent.agent.problem_statement import EmptyProblemStatement, TextProblemStatement
 from sweagent.environment.swe_env import SWEEnv
@@ -260,3 +261,28 @@ def test_function_calling(dummy_env: SWEEnv, function_calling_agent: DefaultAgen
     assert not r.done, "Expected not done, because we haven't submitted yet"
     assert r.action.strip() == "ls", "Expected the tool call to be executed"
     assert "file1 file2" in r.observation, "Expected the tool call to return the output of the command"
+
+
+class SetupRecordingHook(AbstractAgentHook):
+    """Records the agent lifecycle events that every hook should receive."""
+
+    def __init__(self):
+        self.events = []
+
+    def on_setup_attempt(self):
+        self.events.append("on_setup_attempt")
+
+    def on_setup_done(self):
+        self.events.append("on_setup_done")
+
+
+def test_setup_done_is_forwarded_to_hooks(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
+    """Regression test: `CombinedAgentHook.on_setup_done` only called `super()`,
+    i.e. the base class no-op, instead of forwarding the event to the registered hooks.
+    `DefaultAgent.setup` fires the event, so every hook implementation that overrides
+    `on_setup_done` silently never ran.
+    """
+    hook = SetupRecordingHook()
+    default_agent.add_hook(hook)
+    default_agent.setup(dummy_env, EmptyProblemStatement(), output_dir=tmp_path)
+    assert hook.events == ["on_setup_attempt", "on_setup_done"]

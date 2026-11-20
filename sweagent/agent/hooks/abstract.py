@@ -132,7 +132,8 @@ class CombinedAgentHook(AbstractAgentHook):
             )
 
     def on_setup_done(self):
-        return super().on_setup_done()
+        for hook in self.hooks:
+            hook.on_setup_done()
 
     def on_tools_installation_started(self):
         for hook in self.hooks:
