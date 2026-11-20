@@ -65,7 +65,12 @@ class RunSingleActionConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-def _get_default_output_dir(output_dir: Path, problem_statement: ProblemStatement, agent: AgentConfig) -> Path:
+def _get_default_output_dir(
+    output_dir: Path,
+    problem_statement: ProblemStatement,
+    agent: AgentConfig,
+    config_files: list[Path] | None = None,
+) -> Path:
     if output_dir == Path("DEFAULT"):
         user_id = getpass.getuser()
         problem_id = problem_statement.id
@@ -73,7 +78,7 @@ def _get_default_output_dir(output_dir: Path, problem_statement: ProblemStatemen
             model_id = agent.model.id  # type: ignore[attr-defined]
         except AttributeError:
             model_id = "unknown_model"
-        config_file = getattr(agent, "_config_files", ["no_config"])[0]
+        config_file: str | Path = config_files[0] if config_files else "no_config"
         if isinstance(config_file, Path):
             config_file = config_file.stem
         return Path.cwd() / "trajectories" / user_id / f"{config_file}__{model_id}___{problem_id}"
@@ -99,7 +104,10 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
     def set_default_output_dir(self) -> None:
         # Needs to be called explicitly, because self._config_files will be setup
         # post-init.
-        self.output_dir = _get_default_output_dir(self.output_dir, self.problem_statement, self.agent)
+        config_files = getattr(self, "_config_files", None)
+        self.output_dir = _get_default_output_dir(
+            self.output_dir, self.problem_statement, self.agent, config_files=config_files
+        )
 
     @classmethod
     def _get_auto_correct(cls) -> list[ACS]:

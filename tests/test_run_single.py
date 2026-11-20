@@ -7,6 +7,7 @@ import pytest
 from sweagent import CONFIG_DIR, TOOLS_DIR
 from sweagent.agent.agents import DefaultAgentConfig
 from sweagent.agent.models import InstantEmptySubmitModelConfig
+from sweagent.agent.problem_statement import EmptyProblemStatement
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.run.common import BasicCLI
 from sweagent.run.hooks.abstract import RunHook
@@ -18,6 +19,38 @@ class RaisesExceptionHook(RunHook):
     def on_instance_start(self, *args, **kwargs):
         msg = "test exception"
         raise ValueError(msg)
+
+
+def _default_output_dir_config(config_files: list[Path], model: InstantEmptySubmitModelConfig) -> RunSingleConfig:
+    """RunSingleConfig with `_config_files` attached the same way `BasicCLI` does it."""
+    config = RunSingleConfig(
+        agent=DefaultAgentConfig(model=model),
+        problem_statement=EmptyProblemStatement(id="test-instance"),
+    )
+    config._config_files = config_files  # type: ignore[attr-defined]
+    return config
+
+
+def test_default_output_dir_is_named_after_config_file():
+    """Regression test: the default run directory must record the config file that was used.
+
+    `_get_default_output_dir` looked `_config_files` up on the *agent* config, which never
+    carries that attribute (it is attached to the run config by `BasicCLI`), so every
+    `sweagent run --config ...` wrote its trajectory to a `no_config__...` directory, unlike
+    `run-batch`, which reads `_config_files` from the run config.
+    """
+    model = InstantEmptySubmitModelConfig()
+    config = _default_output_dir_config([Path("/some/dir/my-config.yaml")], model)
+    config.set_default_output_dir()
+    assert config.output_dir.name == f"my-config__{model.id}___test-instance"
+
+
+def test_default_output_dir_without_config_file():
+    """Without any config file (e.g. `--no_config_file`) the fallback name stays `no_config`."""
+    model = InstantEmptySubmitModelConfig()
+    config = _default_output_dir_config([], model)
+    config.set_default_output_dir()
+    assert config.output_dir.name == f"no_config__{model.id}___test-instance"
 
 
 @pytest.mark.slow
