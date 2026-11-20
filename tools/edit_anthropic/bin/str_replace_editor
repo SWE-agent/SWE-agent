@@ -54,6 +54,25 @@ Edit the file again if necessary.
 """
 
 
+def _split_newline_style(text: str) -> Tuple[str, str]:
+    """Return text with LF endings, plus the ending the file should keep.
+
+    Path.read_text() translates ``\\r\\n`` and ``\\r`` to ``\\n``. Writing that
+    string back turns a one-line edit into a whole-file newline rewrite.
+    """
+    if "\r\n" in text:
+        return text.replace("\r\n", "\n"), "\r\n"
+    if "\r" in text:
+        return text.replace("\r", "\n"), "\r"
+    return text, "\n"
+
+
+def _apply_newline_style(text: str, newline: str) -> str:
+    if newline == "\n":
+        return text
+    return text.replace("\n", newline)
+
+
 def maybe_truncate(content: str, truncate_after: Optional[int] = MAX_RESPONSE_LEN):
     """Truncate content and append a notice if content exceeds the specified length."""
     return (
@@ -352,6 +371,7 @@ class EditTool:
     def __init__(self):
         super().__init__()
         self._encoding = None
+        self._newline = "\n"
 
     @property
     def _file_history(self):
@@ -653,10 +673,13 @@ class EditTool:
         exception = None
         for self._encoding, errors in encodings:
             try:
-                text = path.read_text(encoding=self._encoding, errors=errors)
+                # Path.read_text(newline=...) is 3.13+. CI still runs 3.11 and 3.12.
+                with path.open(mode="r", encoding=self._encoding, errors=errors, newline="") as handle:
+                    text = handle.read()
             except UnicodeDecodeError as e:
                 exception = e
             else:
+                text, self._newline = _split_newline_style(text)
                 break
         else:
             print("Ran into UnicodeDecodeError {} while trying to read {}".format(exception, path))
@@ -666,7 +689,11 @@ class EditTool:
     def write_file(self, path: Path, file: str):
         """Write the content of a file to a given path; raise a ToolError if an error occurs."""
         try:
-            path.write_text(file, encoding=self._encoding or "utf-8")
+            path.write_text(
+                _apply_newline_style(file, self._newline),
+                encoding=self._encoding or "utf-8",
+                newline="",
+            )
         except Exception as e:
             print("Ran into {} while trying to write to {}".format(e, path))
             sys.exit(20)
