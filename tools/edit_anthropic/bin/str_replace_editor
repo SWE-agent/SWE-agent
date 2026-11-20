@@ -516,9 +516,12 @@ class EditTool:
     def str_replace(self, path: Path, old_str: str, new_str: Optional[str]):
         """Implement the str_replace command, which replaces old_str with new_str in the file content"""
         # Read the file content
-        file_content = self.read_file(path).expandtabs()
+        raw_content = self.read_file(path)
+        # `view` prints tab expanded text, so models copy spaces into old_str: match on the expanded
+        # text, but never write it back, because that rewrites the tabs of untouched lines (#1647).
+        file_content = raw_content.expandtabs()
         old_str = old_str.expandtabs()
-        new_str = new_str.expandtabs() if new_str is not None else ""
+        new_str = new_str if new_str is not None else ""
 
         # Check if old_str is unique in the file
         occurrences = file_content.count(old_str)
@@ -544,8 +547,8 @@ class EditTool:
             except Exception as e:
                 print("Warning: Failed to run pre-edit linter on {}: {}".format(path, e))
 
-        # Replace old_str with new_str
-        new_file_content = file_content.replace(old_str, new_str)
+        # Replace old_str with new_str, rewriting only the lines that the match covers
+        new_file_content = self._replace_matched_lines(raw_content, file_content, old_str, new_str)
 
         # Write the new content to the file
         self.write_file(path, new_file_content)
@@ -574,7 +577,7 @@ class EditTool:
                 epilogue = LINT_WARNING_TEMPLATE.format(errors=errors)
 
         # Save the content to history
-        self._file_history[path].append(file_content)
+        self._file_history[path].append(raw_content)
 
         # Create a snippet of the edited section
         replacement_line = file_content.split(old_str)[0].count("\n")
@@ -593,10 +596,40 @@ class EditTool:
 
         print(success_msg)
 
+    def _replace_matched_lines(self, raw_content: str, expanded_content: str, old_str: str, new_str: str) -> str:
+        """Apply old_str -> new_str, which was matched in the tab expanded content, to the raw content"""
+        if old_str in raw_content:
+            return raw_content.replace(old_str, new_str)
+        start = expanded_content.find(old_str)
+        end = start + len(old_str)
+        first_line = expanded_content.count("\n", 0, start)
+        last_line = expanded_content.count("\n", 0, end - 1)
+        expanded_lines = expanded_content.split("\n")
+        raw_lines = raw_content.split("\n")
+        # Map the match boundaries back to raw offsets, so characters outside the match keep their tabs
+        raw_start = sum(len(line) + 1 for line in raw_lines[:first_line]) + self._expanded_to_raw_offset(
+            expanded_lines[first_line], raw_lines[first_line], start - (expanded_content.rfind("\n", 0, start) + 1)
+        )
+        raw_end = sum(len(line) + 1 for line in raw_lines[:last_line]) + self._expanded_to_raw_offset(
+            expanded_lines[last_line], raw_lines[last_line], end - (expanded_content.rfind("\n", 0, end - 1) + 1)
+        )
+        return raw_content[:raw_start] + new_str + raw_content[raw_end:]
+
+    @staticmethod
+    def _expanded_to_raw_offset(expanded_line: str, raw_line: str, offset: int) -> int:
+        """Map an offset in a tab expanded line to the raw line, snapping to the start of a tab"""
+        column = 0
+        if offset <= 0:
+            return 0
+        for index, char in enumerate(raw_line):
+            column += 8 - column % 8 if char == "\t" else 1
+            if column >= offset:
+                return index + 1
+        return len(raw_line)
+
     def insert(self, path: Path, insert_line: int, new_str: str):
         """Implement the insert command, which inserts new_str at the specified line in the file content."""
-        file_text = self.read_file(path).expandtabs()
-        new_str = new_str.expandtabs()
+        file_text = self.read_file(path)
         file_text_lines = file_text.split("\n")
         n_lines_file = len(file_text_lines)
 
