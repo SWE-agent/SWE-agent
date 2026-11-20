@@ -31,7 +31,7 @@ class Bundle(BaseModel):
             msg = f"Bundle config file '{config_path}' does not exist."
             raise ValueError(msg)
 
-        config_data = yaml.safe_load(config_path.read_text())
+        config_data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
         self._config = BundleConfig(**config_data)
 
         invalid_hidden_tools = set(self.hidden_tools) - set(self._config.tools.keys())
