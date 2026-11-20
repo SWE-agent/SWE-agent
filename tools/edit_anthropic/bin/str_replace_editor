@@ -673,7 +673,9 @@ class EditTool:
         exception = None
         for self._encoding, errors in encodings:
             try:
-                text = path.read_text(encoding=self._encoding, errors=errors, newline="")
+                # Path.read_text(newline=...) is 3.13+. CI still runs 3.11 and 3.12.
+                with path.open(mode="r", encoding=self._encoding, errors=errors, newline="") as handle:
+                    text = handle.read()
             except UnicodeDecodeError as e:
                 exception = e
             else:
