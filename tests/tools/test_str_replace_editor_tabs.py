@@ -33,6 +33,12 @@ REGISTRY = TOOLS / "registry" / "lib"
             id="insert-keeps-tab-on-untouched-line",
         ),
         pytest.param(
+            "\tkeep\tthis\n",
+            ["str_replace", "--old_str", "        keep", "--new_str", "        keep!"],
+            "        keep!\tthis\n",
+            id="str-replace-keeps-tab-after-the-match-on-the-same-line",
+        ),
+        pytest.param(
             "all:\n\techo hi\n",
             ["insert", "--insert_line", "2", "--new_str", "\techo there"],
             "all:\n\techo hi\n\techo there\n",
