@@ -62,7 +62,10 @@ def get_logger(name: str, *, emoji: str = "") -> logging.Logger:
     if thread_name != "MainThread":
         name = name + "-" + _THREAD_NAME_TO_LOG_SUFFIX.get(thread_name, thread_name)
     logger = logging.getLogger(name)
-    if logger.hasHandlers():
+    # Only look at the handlers of this logger: `logger.hasHandlers` would also consider
+    # handlers of the parent/root logger (e.g. set by the embedding program), which would
+    # make us skip our own setup and therefore also skip the additional handlers below.
+    if logger.handlers:
         # Already set up
         return logger
     handler = _RichHandlerWithEmoji(
