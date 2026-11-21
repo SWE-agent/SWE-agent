@@ -36,7 +36,9 @@ class Flake8Error:
     def from_line(cls, line: str):
         try:
             prefix, _sep, problem = line.partition(": ")
-            filename, line_number, col_number = prefix.split(":")
+            # Parse from the right so that Windows absolute paths with a
+            # drive-letter colon (e.g. "C:\\Users\\dev\\app.py") are kept intact.
+            filename, line_number, col_number = prefix.rsplit(":", 2)
         except (ValueError, IndexError) as e:
             msg = f"Invalid flake8 error line: {line}"
             raise ValueError(msg) from e
