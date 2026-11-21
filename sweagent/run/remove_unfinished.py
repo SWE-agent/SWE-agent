@@ -16,8 +16,6 @@ def remove_unfinished(base_dir: Path, dry_run: bool = True) -> None:
     for directory in base_dir.iterdir():
         if not directory.is_dir():
             continue
-        if "__" not in directory.name:
-            continue
         trajs = list(directory.glob("*.traj"))
         if not trajs:
             logger.info("No trajectories found in %s", directory)
