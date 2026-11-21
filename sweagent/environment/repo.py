@@ -123,6 +123,26 @@ class LocalRepoConfig(BaseModel):
         return _get_git_reset_commands(self.base_commit)
 
 
+_GITHUB_HOST_PREFIXES = ("github.com/", "www.github.com/")
+
+
+def _ensure_github_url_scheme(github_url: str) -> str:
+    """Make sure that a GitHub URL carries a scheme.
+
+    Git interprets a URL without a scheme (and without `user@host:path` syntax) as a
+    local path, so cloning `github.com/owner/repo` fails with
+    `fatal: 'github.com/owner/repo' does not appear to be a git repository`.
+    """
+    if "://" in github_url or github_url.startswith("git@"):
+        return github_url
+    if github_url.startswith(_GITHUB_HOST_PREFIXES):
+        return f"https://{github_url}"
+    if github_url.count("/") == 1:
+        # Shorthand such as "owner/repo"
+        return f"https://github.com/{github_url}"
+    return github_url
+
+
 class GithubRepoConfig(BaseModel):
     github_url: str
 
@@ -142,8 +162,7 @@ class GithubRepoConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     def model_post_init(self, __context: Any) -> None:
-        if self.github_url.count("/") == 1:
-            self.github_url = f"https://github.com/{self.github_url}"
+        self.github_url = _ensure_github_url_scheme(self.github_url)
 
     @property
     def repo_name(self) -> str:
