@@ -5,6 +5,7 @@ import subprocess
 
 import pytest
 
+from sweagent.environment.repo import GithubRepoConfig
 from sweagent.run.hooks.open_pr import _remove_triple_backticks, format_trajectory_markdown
 from sweagent.utils.github import (
     InvalidGithubURL,
@@ -73,6 +74,23 @@ def test_parse_gh_issue_url_fails():
 def test_is_from_github_url():
     assert not _is_github_issue_url("")
     assert _is_github_issue_url("https://github.com/SWE-agent/SWE-agent/issues/43")
+
+
+def test_github_repo_config_adds_scheme():
+    """A scheme-less URL must still produce a URL that git can clone from."""
+    assert _is_github_repo_url("github.com/SWE-agent/SWE-agent")
+    for url in [
+        "github.com/SWE-agent/SWE-agent",
+        "www.github.com/SWE-agent/SWE-agent",
+        "SWE-agent/SWE-agent",
+    ]:
+        config = GithubRepoConfig(github_url=url)
+        assert config.github_url.startswith("https://")
+        assert config._get_url_with_token("") == config.github_url
+        assert config.repo_name == "SWE-agent__SWE-agent"
+    # URLs that already carry a scheme or use scp-like syntax are left untouched
+    for url in ["https://github.com/SWE-agent/SWE-agent", "git@github.com:SWE-agent/SWE-agent.git"]:
+        assert GithubRepoConfig(github_url=url).github_url == url
 
 
 def test_get_associated_commit_urls():
