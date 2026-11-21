@@ -160,7 +160,7 @@ class ThoughtActionParser(AbstractParseFunction, BaseModel):
         if last_valid_block:
             start, end = last_valid_block
             language = (start.group(1) or "").lower()
-            if language and language not in {"bash", "sh", "shell", "console"}:
+            if self.type == "thought_action" and language and language not in {"bash", "sh", "shell", "console"}:
                 msg = (
                     f"The command block is marked as {language}, so it was not run as a shell command. "
                     "Use an unmarked ``` block with one shell command."

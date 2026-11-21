@@ -40,6 +40,22 @@ def test_thought_action_parser():
     assert action == "ls -l\n"
 
 
+@pytest.mark.parametrize("language", ["", "bash", "sh", "shell", "console", "BASH"])
+def test_thought_action_parser_accepts_shell_fences(language):
+    parser = ThoughtActionParser()
+    thought, action = parser({"message": f"List the directory.\n```{language}\nls -l\n```"}, [])
+    assert thought == "List the directory.\n"
+    assert action == "ls -l\n"
+
+
+@pytest.mark.parametrize("language", ["", "python", "javascript"])
+def test_edit_format_accepts_language_fences(language):
+    parser = EditFormat()
+    thought, action = parser({"message": f"Replace the window.\n```{language}\nprint(1)\n```"}, [])
+    assert thought == "Replace the window.\n"
+    assert action == "print(1)\n"
+
+
 def test_xml_thought_action_parser():
     parser = XMLThoughtActionParser()
     model_response = "Let's look at the files in the current directory.\n<command>\nls -l\n</command>"
