@@ -46,8 +46,9 @@ main() {
 
     # Print the total number of matches and the matches themselves
     echo "Found $num_matches matches for \"$search_term\" in $file:"
-    echo "$matches" | cut -d: -f1-2 | sort -u -t: -k2,2n | while IFS=: read -r filename line_number; do
-        echo "Line $line_number:$(sed -n "${line_number}p" "$file")"
+    printf '%s\n' "$matches" | while IFS= read -r match; do
+        # Strip the known filename, which may itself contain colons.
+        printf 'Line %s\n' "${match#"$file:"}"
     done
     echo "End of matches for \"$search_term\" in $file"
 }
