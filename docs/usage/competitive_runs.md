@@ -60,7 +60,7 @@ defense to kill any process that hogs too much memory (note that this will affec
 <summary>Memory sentinel</summary>
 
 ```python
---8<-- "docs/usage/memory_sentinel.py"
+--8 < --"docs/usage/memory_sentinel.py"
 ```
 
 </details>
