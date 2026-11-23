@@ -1,3 +1,4 @@
+import shlex
 import subprocess
 import threading
 from pathlib import Path
@@ -63,7 +64,7 @@ class SaveApplyPatchHook(RunHook):
         content = [
             "```bash",
             "# The patch has been saved to your local filesystem at:",
-            f"PATCH_FILE_PATH='{patch_output_file.resolve()}'",
+            f"PATCH_FILE_PATH={shlex.quote(str(patch_output_file.resolve()))}",
             "# Inspect it:",
             'cat "${PATCH_FILE_PATH}"',
             "# Apply it to a local repository:",
