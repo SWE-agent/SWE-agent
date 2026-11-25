@@ -104,3 +104,27 @@ def test_user_agent_header_with_other_extra_headers():
         extra_headers = call_kwargs.kwargs.get("extra_headers", {})
         assert extra_headers["User-Agent"] == f"swe-agent/{__version__}"
         assert extra_headers["X-Custom"] == "value"
+
+
+def test_llmtr_openai_compatible_api_base(monkeypatch):
+    """LLMTR uses the existing LiteLLM OpenAI-compatible path (api_base + env key)."""
+    monkeypatch.setenv("LLMTR_API_KEY", "test-llmtr-key")
+    model = get_model(
+        GenericAPIModelConfig(
+            name="openai/minimax/minimax-m3.1-flash",
+            api_base="https://llmtr.com/v1",
+            api_key=SecretStr("$LLMTR_API_KEY"),
+            top_p=None,
+            per_instance_cost_limit=0,
+            total_cost_limit=0,
+        ),
+        ToolConfig(parse_function=Identity()),
+    )
+    mock_response = _make_mock_response()
+    with patch("litellm.completion", return_value=mock_response) as mock_completion:
+        model.query(History([{"role": "user", "content": "test"}]))
+        mock_completion.assert_called_once()
+        call_kwargs = mock_completion.call_args.kwargs
+        assert call_kwargs.get("api_base") == "https://llmtr.com/v1"
+        assert call_kwargs.get("api_key") == "test-llmtr-key"
+        assert call_kwargs.get("model") == "openai/minimax/minimax-m3.1-flash"
