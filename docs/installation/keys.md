@@ -99,6 +99,20 @@ what you want (in particular, it uses function calling and prompt caching)!
 If you're using a [litellm proxy](https://docs.litellm.ai/docs/providers/openai_compatible#usage-with-litellm-proxy-server), make sure to set your `agent.model.name` to `openai/...`
 and set `agent.model.api_key` to the key you've configured for your proxy (or a random value; it cannot be empty).
 
+## Using LLMTR
+
+[LLMTR](https://llmtr.com) is an OpenAI-compatible gateway at `https://llmtr.com/v1`. SWE-agent talks to it through the same LiteLLM path as any other custom OpenAI-compatible endpoint. Set `agent.model.name` to `openai/<vendor>/<model>` with a model id from the LLMTR catalog, point `api_base` at the gateway, and load the key from `LLMTR_API_KEY`:
+
+```yaml title="config/your_config.yaml"
+agent:
+  model:
+    name: openai/minimax/minimax-m3.1-flash
+    api_base: https://llmtr.com/v1
+    api_key: $LLMTR_API_KEY
+```
+
+Get an API key at [https://llmtr.com/dashboard/keys](https://llmtr.com/dashboard/keys). Model IDs are namespaced `vendor/model` values; IDs under `llmtr/` are hosted in Turkey.
+
 !!! warning "Model providers"
 
     Make sure that your model name includes a "provider", i.e., follows the form `provider/model_name`. The model name and provider might be arbitrarily chosen

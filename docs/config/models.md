@@ -11,6 +11,10 @@
 
 ## Notes for specific models
 
+### LLMTR
+
+LLMTR is an OpenAI-compatible gateway. Use the LiteLLM custom-endpoint path: `agent.model.name` as `openai/<vendor>/<model>`, `api_base: https://llmtr.com/v1`, and `api_key: $LLMTR_API_KEY`. See [the model section](../installation/keys.md#using-llmtr) in the installation guide.
+
 ### Local models
 
 See [the model section](../installation/keys.md) in the installation guide.
