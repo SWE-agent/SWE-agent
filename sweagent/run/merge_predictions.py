@@ -14,9 +14,9 @@ def merge_predictions(directories: list[Path], output: Path | None = None) -> No
     """Merge predictions found in `directories` into a single JSON file.
 
     Args:
-        directory: Directory containing predictions.
+        directories: Directories containing predictions.
         output: Output file. If not provided, the merged predictions will be
-            written to `directory/preds.json`.
+            written to `directories[0]/preds.json`.
     """
     preds = []
     for directory in directories:
