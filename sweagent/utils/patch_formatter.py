@@ -52,7 +52,7 @@ class PatchFormatter:
         """Reads file and returns string representation of the relevant lines.
 
         Args:
-            path: The path to the file within the repo location
+            text: the file contents to render
             starts: The starting line numbers of the relevant lines. The first line is line 1.
             stops: The stopping line numbers of the relevant lines. The stop is not inclusive.
                 The first line is line 1.

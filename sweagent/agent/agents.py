@@ -937,11 +937,10 @@ class DefaultAgent(AbstractAgent):
         """Runs an action proposed by the agent in the environment and returns the corresponding output.
 
         Args:
-            action: command to run in bash shell
-            output: output from model (only used for error handling)
+            step: the model's proposed step, carrying both `action` and `observation`
 
         Returns:
-            action_execution_output: action execution output
+            step: the same step, with `observation` and `done` updated
         """
         if self.tools.should_block_action(step.action):
             raise _BlockedActionError()
@@ -1272,9 +1271,9 @@ class DefaultAgent(AbstractAgent):
         main loop that repeatedly calls `self._step` until the problem is solved.
 
         Args:
-            setup_args: Arguments to pass to the agent's setup method.
             env: The environment to run the agent on.
-            traj_dir: Directory to save the trajectory to
+            problem_statement: The problem to solve.
+            output_dir: Directory to save the trajectory to
         """
         self.setup(env=env, problem_statement=problem_statement, output_dir=output_dir)
 

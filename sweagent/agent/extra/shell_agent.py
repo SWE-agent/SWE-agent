@@ -67,10 +67,10 @@ class ShellAgent(DefaultAgent):
         main loop that repeatedly calls `self._step` until the problem is solved.
 
         Args:
-            setup_args: Arguments to pass to the agent's setup method.
             env: The environment to run the agent on.
-            traj_dir: Directory to save the trajectory to
-            interruptible: Whether the human can jump in by pressing ^C
+            problem_statement: The problem to solve.
+            output_dir: Directory to save the trajectory to. The human can interrupt
+                the run with ^C.
         """
         self.setup(env=env, problem_statement=problem_statement, output_dir=output_dir)
 
