@@ -20,7 +20,6 @@ import socket
 import socketserver
 import threading
 from functools import partial
-from pathlib import Path
 
 import pytest
 
@@ -39,7 +38,7 @@ def _traj_json(marker: str) -> dict:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def traj_dirs(tmp_path):
     served = tmp_path / "served"
     outside = tmp_path / "outside"
@@ -50,7 +49,7 @@ def traj_dirs(tmp_path):
     return served, outside
 
 
-@pytest.fixture()
+@pytest.fixture
 def live_server(traj_dirs):
     served, _ = traj_dirs
     handler = partial(Handler, directory=str(served), gold_patches={}, test_patches={})
