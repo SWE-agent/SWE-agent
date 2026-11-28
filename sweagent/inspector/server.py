@@ -8,8 +8,32 @@ from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlparse
 
 import yaml
+
+
+def resolve_traj_path(traj_dir: str | Path, request_path: str) -> Path:
+    """Resolve a requested trajectory path inside the trajectory directory.
+
+    Rejects absolute paths and anything that resolves outside `traj_dir`
+    (including `..` segments and symlinks pointing outside), so the
+    `/trajectory/` handler cannot be used to read trajectory files from
+    elsewhere on the host. Raises `ValueError` for escaping/absolute paths
+    and `FileNotFoundError` when the resolved path is not a file.
+    See https://github.com/SWE-agent/SWE-agent/issues/1472.
+    """
+    if not request_path or Path(request_path).is_absolute():
+        msg = f"Absolute trajectory paths are not allowed: {request_path!r}"
+        raise ValueError(msg)
+    base = Path(traj_dir).resolve()
+    resolved = (base / request_path).resolve()
+    if not resolved.is_relative_to(base):
+        msg = f"Trajectory path escapes the trajectory directory: {request_path!r}"
+        raise ValueError(msg)
+    if not resolved.is_file():
+        raise FileNotFoundError(resolved)
+    return resolved
 
 
 def add_problem_statement(content):
@@ -239,8 +263,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def serve_file_content(self, file_path):
         try:
+            resolved = resolve_traj_path(self.traj_dir, file_path)
             content = load_content(
-                Path(self.traj_dir) / file_path,
+                resolved,
                 self.gold_patches,
                 self.test_patches,
             )
@@ -250,16 +275,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(content).encode())
         except FileNotFoundError:
             self.send_error(404, f"File {file_path} not found")
+        except ValueError:
+            self.send_error(404, f"File {file_path} not found")
 
     def do_GET(self):
-        if self.path == "/directory_info":
+        # Strip the query string and percent-decode before routing, so that
+        # encoded `..` segments cannot smuggle a path past the checks below.
+        parsed_path = urlparse(self.path).path
+        if parsed_path == "/directory_info":
             self.serve_directory_info()
-        elif self.path.startswith("/files"):
+        elif parsed_path.startswith("/files"):
             self.handle_files_request()
-        elif self.path.startswith("/trajectory/"):
-            file_path = self.path[len("/trajectory/") :]
+        elif parsed_path.startswith("/trajectory/"):
+            file_path = unquote(parsed_path[len("/trajectory/") :])
             self.serve_file_content(file_path)
-        elif self.path.startswith("/check_update"):
+        elif parsed_path.startswith("/check_update"):
             self.check_for_updates()
         else:
             super().do_GET()
@@ -287,12 +317,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_response(204)  # Send no content response if no update
         self.end_headers()
 
-    def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        super().end_headers()
 
-
-def main(data_path, directory, port):
+def main(data_path, directory, port, host="127.0.0.1"):
     data = []
     if data_path is not None:
         if data_path.endswith(".jsonl"):
@@ -319,8 +345,8 @@ def main(data_path, directory, port):
         test_patches=test_patches,
     )
     try:
-        with socketserver.TCPServer(("", port), handler_with_directory) as httpd:
-            print(f"Serving at http://localhost:{port}")
+        with socketserver.TCPServer((host, port), handler_with_directory) as httpd:
+            print(f"Serving at http://{host}:{port}")
             httpd.serve_forever()
     except OSError as e:
         if e.errno == 48:
@@ -338,6 +364,13 @@ def get_parser():
     )
     parser.add_argument("--directory", type=str, help="Directory to serve", default=os.getcwd(), nargs="?")
     parser.add_argument("--port", type=int, help="Port to serve", default=8000)
+    parser.add_argument(
+        "--host",
+        type=str,
+        help="Interface to bind (default 127.0.0.1). Only set to 0.0.0.0 deliberately: "
+        "the inspector serves trajectory files with no authentication.",
+        default="127.0.0.1",
+    )
     return parser
 
 
